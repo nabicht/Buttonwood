@@ -62,7 +62,7 @@ class MonotonicIntID(IDGenerator):
         :param seed:
         :param increment:
         """
-        assert isinstance(seed, int)
+        assert isinstance(seed, int) or isinstance(seed, long)
         assert isinstance(increment, int)
         IDGenerator.__init__(self)
         self._seed = seed
