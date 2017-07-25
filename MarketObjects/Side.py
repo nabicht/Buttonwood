@@ -58,7 +58,6 @@ class Side(object):
         else:
             return BID_SIDE
 
-
     def __int__(self):
         if self.__bid_or_ask == self.BID:
             return self.BID
