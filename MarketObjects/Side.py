@@ -53,7 +53,7 @@ class Side(object):
         return False
 
     def other_side(self):
-        if self.is_bid():
+        if self.__bid_or_ask == self.BID:
             return ASK_SIDE
         else:
             return BID_SIDE
