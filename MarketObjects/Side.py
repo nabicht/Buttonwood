@@ -54,9 +54,10 @@ class Side(object):
 
     def other_side(self):
         if self.is_bid():
-            return Side(Side.ASK)
-        if self.is_ask():
-            return Side(Side.BID)
+            return ASK_SIDE
+        else:
+            return BID_SIDE
+
 
     def __int__(self):
         if self.__bid_or_ask == self.BID:
