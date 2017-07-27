@@ -601,7 +601,7 @@ class OrderEventChain(object):
         # TODO unit test!
         if self._current_exposure is not None and self._current_exposure.qty() > 0:
             self._price_at_close = self.current_exposure().price()
-        else: # for example, FAKs and other aggressive orders that get cancelled without an acknowledgement
+        else:  # for example, FAKs and other aggressive orders that get cancelled without an acknowledgement
             self._price_at_close = self.most_recent_requested_exposure().price()
         self._open = False
         self._visible_qty = 0
@@ -732,7 +732,6 @@ class OrderEventChain(object):
         assert self.time_in_force() == OrderEventConstants.FAR, \
             "Cancel Replace commands only allowed for FAR time in force. This is a %s" % OrderEventConstants.time_in_force_str(
                 self.time_in_force())
-
         self._events.append(cr)
         # set the requested exposure
         cr_exposure = Exposure(cr.price(), cr.qty(), cr.event_id())
@@ -953,4 +952,3 @@ class OrderEventChain(object):
 
         # close out the exposure that is open
         self._close_requested_exposure(rej)
-
