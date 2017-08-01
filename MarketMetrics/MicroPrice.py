@@ -5,7 +5,8 @@ def size_weighted_midpoint(bid_price, bid_qty, ask_price, ask_qty):
         return None
     return ((bid_qty * ask_price) + (ask_qty * bid_price)) / bid_plus_ask_qty
 
-def size_weighted_midpoint_from_price_levels(bid_price_level, ask_price_level, include_hidden = False):
+
+def size_weighted_midpoint_from_price_levels(bid_price_level, ask_price_level, include_hidden=False):
     if bid_price_level is None or ask_price_level is None:
         return None
     bid_qty = bid_price_level.visible_qty()
