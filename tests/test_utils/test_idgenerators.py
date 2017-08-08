@@ -44,7 +44,7 @@ def test_monotonicintid():
 
     #test with a seed number
     generator = MonotonicIntID(seed=2016113000000)
-    for i in xrange(2016113000000+1, 1000, 2):
+    for i in range(2016113000000+1, 1000, 2):
         assert generator.id() == i
 
 
