@@ -68,9 +68,7 @@ class AggressiveAct:
 
     def close(self, order_book):
         self._is_closed = True
-
         impact = 0.0
-        # TODO calculate impact!
         opposite_side = self._aggressive_side.other_side()
         opposite_tob = order_book.best_level(opposite_side)
         # if the opposite tob is worse than the last fill price, then there is no impact on top of book. This can
