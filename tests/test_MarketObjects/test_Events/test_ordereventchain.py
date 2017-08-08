@@ -86,7 +86,7 @@ def test_acknowledgement():
     n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", PROD, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # no ack yet
-    oec.most_recent_event() == n
+    assert oec.most_recent_event() == n
     #check exposure
     assert len(oec.open_exposure_requests()) == 1
     assert oec.most_recent_requested_exposure() == oec.open_exposure_requests()[-1]
@@ -98,7 +98,7 @@ def test_acknowledgement():
     #now ack it
     ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", PROD, n, Price("34.52"), 1000, None)
     oec.apply_acknowledgement_report(ack)
-    oec.most_recent_event() == ack
+    assert oec.most_recent_event() == ack
     #check exposure
     assert len(oec.open_exposure_requests()) == 0
     assert oec.most_recent_requested_exposure() is None
@@ -111,7 +111,7 @@ def test_new_iceberg_order_ack():
     n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", PROD, BID_SIDE, FAR, Price("34.52"), 1000, 50)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # no ack yet
-    oec.most_recent_event() == n
+    assert oec.most_recent_event() == n
     #check exposure
     assert len(oec.open_exposure_requests()) == 1
     assert oec.most_recent_requested_exposure() == oec.open_exposure_requests()[-1]
@@ -123,7 +123,7 @@ def test_new_iceberg_order_ack():
     #now ack it
     ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", PROD, n, Price("34.52"), 1000, 50)
     oec.apply_acknowledgement_report(ack)
-    oec.most_recent_event() == ack
+    assert oec.most_recent_event() == ack
     #check exposure
     assert len(oec.open_exposure_requests()) == 0
     assert oec.most_recent_requested_exposure() is None
