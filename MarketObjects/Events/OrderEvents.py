@@ -30,7 +30,7 @@ SOFTWARE.
 from MarketPy.MarketObjects.CancelReasons import CANCEL_TYPES_STRINGS, CANCEL_REASON_STRINGS
 from MarketPy.MarketObjects.Events.BasicEvents import BasicEvent
 from MarketPy.MarketObjects.Price import Price
-from MarketPy.MarketObjects.Product import Product
+from MarketPy.MarketObjects.Market import Market
 from MarketPy.MarketObjects.RejectReasons import REJECT_REASON_STRINGS
 from MarketPy.MarketObjects.Side import Side
 from MarketPy.MarketObjects.Events import OrderEventConstants
@@ -64,7 +64,7 @@ class OrderEvent(BasicEvent):
      is used to clearly identify all events that belong to the same order chain.
     """
 
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, other_key_values=None):
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=None):
         """
         The initializer of the base OrderEvent class.
 
@@ -80,26 +80,26 @@ class OrderEvent(BasicEvent):
         :param timestamp: float. microsecond time stamp of event. Expecting format of seconds.microseconds (ex: 1234.001123)
         :param chain_id: str or int. the unique identifier fo the orderchain
         :param user_id: str or int. unique identifier of the user who sent the command
-        :param product: MarketObjects.Product
+        :param market: MarketObjects.Market
         :param other_key_values: dict
         """
         assert isinstance(chain_id, str) or isinstance(chain_id, int)
         assert isinstance(user_id, str) or isinstance(user_id, int)
-        assert isinstance(product, Product)
+        assert isinstance(market, Market)
         assert other_key_values is None or isinstance(other_key_values,
                                                       dict), "other_key_values must be none or of type dict"
         BasicEvent.__init__(self, event_id, timestamp)
         self._user_id = user_id
         self._chain_id = chain_id
-        self._product = product
+        self._market = market
         self._other_key_values = {} if other_key_values is None else other_key_values
 
-    def product(self):
+    def market(self):
         """
-        The product of the order even
+        The market of the order event
         :return:
         """
-        return self._product
+        return self._market
 
     def user_id(self):
         """
@@ -144,8 +144,8 @@ class OrderCommand(OrderEvent):
      from a participant that the matching engine attempts to execute.
     """
 
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, other_key_values=None):
-        OrderEvent.__init__(self, event_id, timestamp, chain_id, user_id, product, other_key_values=other_key_values)
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=None):
+        OrderEvent.__init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=other_key_values)
 
 
 class NewOrderCommand(OrderCommand):
@@ -155,7 +155,7 @@ class NewOrderCommand(OrderCommand):
     If iceberg_peak_qty is None then not taking advantage of iceberg functionality.
     """
 
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, side, time_in_force,
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, side, time_in_force,
                  price, qty, iceberg_peak_qty=None, limit_or_market=OrderEventConstants.LIMIT, other_key_values=None):
         # TODO documentation
         assert isinstance(side, Side)
@@ -167,8 +167,8 @@ class NewOrderCommand(OrderCommand):
         assert isinstance(time_in_force, int)
         assert qty > 0, "Qty must be greater than 0"
         assert iceberg_peak_qty is None or iceberg_peak_qty >= 0, "Iceberg Peak Qty must be None or an int >= 0"
-        OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, product, other_key_values=other_key_values)
-        assert product.is_valid_price(price), "Price %s is not valid for Product %s" % (str(price), str(product))
+        OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=other_key_values)
+        assert market.product().is_valid_price(price), "Price %s is not valid for Product %s" % (str(price), str(market))
 
         self._side = side
         self._price = price
@@ -267,7 +267,8 @@ class NewOrderCommand(OrderCommand):
                                           'chain_id': self.chain_id(),
                                           'event_id': self.event_id(),
                                           'timestamp': self.timestamp(),
-                                          'product_name': self.product().name(),
+                                          'product_name': self.market().product().name(),
+                                          'endpoint_name': self.market().endpoint().name(),
                                           'side': int(self.side()),
                                           'price': str(self.price()),
                                           'qty': self.qty(),
@@ -278,7 +279,7 @@ class NewOrderCommand(OrderCommand):
 
 
 class CancelReplaceCommand(OrderCommand):
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, side, price, qty, iceberg_peak_qty=None,
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, side, price, qty, iceberg_peak_qty=None,
                  other_key_values=None):
         # TODO document
         assert isinstance(price, Price)
@@ -286,8 +287,8 @@ class CancelReplaceCommand(OrderCommand):
         assert iceberg_peak_qty is None or isinstance(iceberg_peak_qty, int)
         assert iceberg_peak_qty is None or iceberg_peak_qty >= 0, "iceberg_peak_qty cannot be negative."
         assert qty >= 0, "Qty must be greater than 0"
-        assert product.is_valid_price(price), "Price %s is not valid for Product %s" % (str(price), str(product))
-        OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, product, other_key_values=other_key_values)
+        assert market.product().is_valid_price(price), "Price %s is not valid for Market %s" % (str(price), str(market))
+        OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=other_key_values)
         self._side = side
         self._price = price
         self._iceberg_peak_qty = iceberg_peak_qty
@@ -340,7 +341,8 @@ class CancelReplaceCommand(OrderCommand):
                                           'chain_id': self.chain_id(),
                                           'event_id': self.event_id(),
                                           'timestamp': self.timestamp(),
-                                          'product_name': self.product().name(),
+                                          'product_name': self.market().product().name(),
+                                          'endpoint_name': self.market().endpoint().name(),
                                           'price': str(self.price()),
                                           'qty': self.qty(),
                                           'iceberg_peak_qty': self.iceberg_peak_qty(),
@@ -348,10 +350,10 @@ class CancelReplaceCommand(OrderCommand):
 
 
 class CancelCommand(OrderCommand):
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, cancel_type, other_key_values=None):
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, cancel_type, other_key_values=None):
         # TODO document
         assert isinstance(cancel_type, int)
-        OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, product, other_key_values=other_key_values)
+        OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=other_key_values)
         self._cancel_type = cancel_type
 
     def cancel_type(self):
@@ -385,7 +387,8 @@ class CancelCommand(OrderCommand):
                                           'chain_id': self.chain_id(),
                                           'event_id': self.event_id(),
                                           'timestamp': self.timestamp(),
-                                          'product_name': self.product().name(),
+                                          'product_name': self.market().product().name(),
+                                          'endpoint_name': self.market().endpoint().name(),
                                           'cancel_type': self.cancel_type(),
                                           'cancel_type_str': self.cancel_type_str(),
                                           'other_key_values': {} if self._other_key_values is None else self._other_key_values}}
@@ -397,8 +400,8 @@ class ExecutionReport(OrderEvent):
      to the order commands.
     """
 
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, causing_command, other_key_values=None):
-        OrderEvent.__init__(self, event_id, timestamp, chain_id, user_id, product, other_key_values=other_key_values)
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, causing_command, other_key_values=None):
+        OrderEvent.__init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=other_key_values)
         self._causing_command = causing_command
 
     def causing_command(self):
@@ -411,7 +414,7 @@ class ExecutionReport(OrderEvent):
 
 
 class AcknowledgementReport(ExecutionReport):
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, response_to_command, price,
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, response_to_command, price,
                  qty, iceberg_peak_qty, other_key_values=None):
         """
         An acknowledgement execution report. Has all the standard data for identifying the message, order, etc.
@@ -439,7 +442,7 @@ class AcknowledgementReport(ExecutionReport):
         assert isinstance(price, Price)
         assert isinstance(qty, int)
         assert iceberg_peak_qty is None or isinstance(iceberg_peak_qty, int)
-        ExecutionReport.__init__(self, event_id, timestamp, chain_id, user_id, product, response_to_command,
+        ExecutionReport.__init__(self, event_id, timestamp, chain_id, user_id, market, response_to_command,
                                  other_key_values=other_key_values)
         self._price = price
         self._qty = qty
@@ -492,7 +495,8 @@ class AcknowledgementReport(ExecutionReport):
                                           'chain_id': self.chain_id(),
                                           'event_id': self.event_id(),
                                           'timestamp': self.timestamp(),
-                                          'product_name': self.product().name(),
+                                          'product_name': self.market().product().name(),
+                                          'endpoint_name': self.market().endpoint().name(),
                                           'response_to_command': self.causing_command().to_json(),
                                           'price': str(self.price()),
                                           'qty': self.qty(),
@@ -502,11 +506,11 @@ class AcknowledgementReport(ExecutionReport):
 
 class RejectReport(ExecutionReport):
 
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, response_to_command, reject_reason,
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, response_to_command, reject_reason,
                  other_key_values=None):
         # TODO document
         assert isinstance(reject_reason, int)
-        ExecutionReport.__init__(self, event_id, timestamp, chain_id, user_id, product, response_to_command,
+        ExecutionReport.__init__(self, event_id, timestamp, chain_id, user_id, market, response_to_command,
                                  other_key_values=other_key_values)
         self._reject_reason = reject_reason
 
@@ -549,7 +553,8 @@ class RejectReport(ExecutionReport):
                                           'chain_id': self.chain_id(),
                                           'event_id': self.event_id(),
                                           'timestamp': self.timestamp(),
-                                          'product_name': self.product().name(),
+                                          'product_name': self.market().product().name(),
+                                          'endpoint_name': self.market().endpoint().name(),
                                           'reject_reason': self.reject_reason(),
                                           'reject_reason_str': self.reject_reason_str(),
                                           'response_to_command': self.causing_command().to_json(),
@@ -558,11 +563,11 @@ class RejectReport(ExecutionReport):
 
 class CancelReport(ExecutionReport):
 
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, cancel_command, cancel_reason,
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, cancel_command, cancel_reason,
                  other_key_values=None):
         # TODO document
         assert isinstance(cancel_reason, int)
-        ExecutionReport.__init__(self, event_id, timestamp, chain_id, user_id, product, cancel_command,
+        ExecutionReport.__init__(self, event_id, timestamp, chain_id, user_id, market, cancel_command,
                                  other_key_values=other_key_values)
         self._cancel_reason = cancel_reason
 
@@ -605,7 +610,8 @@ class CancelReport(ExecutionReport):
                                           'chain_id': self.chain_id(),
                                           'event_id': self.event_id(),
                                           'timestamp': self.timestamp(),
-                                          'product_name': self.product().name(),
+                                          'product_name': self.market().product().name(),
+                                          'endpoint_name': self.market().endpoint().name(),
                                           'cancel_reason': self.cancel_reason(),
                                           'cancel_reason_str': self.cancel_reason_str(),
                                           'cancel_command': "None" if self.causing_command() is None else self.cancel_command().to_json(),
@@ -614,14 +620,14 @@ class CancelReport(ExecutionReport):
 
 class FillReport(ExecutionReport):
 
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, aggressing_command, fill_qty, fill_price,
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, aggressing_command, fill_qty, fill_price,
                  side, match_id, other_key_values=None):
         # TODO document
         assert isinstance(fill_price, Price)
         assert isinstance(fill_qty, int)
         assert isinstance(match_id, int) or isinstance(match_id, str)
         assert isinstance(side, Side)
-        ExecutionReport.__init__(self, event_id, timestamp, chain_id, user_id, product, aggressing_command,
+        ExecutionReport.__init__(self, event_id, timestamp, chain_id, user_id, market, aggressing_command,
                                  other_key_values=other_key_values)
         self._fill_price = fill_price
         self._fill_qty = fill_qty
@@ -689,7 +695,8 @@ class FillReport(ExecutionReport):
                                           'chain_id': self.chain_id(),
                                           'event_id': self.event_id(),
                                           'timestamp': self.timestamp(),
-                                          'product_name': self.product().name(),
+                                          'product_name': self.market().product().name(),
+                                          'endpoint_name': self.market().endpoint().name(),
                                           'side': int(self.side()),
                                           'fill_price': str(self.fill_price()),
                                           'fill_qty': self.fill_qty(),
@@ -700,11 +707,11 @@ class FillReport(ExecutionReport):
 
 class PartialFillReport(FillReport):
 
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, aggressing_command, fill_qty, fill_price,
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, aggressing_command, fill_qty, fill_price,
                  side, match_id, leaves_qty, other_key_values=None):
         # TODO document
         assert isinstance(leaves_qty, int)
-        FillReport.__init__(self, event_id, timestamp, chain_id, user_id, product, aggressing_command, fill_qty,
+        FillReport.__init__(self, event_id, timestamp, chain_id, user_id, market, aggressing_command, fill_qty,
                             fill_price, side, match_id, other_key_values=other_key_values)
         self._leaves_qty = leaves_qty
 
@@ -728,7 +735,8 @@ class PartialFillReport(FillReport):
                                           'chain_id': self.chain_id(),
                                           'event_id': self.event_id(),
                                           'timestamp': self.timestamp(),
-                                          'product_name': self.product().name(),
+                                          'product_name': self.market().product().name(),
+                                          'endpoint_name': self.market().endpoint().name(),
                                           'side': int(self.side()),
                                           'fill_price': str(self.fill_price()),
                                           'fill_qty': self.fill_qty(),
@@ -740,10 +748,10 @@ class PartialFillReport(FillReport):
 
 class FullFillReport(FillReport):
 
-    def __init__(self, event_id, timestamp, chain_id, user_id, product, aggressing_command, fill_qty, fill_price,
+    def __init__(self, event_id, timestamp, chain_id, user_id, market, aggressing_command, fill_qty, fill_price,
                  side, match_id, other_key_values=None):
         # TODO document
-        FillReport.__init__(self, event_id, timestamp, chain_id, user_id, product, aggressing_command, fill_qty,
+        FillReport.__init__(self, event_id, timestamp, chain_id, user_id, market, aggressing_command, fill_qty,
                             fill_price, side, match_id, other_key_values=other_key_values)
 
     def event_type_str(self):

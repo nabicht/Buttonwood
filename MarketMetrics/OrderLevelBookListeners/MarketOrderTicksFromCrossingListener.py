@@ -33,6 +33,7 @@ from MarketPy.MarketObjects.Side import BID_SIDE, ASK_SIDE
 from MarketPy.utils.dicts import NDeepDict
 from collections import defaultdict
 
+
 class MarketOrderTicksFromCrossing(OrderLevelBookListener, OrderEventListener):
     """
     Tracks how far away a MarketOrder was from crossing the opposite TOB.
@@ -48,32 +49,34 @@ class MarketOrderTicksFromCrossing(OrderLevelBookListener, OrderEventListener):
 
     This is designed so it can work with mulitiple order books at once.
     """
-    #TODO UNIT TEST
+    # TODO UNIT TEST
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
-        self._product_chain_id_ticks = NDeepDict(2)
-        self._product_bid_tob = defaultdict()
-        self._product_ask_tob = defaultdict()
+        self._market_chain_id_ticks = NDeepDict(2)
+        self._market_bid_tob = defaultdict()
+        self._market_ask_tob = defaultdict()
 
     def handle_new_order_command(self, new_order_command, resulting_order_chain):
-        #only applies to new order commands
+        # only applies to new order commands
         if new_order_command.is_market_order():
             side = new_order_command.side()
             price = new_order_command.price()
-            product = new_order_command.product()
-            opp_price = self._product_bid_tob[product] if side.is_ask() else self._product_ask_tob[product]
-            ticks_away = ((opp_price - price) if side.is_bid() else (price - opp_price)) / product.mpi()
-            self._product_chain_id_ticks.set([product, new_order_command.chain_id()], value=ticks_away)
+            market = new_order_command.market()
+            mpi = market.product().mpi()
+            opp_price = self._market_bid_tob[market] if side.is_ask() else self._market_ask_tob[market]
+            ticks_away = ((opp_price - price) if side.is_bid() else (price - opp_price)) / mpi
+            self._market_chain_id_ticks.set([market, new_order_command.chain_id()], value=ticks_away)
 
     def notify_book_update(self, order_book, causing_order_chain):
         """
         Every time an orderbook comes in need to save the bid price and the ask
          price
         """
-        self._product_bid_tob[order_book.product()] = order_book.best_price(BID_SIDE)
-        self._product_ask_tob[order_book.product()] = order_book.best_price(ASK_SIDE)
+        market = order_book.market()
+        self._market_bid_tob[market] = order_book.best_price(BID_SIDE)
+        self._market_ask_tob[market] = order_book.best_price(ASK_SIDE)
 
-    def ticks_from_crossing(self, product, chain_id):
+    def ticks_from_crossing(self, market, chain_id):
         """
         Gets how many ticks away from crossing the chain id was.
          * Greater than 0 is how many ticks away from crossing (but did not cross)
@@ -82,8 +85,8 @@ class MarketOrderTicksFromCrossing(OrderLevelBookListener, OrderEventListener):
          * None means there was no opposite side to cross (or the order chain id
            being asked about wasn't a market order)
 
-        :param product: MarketObjects.Product.Product
+        :param market: MarketObjects.Market.Market
         :param chain_id: order chain's unique identifier
         :return: int
         """
-        return self._product_chain_id_ticks.get([product, chain_id])
+        return self._market_chain_id_ticks.get([market, chain_id])

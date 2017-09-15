@@ -40,7 +40,7 @@ from MarketPy.MarketObjects.Events.OrderEvents import FullFillReport
 from MarketPy.MarketObjects.Events.OrderEvents import CancelReport
 from MarketPy.MarketObjects.Events.EventChains import OrderEventChain
 from MarketPy.MarketObjects.OrderBooks.BasicOrderBook import BasicOrderBook
-from MarketPy.MarketObjects.Product import Product
+from MarketPy.MarketObjects.Market import Market
 from MarketPy.utils.IDGenerators import MonotonicIntID
 from collections import OrderedDict
 import logging
@@ -50,11 +50,11 @@ class OrderEventHandler:
     def __init__(self, logger):
         self._event_listeners = OrderedDict()
         self._chain_id_to_chain = {}
-        self._product_book_id_to_book = {}
+        self._market_book_id_to_book = {}
         self._logger = logger
         self._sub_chain_id_generator = MonotonicIntID()
 
-    def register_orderbook(self, product, orderbook_id, orderbook):
+    def register_orderbook(self, market, orderbook_id, orderbook):
         """
         Allows you to register an order book for a product with a given orderbook identifier. The identifier allows you
         to name the order book so it is easily retrievable later.
@@ -63,24 +63,24 @@ class OrderEventHandler:
         already registered for <product name>".  This will prevent overriding an orderbook that has already been
         registered and populated.
 
-        :param product: MarketObjects.Product.Product
+        :param market: MarketObjects.Market.Market
         :param orderbook_id: str. The human readable, unique identifier for the orderbook
         :param orderbook: MarketObjects.OrderBooks.BasicOrderBook
         """
         assert isinstance(orderbook, BasicOrderBook)
-        assert isinstance(product, Product)
+        assert isinstance(market, Market)
         assert isinstance(orderbook_id, str)
 
-        if product not in self._product_book_id_to_book:
-            self._product_book_id_to_book[product] = {}
-        if orderbook_id not in self._product_book_id_to_book[product]:
-            self._product_book_id_to_book[product][orderbook_id] = orderbook
+        if market not in self._market_book_id_to_book:
+            self._market_book_id_to_book[market] = {}
+        if orderbook_id not in self._market_book_id_to_book[market]:
+            self._market_book_id_to_book[market][orderbook_id] = orderbook
         else:
-            raise Exception("%s is already registered for %s" % (orderbook_id, product.name()))
+            raise Exception("%s is already registered for %s" % (orderbook_id, str(market)))
 
-    def orderbook(self, product, orderbook_id):
-        if product in self._product_book_id_to_book:
-            return self._product_book_id_to_book[product].get(orderbook_id)
+    def orderbook(self, market, orderbook_id):
+        if market in self._market_book_id_to_book:
+            return self._market_book_id_to_book[market].get(orderbook_id)
         return None
 
     def register_event_listener(self, event_listener_id, event_listener):
@@ -191,9 +191,9 @@ class OrderEventHandler:
 
     def _apply_to_orderbooks(self, event, order_chain):
         if order_chain is not None:
-            product = event.product()
-            if product in self._product_book_id_to_book:
-                for orderbook_id, orderbook in self._product_book_id_to_book[product].iteritems():
+            market = event.market()
+            if market in self._market_book_id_to_book:
+                for orderbook_id, orderbook in self._market_book_id_to_book[market].iteritems():
                     self._logger.debug("%s: applying %s chain %s event %s to orderbook %s" %
                                        (self.__class__.__name__,
                                         event.__class__.__name__,

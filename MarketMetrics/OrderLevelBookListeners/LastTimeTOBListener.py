@@ -45,8 +45,8 @@ class LastTimeTOBListener(OrderLevelBookListener):
     # TODO UNIT TEST
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
-        self._product_to_side_prev_price = NDeepDict(depth=2, default_value=None)
-        self._product_side_price_time = NDeepDict(depth=3, default_value=None)  # product to side to price to last time it was top of book
+        self._market_to_side_prev_price = NDeepDict(depth=2, default_value=None)
+        self._market_side_price_time = NDeepDict(depth=3, default_value=None)  # market to side to price to last time it was top of book
 
     def notify_book_update(self, order_book, causing_order_chain):
         """
@@ -60,42 +60,42 @@ class LastTimeTOBListener(OrderLevelBookListener):
          2) update the new price to the new time
         """
         time = order_book.last_update_time()
-        product = order_book.product()
+        market = order_book.market()
         # only need to do the side that was updated by the causing order chain as that is only side that changed
         side = causing_order_chain.side()
 
         best_price = order_book.best_price(side)
         # if current book best price is not none then need to set its time
         if best_price is not None:
-            self._product_side_price_time.set((product, side, best_price), value=time)
+            self._market_side_price_time.set((market, side, best_price), value=time)
         # if previous best price is not none and is different than new best price then need to set its time to
         #  update it to include previous price period since it was best price until the change
-        prev_best_price = self._product_to_side_prev_price.get((product, side))
+        prev_best_price = self._market_to_side_prev_price.get((market, side))
         if prev_best_price is not None and prev_best_price != best_price:
-            self._product_side_price_time.set((product, side, prev_best_price), value=time)
+            self._market_side_price_time.set((market, side, prev_best_price), value=time)
         # set previous best price to be the current best price
-        self._product_to_side_prev_price.set((product, side), value=best_price)
+        self._market_to_side_prev_price.set((market, side), value=best_price)
 
-    def last_time_was_tob(self, product, side, price):
+    def last_time_was_tob(self, market, side, price):
         """
         Returns the last time the price was the top of book
         Will return None if the passed in price has never been top of book for
-         product and side during the scope of this listener
+         market and side during the scope of this listener
 
-        :param product: MarketObjects.Product.Product
+        :param market: MarketObjects.Market.Market
         :param side: MarketObjects.Side.Side
         :param price: MarketObjects.Price.Price
         :return: float. (Could be None)
         """
-        return self._product_side_price_time.get((product, side, price))
+        return self._market_side_price_time.get((market, side, price))
 
-    def last_time_crossed(self, product, side, price):
+    def last_time_crossed(self, market, side, price):
         """
         Returns the last time the price for the given side would have crossed the book.
         
         None if it never would have crossed the book or if there was never a book to cross.
         
-        :param product: MarketObjects.Product.Product
+        :param market: MarketObjects.Market.Market
         :param side: MarketObjects.Side.Side (side of the order we are checking)
         :param price: MarketObjects.Price.Price (price of the order we are checking)
         :return: float. (Could be None)
@@ -105,7 +105,7 @@ class LastTimeTOBListener(OrderLevelBookListener):
 
         times = []
 
-        resting_prices_to_time = self._product_side_price_time.get((product, resting_side))
+        resting_prices_to_time = self._market_side_price_time.get((market, resting_side))
         for resting_price, time in resting_prices_to_time.iteritems():
             if price.better_or_same_as(resting_price, side):
                 times.append(time)

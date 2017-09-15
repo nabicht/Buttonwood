@@ -61,5 +61,5 @@ class CrossedBookListener(OrderLevelBookListener):
                     firms.add(chain.user_id().split(".")[0])
                 if len(firms) > 1:
                     self._logger.warn("%s is crossed! Bid %s >= Ask %s" %
-                                      (order_book.product().name(), str(order_book.best_bid_price()),
+                                      (str(order_book.market()), str(order_book.best_bid_price()),
                                        str(order_book.best_ask_price())))

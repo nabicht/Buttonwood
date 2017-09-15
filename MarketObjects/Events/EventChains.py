@@ -48,13 +48,14 @@ class CancelReplaceInfo(object):
     # TODO document class
     # TODO unit test
 
-    def __init__(self, previous_exposure, new_exposure, side, product):
+    def __init__(self, previous_exposure, new_exposure, side, market):
         self._prev = previous_exposure
         self._new = new_exposure
+        mpi = market.product().mpi()
         if side.is_bid():
-            self._price_delta = (self._new.price() - self._prev.price()) / product.mpi()
+            self._price_delta = (self._new.price() - self._prev.price()) / mpi
         else:
-            self._price_delta = (self._prev.price() - self._new.price()) / product.mpi()
+            self._price_delta = (self._prev.price() - self._new.price()) / mpi
         self._qty_delta = new_exposure.qty() - previous_exposure.qty()
 
     def previous_exposure(self):
@@ -287,8 +288,8 @@ class OrderEventChain(object):
         # add to list of events
         self._events = [new_order_command]
         self._filled_price_to_qty = defaultdict(int)
-        self._logger.debug("New %s created, OrderChainID %s Product %s" %
-                           (self.__class__.__name__, str(self.chain_id()), self.product().name()))
+        self._logger.debug("New %s created, OrderChainID %s Market %s" %
+                           (self.__class__.__name__, str(self.chain_id()), str(self.market())))
         # New Orders start new subchains, so start subchain and put it in list of subchains
         self._sub_chains = []
         self._visible_qty = 0  # an unack'd order has no qty showing on the book
@@ -356,7 +357,15 @@ class OrderEventChain(object):
 
         :return: MarketObjects.Product.Product
         """
-        return self._new_order_command.product()
+        return self._new_order_command.market().product()
+
+    def market(self):
+        """
+        Gets the Market of the OrderEventChain
+
+        :return: MarketObjects.Market.Market
+        """
+        return self._new_order_command.market()
 
     def time_in_force(self):
         """
@@ -589,7 +598,7 @@ class OrderEventChain(object):
             l.append(event.to_json())
         s = json.dumps(l)
         s += "\n%s: %s %s %s %d (%d) @ %s" % \
-             (str(self.chain_id()), self.user_id(), self.product().name(), self.side(), self.visible_qty(),
+             (str(self.chain_id()), self.user_id(), str(self.market()), self.side(), self.visible_qty(),
               self.current_qty() - self.visible_qty(), str(self.current_price()))
         return s
 
@@ -650,7 +659,7 @@ class OrderEventChain(object):
         :param ack: MarketObjects.Events.OrderEvents.AcknowledgementReport
         """
         assert isinstance(ack, AcknowledgementReport)
-        assert ack.product() == self.product(), \
+        assert ack.market() == self.market(), \
             "Acknowledgement does NOT have same product as the OrderEventChain expects"
         assert ack.chain_id() == self.chain_id(), \
             "Acknowledgement's chain ID (%s) does not match chain's ID (%s)" % (
@@ -670,7 +679,7 @@ class OrderEventChain(object):
         if self.current_exposure() is not None:
             self._event_id_to_cancel_replace_info[ack.event_id()] = CancelReplaceInfo(self.current_exposure(),
                                                                                       ack_exposure, self.side(),
-                                                                                      self.product())
+                                                                                      self.market())
         # handle subchains
         subchain_open_reason = None
         subchain_close_reason = None
@@ -725,8 +734,8 @@ class OrderEventChain(object):
         :param cr: MarketObjects.Events.OrderEvents.CancelReplaceCommand
         """
         assert isinstance(cr, CancelReplaceCommand)
-        assert cr.product() == self.product(), \
-            "Cancel Replace does NOT have same product as the OrderEventChain expects"
+        assert cr.market() == self.market(), \
+            "Cancel Replace does NOT have same market as the OrderEventChain expects"
         assert cr.chain_id() == self.chain_id(), \
             "Cancel Replace's chain ID (%s) does not match chain's ID (%s)" % (str(cr.chain_id()), str(self.chain_id()))
         assert self.time_in_force() == OrderEventConstants.FAR, \
@@ -746,8 +755,8 @@ class OrderEventChain(object):
         :param cc: MarketObjects.Events.OrderEvents.CancelCommand
         """
         assert isinstance(cc, CancelCommand)
-        assert cc.product() == self.product(), \
-            "Cancel Command does NOT have same product as the OrderEventChain expects"
+        assert cc.market() == self.market(), \
+            "Cancel Command does NOT have same market as the OrderEventChain expects"
         assert cc.chain_id() == self.chain_id(), \
             "Cancel Commnad chain ID (%s) does not match chain's ID (%s)" % (str(cc.chain_id()), str(self.chain_id()))
 
@@ -763,8 +772,8 @@ class OrderEventChain(object):
         :param cr: MarketObjects.Events.OrderEvents.CancelReport
         """
         assert isinstance(cr, CancelReport)
-        assert cr.product() == self.product(), \
-            "Cancel Report does NOT have same product as the OrderEventChain expects"
+        assert cr.market() == self.market(), \
+            "Cancel Report does NOT have same market as the OrderEventChain expects"
         assert cr.chain_id() == self.chain_id(), \
             "Cancel Report chain ID (%s) does not match chain's ID (%s)" % (str(cr.chain_id()), str(self.chain_id()))
         # append to events
@@ -934,8 +943,8 @@ class OrderEventChain(object):
         :param rej: MarketObjects.Events.OrderEvents.RejectReport
         """
         assert isinstance(rej, RejectReport)
-        assert rej.product() == self.product(), \
-            "Reject does NOT have same product as the OrderEventChain expects"
+        assert rej.market() == self.market(), \
+            "Reject does NOT have same market as the OrderEventChain expects"
         assert rej.chain_id() == self.chain_id(), \
             "Reject's chain ID (%s) does not match chain's ID (%s)" % (str(rej.chain_id()), str(self.chain_id()))
         assert rej.rejected_command().chain_id() == rej.chain_id(), \
