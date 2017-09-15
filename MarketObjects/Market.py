@@ -71,7 +71,7 @@ class Market(object):
         return not self.__eq__(other)
 
     def __str__(self):
-        return "%s @ %s)" % (self.product().name(), self.endpoint().name())
+        return "%s@%s" % (self.product().name(), self.endpoint().name())
 
     def to_json(self):
         return {"product": self.product(), "endpoint": self.endpoint()}
