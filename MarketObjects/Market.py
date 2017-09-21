@@ -74,4 +74,4 @@ class Market(object):
         return "%s@%s" % (self.product().name(), self.endpoint().name())
 
     def to_json(self):
-        return {"product": self.product(), "endpoint": self.endpoint()}
+        return {"product": self.product().to_json(), "endpoint": self.endpoint().to_json()}

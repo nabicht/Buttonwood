@@ -43,18 +43,19 @@ class TopOfBookBeforeEventListener(OrderLevelBookListener):
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
         self._event_id_to_tob = {}
-        self._product_to_previous_tob = {}
+        self._market_to_previous_tob = {}
 
     def notify_book_update(self, order_book, causing_order_chain):
         # set the event to the previous tob
-        tob = self._product_to_previous_tob.get(order_book.product())
+        market = order_book.market()
+        tob = self._market_to_previous_tob.get(market)
         event_id = causing_order_chain.most_recent_event().event_id()
         self._event_id_to_tob[event_id] = tob
 
         # set the previous tob to the new tob
 
-        self._product_to_previous_tob[order_book.product()] = (order_book.best_level(BID_SIDE),
-                                                               order_book.best_level(ASK_SIDE))
+        self._market_to_previous_tob[market] = (order_book.best_level(BID_SIDE),
+                                                order_book.best_level(ASK_SIDE))
 
     def clean_up_order_chain(self, order_chain):
         for event in order_chain.events():

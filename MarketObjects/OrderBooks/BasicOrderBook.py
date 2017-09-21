@@ -50,17 +50,16 @@ class BasicOrderBook:
     :param logger: logger
     """
 
-    def __init__(self, product, logger):
+    def __init__(self, market, logger):
         self._logger = logger
-        self._product = product
+        self._market = market
 
-    def product(self):
+    def market(self):
         """
-        The product of the orderbook
+        Get the market of the order book.
 
-        :return: MarketObjects.Product.Product
+        :return: MarketObjects.Market.Market
         """
-        return self._product
 
     def name(self):
         """

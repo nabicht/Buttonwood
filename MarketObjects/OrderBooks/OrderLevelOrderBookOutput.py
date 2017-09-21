@@ -66,7 +66,7 @@ def _side_json(order_book, side):
 def json_snapshot(order_book):
     assert isinstance(order_book, OrderLevelBook)
     order_book_dict = dict()
-    order_book_dict["Product"] = order_book.product().to_json()
+    order_book_dict["Market"] = order_book.market().to_json()
     order_book_dict["last_update_time"] = order_book.last_update_time()
     order_book_dict[str(BID_SIDE)] = _side_json(order_book, BID_SIDE)
     order_book_dict[str(ASK_SIDE)] = _side_json(order_book, ASK_SIDE)
