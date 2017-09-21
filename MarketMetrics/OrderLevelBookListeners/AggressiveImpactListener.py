@@ -69,15 +69,15 @@ class AggressiveAct:
     def close(self, order_book):
         self._is_closed = True
         impact = 0.0
-        opposite_side = self._aggressive_side.other_side()
-        opposite_tob = order_book.best_level(opposite_side)
+        passive_side = self._aggressive_side.other_side()
+        passive_tob = order_book.best_level(passive_side)
         # if the opposite tob is worse than the last fill price, then there is no impact on top of book. This can
         #  happen at venues that have stupidly bad self trade prevention.
         for fill_price, fill_qty in self._price_to_qty.iteritems():
-            if opposite_tob is not None and fill_price == opposite_tob.price():
-                total_qty = opposite_tob.total_qty() + fill_qty
+            if passive_tob is not None and fill_price == passive_tob.price():
+                total_qty = passive_tob.total_qty() + fill_qty
                 impact += float(fill_qty) / total_qty
-            elif opposite_tob is None or fill_price.worse_than(opposite_tob, self._aggressive_side):
+            elif passive_tob is None or fill_price.worse_than(passive_tob.price(), self._aggressive_side):
                 impact += 1
         self._impact = impact
 
