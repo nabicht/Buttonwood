@@ -155,10 +155,22 @@ class MatchSeries:
     def match_qty(self, sanity_check=True):
         if sanity_check:
             self._price_qty_sanity_check()
-        total_qty = 0
-        for qty in self._agg_price_to_qty.itervalues():
-            total_qty += qty
-        return total_qty
+        return self.aggressive_qty()
+
+    def aggressive_qty(self):
+        qty = 0
+        for fill in self._agg_fills:
+            qty += fill.fill_qty()
+        return qty
+
+    def passive_qty(self):
+        qty = 0
+        for fill in self._pas_fills:
+            qty += fill.fill_qty()
+        return qty
+
+    def balanced_match_qty(self):
+        return self.aggressive_qty() == self.passive_qty()
 
     def prices(self, sanity_check=True):
         if sanity_check:
