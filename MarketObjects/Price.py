@@ -28,6 +28,7 @@ SOFTWARE.
 """
 
 from cdecimal import Decimal
+from MarketPy.MarketObjects.Side import Side
 
 
 class Price(object):
@@ -60,17 +61,18 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
+        assert isinstance(other_price, (Price, float, int, Decimal)), \
+            "other_price should be MarketObjects.Price.Price, int, Decimal, or float"
+        assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
         # if this price is a bid it is better than otherPrice if greater than
+
+        print self, type(other_price), other_price
+        print self > other_price
         if side.is_bid():
-            if type(other_price) is int or type(other_price) is float:
-                return self._price > other_price
-            return self._price > other_price.price()
+            return self > other_price
         # otherwise price is an ask and it is better than otherPrice if less than
-        elif side.is_ask():
-            if type(other_price) is int or type(other_price) is float:
-                return self._price < other_price
-            return self._price < other_price.price()
-        return False
+        else:
+            return self < other_price
 
     def better_or_same_as(self, other_price, side):
         """
@@ -85,13 +87,10 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        if other_price is None:
-            return False
-        if type(other_price) is float or type(other_price) is int:
-            if other_price == self._price:
-                return True
-            return self.better_than(other_price, side)
-        if other_price.price() == self._price:
+        assert isinstance(other_price, (Price, float, int, Decimal)), \
+            "other_price should be MarketObjects.Price.Price, int, Decimal, or float"
+        assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
+        if other_price == self:
             return True
         return self.better_than(other_price, side)
 
@@ -109,15 +108,14 @@ class Price(object):
         :return: boolean
         """
         # if this price is a bid it is worse than otherPrice if less than
+        assert isinstance(other_price, (Price, float, int, Decimal)), \
+            "other_price should be MarketObjects.Price.Price, int, Decimal, or float"
+        assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
         if side.is_bid():
-            if type(other_price) is int or type(other_price) is float:
-                return self._price < other_price
-            return self._price < other_price.price()
+            return self < other_price
         # otherwise price is an ask and it is worse than otherPrice if greater than
         else:
-            if type(other_price) is int or type(other_price) is float:
-                return self._price > other_price
-            return self._price > other_price.price()
+            return self > other_price
 
     def worse_or_same_as(self, other_price, side):
         """
@@ -132,20 +130,12 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        if type(other_price) is float or type(other_price) is int:
-            if other_price == self._price:
-                return True
-            return self.better_than(other_price, side)
-        if other_price.price() == self._price:
+        assert isinstance(other_price, (Price, float, int, Decimal)), \
+            "other_price should be MarketObjects.Price.Price, int, Decimal, or float"
+        assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
+        if other_price == self:
             return True
         return self.worse_than(other_price, side)
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.price() == other.price()
-        if type(other) is float or type(other) is int:
-            return self.price() == other
-        return False
 
     def ticks_behind(self, other_price, side, product):
         """
@@ -173,30 +163,37 @@ class Price(object):
     def __lt__(self, other):
         if isinstance(other, self.__class__):
             return self.price() < other.price()
-        if type(other) is float or type(other) is int:
+        if isinstance(other, (float, int, Decimal)):
             return self.price() < other
         return None
 
     def __le__(self, other):
         if isinstance(other, self.__class__):
             return self.price() <= other.price()
-        if type(other) is float or type(other) is int:
+        if isinstance(other, (float, int, Decimal)):
             return self.price() <= other
         return None
 
     def __gt__(self, other):
         if isinstance(other, self.__class__):
             return self.price() > other.price()
-        if type(other) is float or type(other) is int:
+        if isinstance(other, (float, int, Decimal)):
             return self.price() > other
         return None
 
     def __ge__(self, other):
         if isinstance(other, self.__class__):
             return self.price() >= other.price()
-        if type(other) is float or type(other) is int:
+        if isinstance(other, (float, int, Decimal)):
             return self.price() >= other
         return None
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.price() == other.price()
+        if isinstance(other, (float, int, Decimal)):
+            return self.price() == other
+        return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
