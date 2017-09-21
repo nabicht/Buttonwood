@@ -66,8 +66,6 @@ class Price(object):
         assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
         # if this price is a bid it is better than otherPrice if greater than
 
-        print self, type(other_price), other_price
-        print self > other_price
         if side.is_bid():
             return self > other_price
         # otherwise price is an ask and it is better than otherPrice if less than
@@ -125,7 +123,7 @@ class Price(object):
            *if side is bid then worse than means a lower price
            *if side is ask then worse than means a higher price
            *if side is other then there is no such thing as a worse price so the return is False
-        
+
         :param other_price: Price. the price you are comparing to
         :param side: Side. the side used for the comparison
         :return: boolean
