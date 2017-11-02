@@ -77,7 +77,7 @@ class AggressiveAct:
             if opposite_tob is not None and fill_price == opposite_tob.price():
                 total_qty = opposite_tob.total_qty() + fill_qty
                 impact += float(fill_qty) / total_qty
-            elif opposite_tob is None or fill_price.worse_than(opposite_tob, self._aggressive_side):
+            elif opposite_tob is None or fill_price.worse_than(opposite_tob.price(), self._aggressive_side):
                 impact += 1
         self._impact = impact
 
@@ -196,6 +196,8 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
 
     def get_aggressive_impact(self, product, event_id):
         if self._product_event_id_aggressive_act.get((product, event_id)) is not None:
+            if not self._product_event_id_aggressive_act.get((product, event_id)).is_closed():
+                print "tried to get aggressive impact for %s and not closed" % str(event_id)
             return self._product_event_id_aggressive_act.get((product, event_id)).impact()
         return 0.0
 
