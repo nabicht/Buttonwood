@@ -87,7 +87,6 @@ class CancelReplaceInfo(object):
     def qty_delta(self):
         return self._qty_delta
 
-
 class Exposure(object):
     # TODO document this class
 
@@ -297,6 +296,7 @@ class OrderEventChain(object):
         self._event_id_to_cancel_replace_info = {}
         self._events_that_caused_visible_qty_refresh = set()
         self._price_at_close = None  # starts as none because this doesn't get populated until it is closed
+        self._open_qty_at_close = None  # starts as none because isn't populated until it is closed
         self._match_ids = set()  # unique negotation ids that the order chain is part of
 
     def new_order_command(self):
@@ -575,11 +575,19 @@ class OrderEventChain(object):
 
         Can be None for the following reasons:
          1) order event chain is not closed yet
-         2) order event chain was never acknowledged, so never had a price (FAKs, FOKs)
-         3) order was fully filled, so no exposure left, thus no price.
+         2) order was fully filled, so no exposure left, thus no price.
         """
-        # TODO unit test the differnt close types and what the resulting price is
         return self._price_at_close
+
+    def open_qty_at_close(self):
+        """
+        The open qty of the chain at the time it was closed.
+
+        Can be None for the following reasons:
+         1) order event chain is not closed yet
+         2) order was fully filled, so no exposure left, thus no price.
+        """
+        return self._open_qty_at_close
 
     # TODO track qty remaining at close
 
@@ -601,8 +609,10 @@ class OrderEventChain(object):
         # TODO unit test!
         if self._current_exposure is not None and self._current_exposure.qty() > 0:
             self._price_at_close = self.current_exposure().price()
+            self._open_qty_at_close = self.current_exposure().qty()
         else:  # for example, FAKs and other aggressive orders that get cancelled without an acknowledgement
             self._price_at_close = self.most_recent_requested_exposure().price()
+            self._open_qty_at_close = self.most_recent_requested_exposure().qty()
         self._open = False
         self._visible_qty = 0
         # wipe out current exposure
