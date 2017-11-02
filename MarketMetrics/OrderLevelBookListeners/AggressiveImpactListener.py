@@ -29,72 +29,50 @@ SOFTWARE.
 
 from MarketPy.MarketObjects.OrderBookListeners.OrderLevelBookListener import OrderLevelBookListener
 from MarketPy.MarketObjects.EventListeners.OrderEventListener import OrderEventListener
+from MarketPy.MarketObjects.MatchSeries import MatchSeries
 from MarketPy.utils.dicts import NDeepDict
 from collections import defaultdict
 
 
-class AggressiveAct:
+class AggressiveAct(MatchSeries):
 
-    def __init__(self, aggressing_event, event_id, negotiation_id):
-        self._aggressing_event = aggressing_event
+    def __init__(self, match_id):
+        MatchSeries.__init__(self, match_id)
         self._total_aggressive_qty = 0
-        self._is_closed = False
-        self._aggressive_side = aggressing_event.side()
-        self._event_id = event_id
-        self._negotiation_id = negotiation_id
-        self._price_to_qty = {}
-        self._impact = 0.0
-
-    def __str__(self):
-        return "Negotiation ID: %s. Aggressing Event ID: %s\n" % (self._negotiation_id, str(self._aggressing_event.event_id()))
-
-    def event_id(self):
-        return self._event_id
-
-    def negotiation_id(self):
-        return self._negotiation_id
-
-    def aggressing_time(self):
-        return self._aggressing_event.timestamp()
+        self._impact = None
 
     def aggressing_user_id(self):
-        return self._aggressing_event.user_id()
+        return self._aggressor.user_id()
 
     def aggressive_side(self):
-        return self._aggressing_event.side()
+        return self._aggressor.side()
 
     def requested_qty(self):
-        return self._aggressing_event.qty()
+        return self._aggressor.qty()
 
-    def close(self, order_book):
-        self._is_closed = True
-        impact = 0.0
-        opposite_side = self._aggressive_side.other_side()
-        opposite_tob = order_book.best_level(opposite_side)
-        # if the opposite tob is worse than the last fill price, then there is no impact on top of book. This can
-        #  happen at venues that have stupidly bad self trade prevention.
-        for fill_price, fill_qty in self._price_to_qty.iteritems():
-            if opposite_tob is not None and fill_price == opposite_tob.price():
-                total_qty = opposite_tob.total_qty() + fill_qty
-                impact += float(fill_qty) / total_qty
-            elif opposite_tob is None or fill_price.worse_than(opposite_tob.price(), self._aggressive_side):
-                impact += 1
-        self._impact = impact
+    def calculate(self, order_book):
+        if self.balanced_match_qty():
+            impact = 0.0
+            passive_side = self._aggressor.side().other_side()
+            passive_tob = order_book.best_level(passive_side)
+            # if the opposite tob is worse than the last fill price, then there is no impact on top of book. This can
+            #  happen at venues that have stupidly bad self trade prevention.
+            for fill_price, fill_qty in self._agg_price_to_qty.iteritems():
+                if passive_tob is not None and fill_price == passive_tob.price():
+                    total_qty = passive_tob.total_qty() + fill_qty
+                    impact += float(fill_qty) / total_qty
+                elif passive_tob is None or fill_price.better_than(passive_tob.price(), passive_side):
+                    impact += 1
+            self._impact = impact
+
+        else:
+            raise Exception("Cannot calculated aggressive impact because match qty not balanced.")
 
     def is_closed(self):
-        return self._is_closed
+        return self._impact is not None
 
-    def add_aggressive_fill(self, fill_event):
-        fill_qty = fill_event.fill_qty()
-        self._total_aggressive_qty += fill_qty
-        price = fill_event.fill_price()
-        if self._price_to_qty.get(price):
-            self._price_to_qty[fill_event.fill_price()] += fill_qty
-        else:
-            self._price_to_qty[fill_event.fill_price()] = fill_qty
-
-    def filled_qty(self):
-        return self._total_aggressive_qty
+    def add_fill(self, fill_event):
+        MatchSeries.add_fill(self, fill_event)
 
     def impact(self):
         return self._impact
@@ -128,26 +106,21 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
         event_id = acknowledgement_report.causing_command().event_id()
         product = acknowledgement_report.product()
         agg_event = self._product_event_id_aggressive_act.get((product, event_id))
+        #if aggressor is acked then all fills on both sides shoud be done and we can calculate
         if agg_event:
-            self._product_to_agg_acts_to_close[product].add(self._product_event_id_aggressive_act.get((product, event_id)))
+            agg_event.calculate(self._product_to_orderbook[product])
 
     def _handle_fill(self, fill, resulting_order_chain):
-        negotiation_id = fill.match_id()
+        match_id = fill.match_id()
         product = fill.product()
+        event_id = fill.causing_command().event_id()
 
-        # if an aggressor that aggressing event already exists we add the fill
-        if fill.is_aggressor():
-            event_id = fill.causing_command().event_id()
-            # if the subchain already exists then we add a fill to it
-            agg_act = self._product_event_id_aggressive_act.get((product, event_id))
-            # if the event_id of the aggressor does not already exist, we create it
-            if not agg_act:
-                agg_act = AggressiveAct(fill.aggressing_command(), event_id, negotiation_id)
-                self._product_event_id_aggressive_act.set((product, event_id), value=agg_act)
-            else:
-                if agg_act.is_closed():
-                    raise Exception("Got a fill for closed ChainID %s SubChainID %s)" % (str(resulting_order_chain.chain_id()), str(event_id)))
-            agg_act.add_aggressive_fill(fill)
+        agg_act = self._product_event_id_aggressive_act.get((product, event_id))
+        # if the event_id of the aggressor does not already exist, we create it
+        if not agg_act:
+            agg_act = AggressiveAct(match_id)
+            self._product_event_id_aggressive_act.set((product, event_id), value=agg_act)
+        agg_act.add_fill(fill)
 
     def handle_partial_fill_report(self, partial_fill_report, resulting_order_chain):
         self._handle_fill(partial_fill_report, resulting_order_chain)
@@ -158,9 +131,13 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
         # on an aggressive full fill we close out the open order chain
         if full_fill_report.is_aggressor():
             event_id = full_fill_report.causing_command().event_id()
-            if self._product_event_id_aggressive_act.get((product, event_id)) is not None:
-                # we need to get the order level books after all the updates are done.
-                self._product_to_agg_acts_to_close[product].add(self._product_event_id_aggressive_act.get((product, event_id)))
+            agg_act = self._product_event_id_aggressive_act.get((product, event_id))
+            if agg_act is not None:
+                # if full fill and qty balanced we should be able to do the impact calculation right now because book up to date
+                if agg_act.balanced_match_qty():
+                    agg_act.calculate(self._product_to_orderbook[product])
+                else: # we need to get the order level books after all the updates are done.
+                    self._product_to_agg_acts_to_close[product].add(self._product_event_id_aggressive_act.get((product, event_id)))
             else:
                 raise Exception("Got an aggressive full fill but not tracking aggressive acts for event: %s" % str(event_id))
 
@@ -169,8 +146,9 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
         product = cancel_report.product()
         event_id = cancel_report.causing_command().event_id()
         agg_event = self._product_event_id_aggressive_act.get((product, event_id))
+        # if aggressor is cancelled then all fills on both sides should be done and we can calculate
         if agg_event:
-            self._product_to_agg_acts_to_close[product].add(agg_event)
+            agg_event.calculate(self._product_to_orderbook[product])
 
     def clean_up(self, order_chain):
         """
@@ -189,19 +167,18 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
 
     def notify_book_update(self, order_book, causing_order_chain):
         product = order_book.product()
-
+        self._product_to_orderbook[product] = order_book
         for agg_act in self._product_to_agg_acts_to_close[product]:
-            agg_act.close(order_book)
+            agg_act.calculate(order_book)
         del self._product_to_agg_acts_to_close[product]
 
     def get_aggressive_impact(self, product, event_id):
         if self._product_event_id_aggressive_act.get((product, event_id)) is not None:
-            if not self._product_event_id_aggressive_act.get((product, event_id)).is_closed():
-                print "tried to get aggressive impact for %s and not closed" % str(event_id)
-            return self._product_event_id_aggressive_act.get((product, event_id)).impact()
+            impact = self._product_event_id_aggressive_act.get((product, event_id)).impact()
+            return impact
         return 0.0
 
     def get_aggressive_qty(self, product, event_id):
         if self._product_event_id_aggressive_act.get((product, event_id)) is not None:
-            return self._product_event_id_aggressive_act.get((product, event_id)).filled_qty()
+            return self._product_event_id_aggressive_act.get((product, event_id)).match_qty()
         return 0
