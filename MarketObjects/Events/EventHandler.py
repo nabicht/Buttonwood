@@ -128,7 +128,7 @@ class OrderEventHandler:
             self._logger.debug("%s: Processing chain %s event %s: %s" %
                                (self.__class__.__name__, str(event.chain_id()), str(event.event_id()), str(event)))
         order_chain, updated_products = self._handle_event(event)
-        return order_chain
+        return order_chain, updated_products
 
     def _handle_new_order_command(self, new_order_command):
         chain_id = new_order_command.chain_id()
