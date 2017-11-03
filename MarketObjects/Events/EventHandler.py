@@ -54,33 +54,33 @@ class OrderEventHandler:
         self._logger = logger
         self._sub_chain_id_generator = MonotonicIntID()
 
-    def register_orderbook(self, market, orderbook_id, orderbook):
+    def register_orderbook(self, market, order_book_id, order_book):
         """
-        Allows you to register an order book for a product with a given orderbook identifier. The identifier allows you
+        Allows you to register an order book for a market with a given order book identifier. The identifier allows you
         to name the order book so it is easily retrievable later.
 
-        If the orderbook id already exists for the product an error will be thrown with message "<orerbook id> is
-        already registered for <product name>".  This will prevent overriding an orderbook that has already been
+        If the orderbook id already exists for the market an error will be thrown with message "<order book id> is
+        already registered for <market name>".  This will prevent overriding an order book that has already been
         registered and populated.
 
         :param market: MarketObjects.Market.Market
-        :param orderbook_id: str. The human readable, unique identifier for the orderbook
-        :param orderbook: MarketObjects.OrderBooks.BasicOrderBook
+        :param order_book_id: str. The human readable, unique identifier for the orderbook
+        :param order_book: MarketObjects.OrderBooks.BasicOrderBook
         """
-        assert isinstance(orderbook, BasicOrderBook)
+        assert isinstance(order_book, BasicOrderBook)
         assert isinstance(market, Market)
-        assert isinstance(orderbook_id, str)
+        assert isinstance(order_book_id, str)
 
         if market not in self._market_book_id_to_book:
             self._market_book_id_to_book[market] = {}
-        if orderbook_id not in self._market_book_id_to_book[market]:
-            self._market_book_id_to_book[market][orderbook_id] = orderbook
+        if order_book_id not in self._market_book_id_to_book[market]:
+            self._market_book_id_to_book[market][order_book_id] = order_book
         else:
-            raise Exception("%s is already registered for %s" % (orderbook_id, str(market)))
+            raise Exception("%s is already registered for %s" % (order_book_id, str(market)))
 
-    def orderbook(self, market, orderbook_id):
+    def order_book(self, market, order_book_id):
         if market in self._market_book_id_to_book:
-            return self._market_book_id_to_book[market].get(orderbook_id)
+            return self._market_book_id_to_book[market].get(order_book_id)
         return None
 
     def register_event_listener(self, event_listener_id, event_listener):
