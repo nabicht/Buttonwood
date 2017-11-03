@@ -660,7 +660,7 @@ class OrderEventChain(object):
         """
         assert isinstance(ack, AcknowledgementReport)
         assert ack.market() == self.market(), \
-            "Acknowledgement does NOT have same product as the OrderEventChain expects"
+            "Acknowledgement does NOT have same market as the OrderEventChain expects"
         assert ack.chain_id() == self.chain_id(), \
             "Acknowledgement's chain ID (%s) does not match chain's ID (%s)" % (
             str(ack.chain_id()), str(self.chain_id()))
