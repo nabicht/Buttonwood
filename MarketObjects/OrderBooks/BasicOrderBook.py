@@ -46,7 +46,7 @@ class BasicOrderBook:
      underlying data structures as well as the functions (internal and exposed)
      that allow for the manipulation of that structure.
 
-    :param product: MarketObjects.Product.Product
+    :param market: MarketObjects.Market.Market
     :param logger: logger
     """
 
