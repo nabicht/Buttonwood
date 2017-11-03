@@ -430,7 +430,7 @@ class AcknowledgementReport(ExecutionReport):
         :param timestamp: float
         :param chain_id: int or str
         :param user_id: int or str
-        :param product: MarketObjects.Price.Price
+        :param market: MarketObjects.Market.Market
         :param response_to_command: MarketObjects.Events.OrderEvents.OrderCommand
         :param price: MarketObjects.Price.Price
         :param qty: int
