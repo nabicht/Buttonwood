@@ -157,7 +157,7 @@ class SideDict(dict):
     def __setitem__(self, key, value):
         if key not in self:
             self._sort_dirty = True
-            #only have to worry about setting max and min if a new key
+            # only have to worry about setting max and min if a new key
             if self._max_key is None or key > self._max_key:
                 self._max_key = key
             if self._min_key is None or key < self._min_key:
