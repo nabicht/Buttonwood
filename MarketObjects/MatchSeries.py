@@ -188,27 +188,8 @@ class MatchSeries:
     def aggressive_fills(self):
         return self._agg_fills
 
-    def aggressive_qty(self):
-        qty = 0
-        for fill in self._agg_fills:
-            qty += fill.fill_qty()
-        return qty
-
-    def passive_qty(self):
-        qty = 0
-        for fill in self._pas_fills:
-            qty += fill.fill_qty()
-        return qty
-
     def aggressor_fully_filled(self):
         return self._agg_fully_filled
-
-    def balanced_match_qty(self):
-        try:
-            self._price_qty_sanity_check()
-        except:
-            return False
-        return True
 
     def passive_fills(self):
         return self._pas_fills
