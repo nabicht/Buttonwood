@@ -168,9 +168,12 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
     def notify_book_update(self, order_book, causing_order_chain):
         product = order_book.product()
         self._product_to_orderbook[product] = order_book
-        for agg_act in self._product_to_agg_acts_to_close[product]:
-            agg_act.calculate(order_book)
-        del self._product_to_agg_acts_to_close[product]
+        remove_set = set()
+        agg_acts_to_close = self._product_to_agg_acts_to_close[product]
+        for agg_act in agg_acts_to_close:
+            if agg_act.balanced_match_qty():
+                agg_act.calculate(order_book)
+        self._product_to_agg_acts_to_close[product] = agg_acts_to_close.difference(remove_set)
 
     def get_aggressive_impact(self, product, event_id):
         if self._product_event_id_aggressive_act.get((product, event_id)) is not None:
