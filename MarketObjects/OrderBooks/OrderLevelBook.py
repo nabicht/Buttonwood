@@ -197,8 +197,8 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
     # TODO document class
     # TODO unit test
 
-    def __init__(self, product, logger, name=None):
-        BasicOrderBook.__init__(self, product, logger)
+    def __init__(self, market, logger, name=None):
+        BasicOrderBook.__init__(self, market, logger)
         OrderEventListener.__init__(self, logger)
         self._listeners = OrderedDict()
         self._bid_price_to_level = SideDict()
@@ -243,7 +243,7 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
 
         self._listeners[listener_id] = order_level_book_listener
         self._logger.info("%s %s registered listener: %s" %
-                          (self.name(), self._product.name(), order_level_book_listener.__class__.__name__))
+                          (self.name(), str(self._market), order_level_book_listener.__class__.__name__))
 
     def order_level_book_listener(self, listener_id):
         """
@@ -406,7 +406,7 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                                     "hidden_qty": level.hidden_qty(),
                                     "chains": chain_ids}
             ob_json[str(side)] = side_dict
-        return {"order_book_type": self.name(), "product": self.product().to_json(), "order_book": ob_json}
+        return {"order_book_type": self.name(), "market": self.market().to_json(), "order_book": ob_json}
 
     """
     ORDER BOOK MANIPULATION

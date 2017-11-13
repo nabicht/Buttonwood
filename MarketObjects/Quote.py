@@ -29,17 +29,17 @@ SOFTWARE.
 
 from MarketPy.MarketObjects.PriceLevel import PriceLevel
 from MarketPy.MarketObjects.Side import Side
-from MarketPy.MarketObjects.Product import Product
+from MarketPy.MarketObjects.Market import Market
 from MarketPy.MarketObjects.Price import Price
 
 
 class Quote(object):
-    def __init__(self, product, side, price, visible_qty, hidden_qty=0):
+    def __init__(self, market, side, price, visible_qty, hidden_qty=0):
         """
         An individual quote expressing a desire to buy or sell a Product for a Price. Visible qty is required and
          hidden qty is optional, defaulting to 0 because many markets don't support hidden quantity.
   
-        :param product: Product.
+        :param market: MarketObjects.Market.Market.
         :param side: Side.
         :param price: Price.
         :param visible_qty: int. Must be greater than 0
@@ -47,7 +47,7 @@ class Quote(object):
         """
         assert isinstance(price, Price) or isinstance(price, str)
         assert isinstance(side, Side)
-        assert isinstance(product, Product)
+        assert isinstance(market, Market)
         assert isinstance(visible_qty, int)
         assert isinstance(hidden_qty, int)
         assert visible_qty > 0, "A quote's visible qty must be greater than 0"
@@ -55,11 +55,11 @@ class Quote(object):
         use_price = price
         if isinstance(price, str):
             use_price = Price(price)
-        assert product.is_valid_price(
-            use_price), "%s is not a valid price for a product with minimum price increment %s" % \
-                        (str(use_price), str(product.mpi()))
+        assert market.product().is_valid_price(use_price), \
+            "%s is not a valid price for a product with minimum price increment %s" % \
+            (str(use_price), str(market.product().mpi()))
         self._side = side
-        self._product = product
+        self._market = market
         self._price_level = PriceLevel(use_price, visible_qty, hidden_qty, num_orders=1)
 
     def side(self):
@@ -70,13 +70,13 @@ class Quote(object):
         """
         return self._side
 
-    def product(self):
+    def market(self):
         """
-        Get the product the quote is for
+        Get the market the quote is for
   
-        :return: Product
+        :return: MarketObjects.Market.Market
         """
-        return self._product
+        return self._market
 
     def price(self):
         """
@@ -131,11 +131,12 @@ class Quote(object):
             return False
         return self._price_level == other._price_level and \
                self.side() == other.side() and \
-               self.product() == other.product()
+               self.market() == other.market()
 
     def __str__(self):
-        return "Quote: %s %d (%d visible, %d hidden) at %s" % \
-               ("Buy" if self.is_buy() else "Sell",
+        return "%s Quote: %s %d (%d visible, %d hidden) at %s" % \
+               (str(self.market()),
+                "Buy" if self.is_buy() else "Sell",
                 self.total_qty(),
                 self.visible_qty(),
                 self.hidden_qty(),

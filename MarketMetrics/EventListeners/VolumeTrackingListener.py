@@ -72,7 +72,7 @@ class VolumeTrackingListener(OrderEventListener):
 
     def __init__(self, logger):
         OrderEventListener.__init__(self, logger)
-        self._product_to_participant_to_volume = defaultdict(lambda: defaultdict(VolumeTracker()))  # TODO can I use NDeep dict here?
+        self._market_to_participant_to_volume = defaultdict(lambda: defaultdict(VolumeTracker()))  # TODO can I use NDeep dict here?
 
     def _handle_fill(self, fill_report):
         # only care about passive fill reports because that way we get both counterparties:
@@ -82,9 +82,9 @@ class VolumeTrackingListener(OrderEventListener):
             passive_user = fill_report.user()
             aggressive_user = fill_report.aggressing_command().user()
             qty = fill_report.fill_qty()
-            product = fill_report.product()
-            self._product_to_participant_to_volume[product][passive_user].add_passive_trade(qty, aggressive_user)
-            self._product_to_participant_to_volume[product][aggressive_user].add_aggressive_trade(qty, passive_user)
+            market = fill_report.market()
+            self._market_to_participant_to_volume[market][passive_user].add_passive_trade(qty, aggressive_user)
+            self._market_to_participant_to_volume[market][aggressive_user].add_aggressive_trade(qty, passive_user)
 
     def handle_partial_fill_report(self, partial_fill_report, resulting_order_chain):
         self._handle_fill(partial_fill_report)

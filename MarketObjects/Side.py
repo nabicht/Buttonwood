@@ -61,7 +61,7 @@ class Side(object):
     def __int__(self):
         if self.__bid_or_ask == self.BID:
             return self.BID
-        elif self.__bid_or_ask == self.ASK:
+        else:
             return self.ASK
 
     def __str__(self):

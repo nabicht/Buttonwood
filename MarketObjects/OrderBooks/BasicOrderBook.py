@@ -46,21 +46,20 @@ class BasicOrderBook:
      underlying data structures as well as the functions (internal and exposed)
      that allow for the manipulation of that structure.
 
-    :param product: MarketObjects.Product.Product
+    :param market: MarketObjects.Market.Market
     :param logger: logger
     """
 
-    def __init__(self, product, logger):
+    def __init__(self, market, logger):
         self._logger = logger
-        self._product = product
+        self._market = market
 
-    def product(self):
+    def market(self):
         """
-        The product of the orderbook
+        Get the market of the order book.
 
-        :return: MarketObjects.Product.Product
+        :return: MarketObjects.Market.Market
         """
-        return self._product
 
     def name(self):
         """

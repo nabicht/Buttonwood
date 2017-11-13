@@ -228,6 +228,7 @@ def test_comparison():
     assert p_same >= p
     assert p_same <= p
 
+
 def test_int_comparison():
     p = Price("91")
     assert p == 91
@@ -240,6 +241,7 @@ def test_decimal_comparison():
     assert p != Decimal("91.22")
     assert p != Decimal("91.0")
 
+    
 def test_price_math():
     p1 = Price('1.15')
     p2 = Price('1.35')

@@ -27,37 +27,51 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from nose.tools import *
-
-from MarketPy.MarketObjects.Events.OrderEvents import CancelReplaceCommand
 from MarketPy.MarketObjects.Endpoint import Endpoint
-from MarketPy.MarketObjects.Market import Market
-from MarketPy.MarketObjects.Price import Price
 from MarketPy.MarketObjects.Product import Product
-from MarketPy.MarketObjects.Side import ASK_SIDE
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+class Market(object):
 
+    def __init__(self, product, endpoint):
+        """
+        Contains all the information needed about a Market.
 
-def test_creation():
-    cr = CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), 234, 2)
-    assert cr.event_type_str() == "Cancel Replace Command"
-    assert cr.price() == Price("23.01")
-    assert cr.market() == MARKET
-    assert cr.user_id() == "user_x"
-    assert cr.timestamp() == 324893458.324313
-    assert cr.event_id() == 12
-    assert cr.qty() == 234
-    assert cr.iceberg_peak_qty() == 2
+        A market is where a trade-able asset is traded. In a central limit order book market this would be one order
+        book at one venue for one product. This is why the Market is made up of a Product and an Endpoint.
 
-@raises(AssertionError)
-def test_error_on_negative_qty():
-    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), -8, 2)
+        :param product: Product. the market's product.
+        :param endpoint: Endpoint. the market's endpoint.
+        """
+        assert isinstance(product, Product)
+        assert isinstance(endpoint, Endpoint)
+        self._product = product
+        self._endpoint = endpoint
+        self._hash = hash((self._product, self._endpoint))
 
-@raises(AssertionError)
-def test_error_on_negative_iceberg_qty():
-    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), 8, -2)
+    def product(self):
+        """
+        Get the Product
 
-@raises(AssertionError)
-def test_error_on_price_not_matching_product():
-    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.001"), 8, -2)
+        :return: Product.
+        """
+        return self._product
+
+    def endpoint(self):
+        """
+        Get the Endpoint
+
+        :return:
+        """
+        return self._endpoint
+
+    def __eq__(self, other):
+        return isinstance(other, Market) and other.__hash__() == self.__hash__()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __str__(self):
+        return "%s@%s" % (self.product().name(), self.endpoint().name())
+
+    def to_json(self):
+        return {"product": self.product().to_json(), "endpoint": self.endpoint().to_json()}

@@ -59,9 +59,9 @@ class TwoSidedQuote(object):
             raise Exception("TwoSidedQuote set to not allow crossed quotes. And bid (%s) >= ask (%s)" %
                             (str(self._buy_quote.price()), str(self._sell_quote.price())))
 
-        if self._sell_quote.product() != self._buy_quote.product():
-            raise Exception("In a two sided quote, both quotes must be the same product. Buy %s. Sell %s." %
-                            (str(self._buy_quote.product()), str(self._sell_quote.product())))
+        if self._sell_quote.market() != self._buy_quote.market():
+            raise Exception("In a two sided quote, both quotes must be the same market. Buy %s. Sell %s." %
+                            (str(self._buy_quote.market()), str(self._sell_quote.market())))
 
     def buy_quote(self):
         """
@@ -109,7 +109,7 @@ class TwoSidedQuote(object):
         """
         if self.buy_quote() is None or self.sell_quote() is None:
             return None
-        return (self.sell_quote().price().price() - self.buy_quote().price().price()) / self.buy_quote().product().mpi()
+        return (self.sell_quote().price().price() - self.buy_quote().price().price()) / self.buy_quote().market().product().mpi()
 
     def __eq__(self, other):
         return self.buy_quote() == other.buy_quote() and self.sell_quote() == other.sell_quote()

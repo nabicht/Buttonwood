@@ -67,80 +67,80 @@ class OrderEventCountListener(OrderEventListener):
 
     def __init__(self, logger):
         OrderEventListener.__init__(self, logger)
-        # storing this product -> user -> count type -> count
+        # storing this market -> user -> count type -> count
         self._event_counts = NDeepDict(3, int)
 
-    def get_count(self, product, user_id, count_type):  # get_count(two_year, "user_a", OrderEventCountListener.NEW_FAK)
-        return self._event_counts.get([product, user_id, count_type])
+    def get_count(self, market, user_id, count_type):  # get_count(msft@nasdaq, "user_a", OrderEventCountListener.NEW_FAK)
+        return self._event_counts.get([market, user_id, count_type])
 
     # REQUESTS / COMMANDS IN ######################################
 
     def handle_new_order_command(self, new_order_command, resulting_order_chain):
         # to be optionally implemented by child class
-        self._event_counts.inc([new_order_command.product(), new_order_command.user(), self.NEW_ORDER])
+        self._event_counts.inc([new_order_command.market(), new_order_command.user(), self.NEW_ORDER])
 
         # Time In Force Counts
         if new_order_command.time_in_force() == OrderEventConstants.FAR:
-            self._event_counts.inc([new_order_command.product(), new_order_command.user(), self.NEW_FAR])
+            self._event_counts.inc([new_order_command.market(), new_order_command.user(), self.NEW_FAR])
         elif new_order_command.time_in_force() == OrderEventConstants.FAK:
-            self._event_counts.inc([new_order_command.product(), new_order_command.user(), self.NEW_FAK])
+            self._event_counts.inc([new_order_command.market(), new_order_command.user(), self.NEW_FAK])
         elif new_order_command.time_in_force() == OrderEventConstants.FOK:
-            self._event_counts.inc([new_order_command.product(), new_order_command.user(), self.NEW_FOK])
+            self._event_counts.inc([new_order_command.market(), new_order_command.user(), self.NEW_FOK])
 
         # Market and limit
         if new_order_command.is_market_order():
-            self._event_counts.inc([new_order_command.product(), new_order_command.user(), self.NEW_MARKET])
+            self._event_counts.inc([new_order_command.market(), new_order_command.user(), self.NEW_MARKET])
         elif new_order_command.is_limit_order():
-            self._event_counts.inc([new_order_command.product(), new_order_command.user(), self.NEW_LIMIT])
+            self._event_counts.inc([new_order_command.market(), new_order_command.user(), self.NEW_LIMIT])
 
     def handle_cancel_replace_command(self, cancel_replace_command, resulting_order_chain):
-        self._event_counts.inc([cancel_replace_command.product(), cancel_replace_command.user(), self.CANCEL_REPLACE])
+        self._event_counts.inc([cancel_replace_command.market(), cancel_replace_command.user(), self.CANCEL_REPLACE])
 
     def handle_cancel_command(self, cancel_command, resulting_order_chain):
-        self._event_counts.inc([cancel_command.product(), cancel_command.user(), self.CANCEL_REQUEST])
+        self._event_counts.inc([cancel_command.market(), cancel_command.user(), self.CANCEL_REQUEST])
 
     # RESPONSES / MESSAGES OUT #####################################
 
     def handle_acknowledgement_report(self, acknowledgement_report, resulting_order_chain):
-        self._event_counts.inc([acknowledgement_report.product(), acknowledgement_report.user(), self.ACK])
+        self._event_counts.inc([acknowledgement_report.market(), acknowledgement_report.user(), self.ACK])
         if isinstance(acknowledgement_report.acknowledged_command(), NewOrderCommand):
-            self._event_counts.inc([acknowledgement_report.product(), acknowledgement_report.user(), self.ACK_NEW_ORDERS])
+            self._event_counts.inc([acknowledgement_report.market(), acknowledgement_report.user(), self.ACK_NEW_ORDERS])
             # if ack comes back for a FAR for a new order, and there is a partial fill in teh orderchain then partially filled on placement
             if resulting_order_chain.time_in_force() == OrderEventConstants.FAR and resulting_order_chain.has_partial_fill():
-                self._event_counts.inc([acknowledgement_report.product(), acknowledgement_report.user(), self.FARS_PARTIALLY_FILLED_ON_PLACEMENT])
+                self._event_counts.inc([acknowledgement_report.market(), acknowledgement_report.user(), self.FARS_PARTIALLY_FILLED_ON_PLACEMENT])
         elif isinstance(acknowledgement_report.acknowledged_command(), CancelReplaceCommand):
-            self._event_counts.inc([acknowledgement_report.product(), acknowledgement_report.user(), self.ACK_CANCEL_REPLACE])
+            self._event_counts.inc([acknowledgement_report.market(), acknowledgement_report.user(), self.ACK_CANCEL_REPLACE])
 
     def handle_partial_fill_report(self, partial_fill_report, resulting_order_chain):
-        self._event_counts.inc([partial_fill_report.product(), partial_fill_report.user(), self.PARTIAL_FILL])
+        self._event_counts.inc([partial_fill_report.market(), partial_fill_report.user(), self.PARTIAL_FILL])
 
     def handle_full_fill_report(self, full_fill_report, resulting_order_chain):
-        self._event_counts.inc([full_fill_report.product(), full_fill_report.user(), self.FULL_FILL])
+        self._event_counts.inc([full_fill_report.market(), full_fill_report.user(), self.FULL_FILL])
 
     def handle_cancel_report(self, cancel_report, resulting_order_chain):
-        self._event_counts.inc([cancel_report.product(), cancel_report.user(), self.CANCEL_CONFIRM])
+        self._event_counts.inc([cancel_report.market(), cancel_report.user(), self.CANCEL_CONFIRM])
 
     def handle_reject_report(self, reject_report, resulting_order_chain):
-        self._event_counts.inc([reject_report.product(), reject_report.user(), self.REJECT])
+        self._event_counts.inc([reject_report.market(), reject_report.user(), self.REJECT])
         if isinstance(reject_report.rejected_command(), NewOrderCommand):
-            self._event_counts.inc([reject_report.product(), reject_report.user(), self.REJECT_NEW])
+            self._event_counts.inc([reject_report.market(), reject_report.user(), self.REJECT_NEW])
         elif isinstance(reject_report.rejected_command(), CancelReplaceCommand):
-            self._event_counts.inc([reject_report.product(), reject_report.user(), self.REJECT_CANCEL_REPLACE])
+            self._event_counts.inc([reject_report.market(), reject_report.user(), self.REJECT_CANCEL_REPLACE])
         elif isinstance(reject_report.rejected_command(), CancelCommand):
-            self._event_counts.inc([reject_report.product(), reject_report.user(), self.REJECT_CANCEL])
+            self._event_counts.inc([reject_report.market(), reject_report.user(), self.REJECT_CANCEL])
 
     # CLOSE OUT THE CHAIN ##########################################
 
     def handle_chain_close(self, closed_order_chain):
         if closed_order_chain.has_full_fill():
             if closed_order_chain.time_in_force() == OrderEventConstants.FAK:
-                self._event_counts.inc([closed_order_chain.product(), closed_order_chain.user(), self.FAKS_FULLY_FILLED])
+                self._event_counts.inc([closed_order_chain.market(), closed_order_chain.user(), self.FAKS_FULLY_FILLED])
             elif closed_order_chain.time_in_force() == OrderEventConstants.FOK:
-                self._event_counts.inc([closed_order_chain.product(), closed_order_chain.user(), self.FOKS_FULLY_FILLED])
+                self._event_counts.inc([closed_order_chain.market(), closed_order_chain.user(), self.FOKS_FULLY_FILLED])
             elif closed_order_chain.time_in_force() == OrderEventConstants.FAR:
                 # if a FAR has no acknowledgement when fully filled, then it was fully filled on placement
                 if not closed_order_chain.has_acknowledgement():
-                    self._event_counts.inc([closed_order_chain.product(), closed_order_chain.user(), self.FARS_FULLY_FILLED_ON_PLACEMENT])
+                    self._event_counts.inc([closed_order_chain.market(), closed_order_chain.user(), self.FARS_FULLY_FILLED_ON_PLACEMENT])
         elif closed_order_chain.has_partial_fill():
             if closed_order_chain.time_in_force() == OrderEventConstants.FAK:
-                self._event_counts.inc([closed_order_chain.product(), closed_order_chain.user(), self.FAKS_PARTIALLY_FILLED])
+                self._event_counts.inc([closed_order_chain.market(), closed_order_chain.user(), self.FAKS_PARTIALLY_FILLED])

@@ -119,31 +119,31 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
 
     priority at command is what the priority was before the event .
 
-    Designed to work with the order books of multiple products.
+    Designed to work with the order books of multiple markets.
     """
 
     # TODO UNIT TEST!
     def __init__(self, logger, handle_market_orders=False):
         OrderLevelBookListener.__init__(self, logger)
         OrderEventListener.__init__(self, logger)
-        self._product_to_order_book = {}
-        self._product_to_event_to_priority = NDeepDict(depth=2)
-        self._product_to_event_to_priority_before = NDeepDict(depth=2, default_value=None)
+        self._market_to_order_book = {}
+        self._market_to_event_to_priority = NDeepDict(depth=2)
+        self._market_to_event_to_priority_before = NDeepDict(depth=2, default_value=None)
         self._handle_market_orders = handle_market_orders
 
-    def _calculate_priority_not_in_book(self, price, side, product, ignore_order_ids=set()):
+    def _calculate_priority_not_in_book(self, price, side, market, ignore_order_ids=set()):
         """
         Calculate the priority when not reflected in the book yet.
 
         :param price: MarketObjects.Price.Price
         :param side: MarketObjects.Side.Side
-        :param product: MarketObjects.Product.Product
+        :param market: MarketObjects.Market.Market
         :return: PriorityListeners.Priority
         """
         # if the order book is None then the orderbook hasn't been established
         #  and we can assume that ack is best priority for its side and there is
         #  other side.
-        order_book = self._product_to_order_book.get(product)
+        order_book = self._market_to_order_book.get(market)
         if order_book is None:
             return Priority(0, None, 0)
         else:  # if order book is not None then we need to figure out what priority would be
@@ -151,14 +151,14 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             opposite_best_price = order_book.best_price(side.other_side())
             ticks_from_opposite_tob = None
             if opposite_best_price is not None:  # if it is None then ticks from opposite is None
-                ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, product)
+                ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, market.product())
 
             best_price = order_book.best_price(side)
             # if the best price is None then it is best priority and only need distance from opposite side of book
             if best_price is None:
                 return Priority(0, ticks_from_opposite_tob, 0)
             else:  # if best price is not None then we need to calculate
-                ticks_from_tob = price.ticks_behind(best_price, side, product)
+                ticks_from_tob = price.ticks_behind(best_price, side, market.product())
                 # assuming visible qty gets priority over hidden so only want visible qty for qty ahead
                 if len(ignore_order_ids) == 0:
                     qty_ahead = order_book.visible_qty_at_price(side, price)
@@ -174,10 +174,10 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         :param order_chain: MarketObjects.Events.EventChains.OrderEventChain
         :return: PriorityListeners.Priority
         """
-        product = order_chain.product()
+        market = order_chain.market()
         side = order_chain.side()
         price = order_chain.current_price() if order_chain.is_open() else order_chain.price_at_close()
-        order_book = self._product_to_order_book.get(product)
+        order_book = self._market_to_order_book.get(market)
         if order_book is None:
             return Priority(0, None, 0)
         else:  # if order book is not None then we need to figure out what priority would be
@@ -185,14 +185,14 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             opposite_best_price = order_book.best_price(side.other_side())
             ticks_from_opposite_tob = None
             if opposite_best_price is not None:  # if it is None then ticks from opposite is None
-                ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, product)
+                ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, market.product())
 
             best_price = order_book.best_price(side)
             # if the best price is None then it is best priority and only need distance from opposite side of book
             if best_price is None:
                 return Priority(0, ticks_from_opposite_tob, 0)
             else:  # if best price is not None then we need to calculate
-                ticks_from_tob = price.ticks_behind(best_price, side, product)
+                ticks_from_tob = price.ticks_behind(best_price, side, market.product())
                 # assuming visible qty gets priority over hidden so only want visible qty for qty ahead
                 qty_ahead = 0
                 for chain in order_book.iter_order_chains_at_price(side, price):
@@ -209,24 +209,24 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         event_id = new_order_command.event_id()
         price = new_order_command.price()
         side = resulting_order_chain.side()
-        product = resulting_order_chain.product()
+        market = resulting_order_chain.market()
         # new orders are not in the book so calculate what priority *would be*
-        priority = self._calculate_priority_not_in_book(price, side, product)
-        self._product_to_event_to_priority.set((product, event_id), value=priority)
+        priority = self._calculate_priority_not_in_book(price, side, market)
+        self._market_to_event_to_priority.set((market, event_id), value=priority)
         # No need to set priority before event on new orders
 
     def handle_cancel_replace_command(self, cancel_replace_command, resulting_order_chain):
         event_id = cancel_replace_command.event_id()
         price = cancel_replace_command.price()
         side = resulting_order_chain.side()
-        product = resulting_order_chain.product()
+        market = resulting_order_chain.market()
         # need the most recently requested exposure, if none, get the ack'd exposure
         exposure = resulting_order_chain.most_recent_requested_exposure()
         if exposure is None:
             exposure = resulting_order_chain.current_exposure()
 
         before_event_priority = self._calculate_priority_in_book(resulting_order_chain)
-        self._product_to_event_to_priority_before.set((product, event_id), value=before_event_priority)
+        self._market_to_event_to_priority_before.set((market, event_id), value=before_event_priority)
 
         # cancel_replace_same_priority is True if cancel replace down and same price
         cancel_replace_same_priority = (price == exposure.price() and exposure.qty() > cancel_replace_command.qty())
@@ -236,32 +236,32 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             priority = before_event_priority
         else:  # otherwise, have to calculate what priority *would be*
             # ignore itself so that we do include it as in front of itself on cancel replace up in size
-            priority = self._calculate_priority_not_in_book(price, side, product,
+            priority = self._calculate_priority_not_in_book(price, side, market,
                                                             ignore_order_ids={cancel_replace_command.chain_id()})
-        self._product_to_event_to_priority.set((product, event_id), value=priority)
+        self._market_to_event_to_priority.set((market, event_id), value=priority)
 
     def handle_cancel_command(self, cancel_command, resulting_order_chain):
         """
         at time fo a cancel, the order should be in the book so just go ahead and calculate priority in book.
         """
         event_id = cancel_command.event_id()
-        product = resulting_order_chain.product()
+        market = resulting_order_chain.market()
         priority = self._calculate_priority_in_book(resulting_order_chain)
-        self._product_to_event_to_priority.set((product, event_id), value=priority)
+        self._market_to_event_to_priority.set((market, event_id), value=priority)
         # priority before the event is the same calculated aftet event for cancel command
-        self._product_to_event_to_priority_before.set((product, event_id), value=priority)
+        self._market_to_event_to_priority_before.set((market, event_id), value=priority)
 
     def handle_acknowledgement_report(self, acknowledgement_report, resulting_order_chain):
         event_id = acknowledgement_report.event_id()
-        product = resulting_order_chain.product()
+        market = resulting_order_chain.market()
         # acks are in the book already and no need to do anything fancy with ignoring orders
         priority = self._calculate_priority_in_book(resulting_order_chain)
-        self._product_to_event_to_priority.set((product, event_id), value=priority)
+        self._market_to_event_to_priority.set((market, event_id), value=priority)
 
         # if acking a new order no priority before, so use default of None.
         #  Calculate for cancel replace with current priority since hasn't been applied to book yet
         if isinstance(acknowledgement_report.causing_command(), CancelReplaceCommand):
-            self._product_to_event_to_priority_before.set((product, event_id), value=priority)
+            self._market_to_event_to_priority_before.set((market, event_id), value=priority)
 
 
     def _priority_at_fill(self, fill_event, resulting_order_chain):
@@ -270,19 +270,19 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
 
         Still need to calculate the ticks from opposite side though.
         """
-        product = fill_event.product()
+        market = fill_event.market()
         event_id = fill_event.event_id()
-        order_book = self._product_to_order_book.get(product)
+        order_book = self._market_to_order_book.get(market)
         # do closes
         opposite_best_price = order_book.best_price(resulting_order_chain.side().other_side())
         ticks_from_opposite_tob = None
         if opposite_best_price is not None:  # if it is None then ticks from opposite is None
-            ticks_from_opposite_tob = abs((opposite_best_price - fill_event.fill_price()) / product.mpi())
-        priorty = Priority(0, ticks_from_opposite_tob, 0)
-        self._product_to_event_to_priority.set((product, event_id), value=priorty)
+            ticks_from_opposite_tob = abs((opposite_best_price - fill_event.fill_price()) / market.product().mpi())
+        priority = Priority(0, ticks_from_opposite_tob, 0)
+        self._market_to_event_to_priority.set((market, event_id), value=priority)
 
         #for a fill, priority before fill is always 0
-        self._product_to_event_to_priority_before.set((product, event_id), value=priorty)
+        self._market_to_event_to_priority_before.set((market, event_id), value=priority)
 
     def handle_partial_fill_report(self, partial_fill_report, resulting_order_chain):
         self._priority_at_fill(partial_fill_report, resulting_order_chain)
@@ -300,39 +300,39 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         #  and if it has no ack then it was cancelled for self trade purposes (or some such thing) so no impact on book
         if not (resulting_order_chain.is_far() and resulting_order_chain.is_limit_order() and resulting_order_chain.has_acknowledgement()):
             return
-        product = resulting_order_chain.product()
+        market = resulting_order_chain.market()
         event_id = cancel_report.event_id()
         priority = self._calculate_priority_in_book(resulting_order_chain)
-        self._product_to_event_to_priority.set((product, event_id), value=priority)
-        self._product_to_event_to_priority_before.set((product, event_id), value=priority)
+        self._market_to_event_to_priority.set((market, event_id), value=priority)
+        self._market_to_event_to_priority_before.set((market, event_id), value=priority)
 
     def notify_book_update(self, order_book, causing_order_chain):
         """
         All that needs to be done here is save off the most order_book to be used
          when an event listener call back needs it.
         """
-        self._product_to_order_book[order_book.product()] = order_book
+        self._market_to_order_book[order_book.market()] = order_book
 
-    def event_priority(self, product, event_id):
+    def event_priority(self, market, event_id):
         """
         Get's the priority of the event. If the event was not tracked (/doesn't exist) then will return None.
         
-        :param product: MarketObjects.Product.Product
+        :param market: MarketObjects.Market.Market
         :param event_id: unique identifier of event
         :return: MarketMetrics.OrderLevelBookListeners.PriorityListeners.Priority
         """
-        return self._product_to_event_to_priority.get((product, event_id))
+        return self._market_to_event_to_priority.get((market, event_id))
 
-    def priority_before_event(self, product, event_id):
+    def priority_before_event(self, market, event_id):
         """
         Gets the priority of the event's order chain right before the event occurred. If the event was not 
          tracked (/doesn't exist) then will return None.
         
-        :param product: MarketObjects.Product.Product
+        :param market: MarketObjects.Market.Market
         :param event_id: unique identifier of event
         :return: MarketMetrics.OrderLevelBookListeners.PriorityListeners.Priority
         """
-        return self._product_to_event_to_priority_before.get((product, event_id))
+        return self._market_to_event_to_priority_before.get((market, event_id))
 
     def clean_up(self, order_chain):
         """
@@ -344,9 +344,9 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
 
         :param order_chain: MarketObjects.Events.EventChains.OrderEventChain
         """
-        product = order_chain.product()
+        market = order_chain.market()
         events = order_chain.events()
         for event in events:
-            self._product_to_event_to_priority.delete((product, event.event_id()))
-            if event.event_id() in self._product_to_event_to_priority_before.get([product]):
-                self._product_to_event_to_priority_before.delete((product, event.event_id()))
+            self._market_to_event_to_priority.delete((market, event.event_id()))
+            if event.event_id() in self._market_to_event_to_priority_before.get([market]):
+                self._market_to_event_to_priority_before.delete((market, event.event_id()))

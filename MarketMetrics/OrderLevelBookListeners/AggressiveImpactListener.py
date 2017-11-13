@@ -98,28 +98,29 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
         OrderEventListener.__init__(self, logger)
-        self._product_event_id_aggressive_act = NDeepDict(depth=2, default_value=None)
-        self._product_to_orderbook = defaultdict(lambda: None)
-        self._product_to_agg_acts_to_close = defaultdict(set)
+        self._market_event_id_aggressive_act = NDeepDict(depth=2, default_value=None)
+        self._market_to_orderbook = defaultdict(lambda: None)
+        self._market_to_agg_acts_to_close = defaultdict(set)
 
     def handle_acknowledgement_report(self, acknowledgement_report, resulting_order_chain):
         event_id = acknowledgement_report.causing_command().event_id()
-        product = acknowledgement_report.product()
-        agg_event = self._product_event_id_aggressive_act.get((product, event_id))
+
+        market = acknowledgement_report.market()
+        agg_event = self._market_event_id_aggressive_act.get((market, event_id))
         #if aggressor is acked then all fills on both sides shoud be done and we can calculate
         if agg_event:
-            agg_event.calculate(self._product_to_orderbook[product])
+            agg_event.calculate(self._market_to_orderbook[market])
 
     def _handle_fill(self, fill, resulting_order_chain):
         match_id = fill.match_id()
-        product = fill.product()
+        market = fill.market()
         event_id = fill.causing_command().event_id()
 
-        agg_act = self._product_event_id_aggressive_act.get((product, event_id))
+        agg_act = self._market_event_id_aggressive_act.get((market, event_id))
         # if the event_id of the aggressor does not already exist, we create it
         if not agg_act:
             agg_act = AggressiveAct(match_id)
-            self._product_event_id_aggressive_act.set((product, event_id), value=agg_act)
+            self._market_event_id_aggressive_act.set((market, event_id), value=agg_act)
         agg_act.add_fill(fill)
 
     def handle_partial_fill_report(self, partial_fill_report, resulting_order_chain):
@@ -127,28 +128,28 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
 
     def handle_full_fill_report(self, full_fill_report, resulting_order_chain):
         self._handle_fill(full_fill_report, resulting_order_chain)
-        product = full_fill_report.product()
+        market = full_fill_report.market()
         # on an aggressive full fill we close out the open order chain
         if full_fill_report.is_aggressor():
             event_id = full_fill_report.causing_command().event_id()
-            agg_act = self._product_event_id_aggressive_act.get((product, event_id))
+            agg_act = self._market_event_id_aggressive_act.get((market, event_id))
             if agg_act is not None:
                 # if full fill and qty balanced we should be able to do the impact calculation right now because book up to date
                 if agg_act.balanced_match_qty():
-                    agg_act.calculate(self._product_to_orderbook[product])
+                    agg_act.calculate(self._market_to_orderbook[market])
                 else: # we need to get the order level books after all the updates are done.
-                    self._product_to_agg_acts_to_close[product].add(self._product_event_id_aggressive_act.get((product, event_id)))
+                    self._market_to_agg_acts_to_close[pr].add(self._market_event_id_aggressive_act.get((market, event_id)))
             else:
                 raise Exception("Got an aggressive full fill but not tracking aggressive acts for event: %s" % str(event_id))
 
     def handle_cancel_report(self, cancel_report, resulting_order_chain):
         # on a cancel we close out the open order chain because of FAKs
-        product = cancel_report.product()
+        market = cancel_report.market()
         event_id = cancel_report.causing_command().event_id()
-        agg_event = self._product_event_id_aggressive_act.get((product, event_id))
+        agg_event = self._market_event_id_aggressive_act.get((market, event_id))
         # if aggressor is cancelled then all fills on both sides should be done and we can calculate
         if agg_event:
-            agg_event.calculate(self._product_to_orderbook[product])
+            agg_event.calculate(self._market_to_orderbook[market]
 
     def clean_up(self, order_chain):
         """
@@ -166,22 +167,22 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
         pass
 
     def notify_book_update(self, order_book, causing_order_chain):
-        product = order_book.product()
-        self._product_to_orderbook[product] = order_book
+        market = order_book.market()
+        self._market_to_orderbook[market] = order_book
         remove_set = set()
-        agg_acts_to_close = self._product_to_agg_acts_to_close[product]
+        agg_acts_to_close = self._market_to_agg_acts_to_close[market]
         for agg_act in agg_acts_to_close:
             if agg_act.balanced_match_qty():
                 agg_act.calculate(order_book)
-        self._product_to_agg_acts_to_close[product] = agg_acts_to_close.difference(remove_set)
+        self._market_to_agg_acts_to_close[market] = agg_acts_to_close.difference(remove_set)
 
-    def get_aggressive_impact(self, product, event_id):
-        if self._product_event_id_aggressive_act.get((product, event_id)) is not None:
-            impact = self._product_event_id_aggressive_act.get((product, event_id)).impact()
+    def get_aggressive_impact(self, market, event_id):
+        if self._market_event_id_aggressive_act.get((market, event_id)) is not None:
+            impact = self._market_event_id_aggressive_act.get((market, event_id)).impact()
             return impact
         return 0.0
 
-    def get_aggressive_qty(self, product, event_id):
-        if self._product_event_id_aggressive_act.get((product, event_id)) is not None:
-            return self._product_event_id_aggressive_act.get((product, event_id)).match_qty()
+    def get_aggressive_qty(self, market, event_id):
+        if self._market_event_id_aggressive_act.get((market, event_id)) is not None:
+            return self._market_event_id_aggressive_act.get((market, event_id)).match_qty()
         return 0
