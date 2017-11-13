@@ -36,8 +36,8 @@ from MarketPy.MarketObjects.Market import Market
 from MarketPy.MarketObjects.Price import Price
 from MarketPy.MarketObjects.Product import Product
 from MarketPy.MarketObjects.Side import BID_SIDE
-from MarketPy.MarketObjects.Events.OrderEventConstants import MARKET
-from MarketPy.MarketObjects.Events.OrderEventConstants import LIMIT
+from MarketPy.MarketObjects.Events.OrderEventConstants import MARKET as MARKET_ORDER
+from MarketPy.MarketObjects.Events.OrderEventConstants import LIMIT as LIMIT_ORDER
 
 MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
 
@@ -46,7 +46,7 @@ def test_creation():
                                 Price("23.01"), 234, 2)
     assert new_order.event_type_str() == ("New Order Command")
     assert new_order.price() == Price("23.01")
-    assert new_order.product() == MARKET
+    assert new_order.market() == MARKET
     assert new_order.user_id() == "user_x"
     assert new_order.timestamp() == 324893458.324313
     assert new_order.event_id() == 12
@@ -57,11 +57,11 @@ def test_creation():
 def test_is_market_order():
     #a market order is a FAK or a FOK, but not a FAR
     new_order = NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK,
-                                Price("23.01"), 234, 2, limit_or_market=MARKET)
+                                Price("23.01"), 234, 2, limit_or_market=MARKET_ORDER)
     assert new_order.is_market_order()
 
     new_order = NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FOK,
-                                Price("23.01"), 234, 2, limit_or_market=LIMIT)
+                                Price("23.01"), 234, 2, limit_or_market=LIMIT_ORDER)
     assert new_order.is_market_order() == False
 
     new_order = NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAR,
@@ -71,11 +71,11 @@ def test_is_market_order():
 def test_is_limit_order():
     #a market order is a FAR, but not a FAK or a FOK
     new_order = NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK,
-                                Price("23.01"), 234, 2, limit_or_market=MARKET)
+                                Price("23.01"), 234, 2, limit_or_market=MARKET_ORDER)
     assert new_order.is_limit_order() == False
 
     new_order = NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FOK,
-                                Price("23.01"), 234, 2, limit_or_market=LIMIT)
+                                Price("23.01"), 234, 2, limit_or_market=LIMIT_ORDER)
     assert new_order.is_limit_order() == True
 
     new_order = NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAR,

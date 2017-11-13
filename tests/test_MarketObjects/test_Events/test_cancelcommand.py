@@ -40,7 +40,7 @@ def test_creation():
     cancel = CancelCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, CancelReasons.SYSTEM_CANCEL)
     assert cancel.cancel_type() == CancelReasons.SYSTEM_CANCEL
     assert cancel.cancel_type_str() == CancelReasons.CANCEL_TYPES_STRINGS[CancelReasons.SYSTEM_CANCEL]
-    assert cancel.product() == PRODUCT
+    assert cancel.market() == MARKET
     assert cancel.user_id() == "user_x"
     assert cancel.timestamp() == 324893458.324313
     assert cancel.event_id() == 12

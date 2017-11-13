@@ -43,7 +43,7 @@ def test_creation():
     cr = CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), 234, 2)
     assert cr.event_type_str() == "Cancel Replace Command"
     assert cr.price() == Price("23.01")
-    assert cr.product() == MARKET
+    assert cr.market() == MARKET
     assert cr.user_id() == "user_x"
     assert cr.timestamp() == 324893458.324313
     assert cr.event_id() == 12

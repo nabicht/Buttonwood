@@ -47,8 +47,8 @@ from MarketPy.MarketObjects.Product import Product
 from MarketPy.MarketObjects.Side import BID_SIDE, ASK_SIDE
 from MarketPy.utils.IDGenerators import MonotonicIntID
 
-MRKT = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-              Endpoint("Nasdaq", "NSDQ"))
+MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
+                Endpoint("Nasdaq", "NSDQ"))
 
 LOGGER = logging.getLogger()
 
@@ -75,10 +75,10 @@ def test_exposure():
 
 
 def test_creation():
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     assert oec.side().is_bid()
-    assert oec.market() == MRKT
+    assert oec.market() == MARKET
     assert oec.time_in_force() == FAR
     # no ack yet
     assert oec.current_exposure() is None
@@ -89,7 +89,7 @@ def test_creation():
 
 
 def test_acknowledgement():
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # no ack yet
     assert oec.most_recent_event() == n
@@ -102,7 +102,7 @@ def test_acknowledgement():
     assert oec.visible_qty() == 0
 
     # now ack it
-    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 1000, None)
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, None)
     oec.apply_acknowledgement_report(ack)
     assert oec.most_recent_event() == ack
     # check exposure
@@ -115,7 +115,7 @@ def test_acknowledgement():
 
 
 def test_new_iceberg_order_ack():
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000, 50)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000, 50)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # no ack yet
     assert oec.most_recent_event() == n
@@ -128,7 +128,7 @@ def test_new_iceberg_order_ack():
     assert oec.visible_qty() == 0
 
     # now ack it
-    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 1000, 50)
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, 50)
     oec.apply_acknowledgement_report(ack)
     assert oec.most_recent_event() == ack
     # check exposure
@@ -140,39 +140,39 @@ def test_new_iceberg_order_ack():
 
 
 def test_close_exposure_fails_partial_fill():
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # _close_exposure(...) should fail for type PartialFill
     # TODO in OrderEventChain, check that the user hasn't changed on us mid chain
-    aggressing_cmd = NewOrderCommand(1214321, 1234235.823, 2354, "user_y", MRKT, ASK_SIDE, FAK, Price("34.52"), 100)
-    pf = PartialFillReport(121236, 1234237.723, 2342, "user_x", MRKT, aggressing_cmd, 100, Price("34.52"), ASK_SIDE,
+    aggressing_cmd = NewOrderCommand(1214321, 1234235.823, 2354, "user_y", MARKET, ASK_SIDE, FAK, Price("34.52"), 100)
+    pf = PartialFillReport(121236, 1234237.723, 2342, "user_x", MARKET, aggressing_cmd, 100, Price("34.52"), ASK_SIDE,
                            987654, 900)
     assert_raises(Exception, oec._close_requested_exposure, pf)  # TODO change to EventChainLogicException
 
 
 def test_close_exposure_cancel_closes_all():
     id_gen = MonotonicIntID(seed=23043, increment=1)
-    n = NewOrderCommand(id_gen.id(), 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(id_gen.id(), 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # should have 1 open exposure
     assert len(oec.open_exposure_requests()) == 1
     assert oec.most_recent_requested_exposure() == Exposure(Price("34.52"), 1000, id_gen.last_id())
 
-    cr = CancelReplaceCommand(id_gen.id(), 1234235.863, 2342, "user_x", MRKT, BID_SIDE, Price("34.51"), 800)
+    cr = CancelReplaceCommand(id_gen.id(), 1234235.863, 2342, "user_x", MARKET, BID_SIDE, Price("34.51"), 800)
     oec.apply_cancel_replace_command(cr)
     # now should have 2 open exposures
     assert len(oec.open_exposure_requests()) == 2
     assert oec.open_exposure_requests()[1] == Exposure(Price("34.51"), 800, id_gen.last_id())
     assert oec.most_recent_requested_exposure() == Exposure(Price("34.51"), 800, id_gen.last_id())
 
-    cancel_command = CancelCommand(id_gen.id(), 1234274.663, 2342, "user_x", MRKT, CancelReasons.USER_CANCEL)
+    cancel_command = CancelCommand(id_gen.id(), 1234274.663, 2342, "user_x", MARKET, CancelReasons.USER_CANCEL)
     oec.apply_cancel_command(cancel_command)
     # now should have 3 open exposures
     assert len(oec.open_exposure_requests()) == 3
     assert oec.open_exposure_requests()[2] == Exposure(None, 0, id_gen.last_id())
     assert oec.most_recent_requested_exposure() == Exposure(None, 0, id_gen.last_id())
 
-    cancel_confirm = CancelReport(id_gen.id(), 1234278.663, 2342, "user_x", MRKT, cancel_command,
+    cancel_confirm = CancelReport(id_gen.id(), 1234278.663, 2342, "user_x", MARKET, cancel_command,
                                   CancelReasons.USER_CANCEL)
     oec.apply_cancel_report(cancel_confirm)
     # all exposures should be closed now
@@ -182,14 +182,14 @@ def test_close_exposure_cancel_closes_all():
 
 
 def test_basic_partial_fill():
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # now ack it
-    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 1000, 1000)
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, 1000)
     oec.apply_acknowledgement_report(ack)
-    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_x", MRKT, ASK_SIDE, FAR, Price("34.52"), 44)
+    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_x", MARKET, ASK_SIDE, FAR, Price("34.52"), 44)
     # now resting partial fill
-    pf = PartialFillReport(121236, 1234237.123, 2342, "user_x", MRKT, aggressor, 44, Price("34.52"),
+    pf = PartialFillReport(121236, 1234237.123, 2342, "user_x", MARKET, aggressor, 44, Price("34.52"),
                            BID_SIDE, 99999, 1000 - 44)
     oec.apply_partial_fill_report(pf)
 
@@ -202,14 +202,14 @@ def test_basic_partial_fill():
 
 
 def test_basic_partial_fill_replenish_visible():
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 100, 40)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 100, 40)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # now ack it
-    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 100, 40)
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 100, 40)
     oec.apply_acknowledgement_report(ack)
-    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MRKT, ASK_SIDE, FAR, Price("34.52"), 40)
+    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MARKET, ASK_SIDE, FAR, Price("34.52"), 40)
     # now resting partial fill
-    pf = PartialFillReport(121236, 1234237.123, 2342, "user_x", MRKT, aggressor, 40, Price("34.52"),
+    pf = PartialFillReport(121236, 1234237.123, 2342, "user_x", MARKET, aggressor, 40, Price("34.52"),
                            BID_SIDE, 99999, 100 - 40)
     oec.apply_partial_fill_report(pf)
 
@@ -221,9 +221,9 @@ def test_basic_partial_fill_replenish_visible():
     assert oec.has_partial_fill()
 
     # now test the partial fill wipes out 40 more, so visible is min
-    aggressor2 = NewOrderCommand(1114, 1234237.123, 33333, "user_y", MRKT, ASK_SIDE, FAR, Price("34.52"), 40)
+    aggressor2 = NewOrderCommand(1114, 1234237.123, 33333, "user_y", MARKET, ASK_SIDE, FAR, Price("34.52"), 40)
     # now resting partial fill
-    pf2 = PartialFillReport(121236, 1234237.123, 2342, "user_x", MRKT, aggressor2, 40, Price("34.52"),
+    pf2 = PartialFillReport(121236, 1234237.123, 2342, "user_x", MARKET, aggressor2, 40, Price("34.52"),
                             BID_SIDE, 99999, 100 - 40 - 40)  # subtract out the size of 2 40 lot fills now
     oec.apply_partial_fill_report(pf2)
     assert oec.open_exposure_requests() == []
@@ -236,14 +236,14 @@ def test_basic_partial_fill_replenish_visible():
 
 def test_partial_fill_to_zero_closes_out_order():
     # when a partialfill closses out to an order there should be a balking because it is a paritial fill so shouldn't happen, but should allow
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 100)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 100)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # now ack it
-    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 100, 100)
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 100, 100)
     oec.apply_acknowledgement_report(ack)
-    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MRKT, ASK_SIDE, FAR, Price("34.52"), 100)
+    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MARKET, ASK_SIDE, FAR, Price("34.52"), 100)
     # now resting partial fill
-    pf = PartialFillReport(1212344, 1234237.123, 2342, "user_x", MRKT, aggressor, 100, Price("34.52"),
+    pf = PartialFillReport(1212344, 1234237.123, 2342, "user_x", MARKET, aggressor, 100, Price("34.52"),
                            BID_SIDE, 99999, 0)
     oec.apply_partial_fill_report(pf)
     assert oec.open_exposure_requests() == []
@@ -254,14 +254,14 @@ def test_partial_fill_to_zero_closes_out_order():
 
 def test_partial_fill_on_unacked_order():
     # when an unacked order is filled the requested exposure gets impacted
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 100)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 100)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     assert oec.current_exposure() is None
     assert oec.most_recent_requested_exposure().qty() == 100
     assert oec.most_recent_requested_exposure().price() == Price("34.52")
 
     # now resting partial fill
-    pf = PartialFillReport(1212344, 1234237.123, 2342, "user_x", MRKT, n, 10, Price("34.52"),
+    pf = PartialFillReport(1212344, 1234237.123, 2342, "user_x", MARKET, n, 10, Price("34.52"),
                            BID_SIDE, 99999, 90)
     oec.apply_partial_fill_report(pf)
     assert oec.current_exposure() is None
@@ -270,20 +270,20 @@ def test_partial_fill_on_unacked_order():
 
 
 def test_partial_fill_on_multiple_unacked_requests():
-    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # should have 1 open exposure
     assert len(oec.open_exposure_requests()) == 1
     assert oec.most_recent_requested_exposure() == Exposure(Price("34.52"), 1000, 1)
 
-    cr1 = CancelReplaceCommand(2, 1234235.863, 2342, "user_x", MRKT, BID_SIDE, Price("34.51"), 800)
+    cr1 = CancelReplaceCommand(2, 1234235.863, 2342, "user_x", MARKET, BID_SIDE, Price("34.51"), 800)
     oec.apply_cancel_replace_command(cr1)
     # now should have 2 open exposures
     assert len(oec.open_exposure_requests()) == 2
     assert oec.open_exposure_requests()[0] == Exposure(Price("34.52"), 1000, 1)
     assert oec.open_exposure_requests()[1] == Exposure(Price("34.51"), 800, 2)
 
-    cr2 = CancelReplaceCommand(3, 1234236.842, 2342, "user_x", MRKT, BID_SIDE, Price("34.55"), 800)
+    cr2 = CancelReplaceCommand(3, 1234236.842, 2342, "user_x", MARKET, BID_SIDE, Price("34.55"), 800)
     oec.apply_cancel_replace_command(cr2)
     # now should have 2 open exposures
     assert len(oec.open_exposure_requests()) == 3
@@ -291,7 +291,7 @@ def test_partial_fill_on_multiple_unacked_requests():
     assert oec.open_exposure_requests()[1] == Exposure(Price("34.51"), 800, 2)
     assert oec.open_exposure_requests()[2] == Exposure(Price("34.55"), 800, 3)
 
-    cr3 = CancelReplaceCommand(4, 1234236.842, 2342, "user_x", MRKT, BID_SIDE, Price("34.56"), 800)
+    cr3 = CancelReplaceCommand(4, 1234236.842, 2342, "user_x", MARKET, BID_SIDE, Price("34.56"), 800)
     oec.apply_cancel_replace_command(cr3)
     # now should have 2 open exposures
     assert len(oec.open_exposure_requests()) == 4
@@ -302,7 +302,7 @@ def test_partial_fill_on_multiple_unacked_requests():
 
     # a partial fill should should only impact the one the partial fill is for
     # partially filling orderid 3 (cr2)
-    pf1 = PartialFillReport(5, 1234237.123, 2342, "user_x", MRKT, cr2, 10, Price("34.55"),
+    pf1 = PartialFillReport(5, 1234237.123, 2342, "user_x", MARKET, cr2, 10, Price("34.55"),
                             BID_SIDE, 999, 790)
     oec.apply_partial_fill_report(pf1)
     assert len(oec.open_exposure_requests()) == 4
@@ -312,7 +312,7 @@ def test_partial_fill_on_multiple_unacked_requests():
     assert oec.open_exposure_requests()[3] == Exposure(Price("34.56"), 800, 4)
 
     # and again
-    pf2 = PartialFillReport(6, 1234237.123, 2342, "user_x", MRKT, cr2, 10, Price("34.55"),
+    pf2 = PartialFillReport(6, 1234237.123, 2342, "user_x", MARKET, cr2, 10, Price("34.55"),
                             BID_SIDE, 1000, 780)
     oec.apply_partial_fill_report(pf2)
     assert len(oec.open_exposure_requests()) == 4
@@ -322,7 +322,7 @@ def test_partial_fill_on_multiple_unacked_requests():
     assert oec.open_exposure_requests()[3] == Exposure(Price("34.56"), 800, 4)
 
     # and now I can fill order id 4 (cr 3)
-    pf3 = PartialFillReport(6, 1234237.123, 2342, "user_x", MRKT, cr3, 50, Price("34.56"),
+    pf3 = PartialFillReport(6, 1234237.123, 2342, "user_x", MARKET, cr3, 50, Price("34.56"),
                             BID_SIDE, 1001, 750)
     oec.apply_partial_fill_report(pf3)
     assert len(oec.open_exposure_requests()) == 4
@@ -332,7 +332,7 @@ def test_partial_fill_on_multiple_unacked_requests():
     assert oec.open_exposure_requests()[3] == Exposure(Price("34.56"), 750, 4)
 
     # now start acking them
-    ack1 = AcknowledgementReport(10, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 1000, None)
+    ack1 = AcknowledgementReport(10, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, None)
     oec.apply_acknowledgement_report(ack1)
     assert len(oec.open_exposure_requests()) == 3
     assert oec.open_exposure_requests()[0] == Exposure(Price("34.51"), 800, 2)
@@ -340,38 +340,38 @@ def test_partial_fill_on_multiple_unacked_requests():
     assert oec.open_exposure_requests()[2] == Exposure(Price("34.56"), 750, 4)
     assert oec.current_exposure() == Exposure(Price("34.52"), 1000, 10)
 
-    ack2 = AcknowledgementReport(11, 1234235.123, 2342, "user_x", MRKT, cr1, Price("34.51"), 800, None)
+    ack2 = AcknowledgementReport(11, 1234235.123, 2342, "user_x", MARKET, cr1, Price("34.51"), 800, None)
     oec.apply_acknowledgement_report(ack2)
     assert len(oec.open_exposure_requests()) == 2
     assert oec.open_exposure_requests()[0] == Exposure(Price("34.55"), 780, 3)
     assert oec.open_exposure_requests()[1] == Exposure(Price("34.56"), 750, 4)
     assert oec.current_exposure() == Exposure(Price("34.51"), 800, 11)
 
-    ack3 = AcknowledgementReport(12, 1234235.123, 2342, "user_x", MRKT, cr2, Price("34.55"), 780, None)
+    ack3 = AcknowledgementReport(12, 1234235.123, 2342, "user_x", MARKET, cr2, Price("34.55"), 780, None)
     oec.apply_acknowledgement_report(ack3)
     assert len(oec.open_exposure_requests()) == 1
     print oec.open_exposure_requests()[0]
     assert oec.open_exposure_requests()[0] == Exposure(Price("34.56"), 750, 4)
     assert oec.current_exposure() == Exposure(Price("34.55"), 780, 12)
 
-    ack4 = AcknowledgementReport(13, 1234235.123, 2342, "user_x", MRKT, cr3, Price("34.56"), 750, None)
+    ack4 = AcknowledgementReport(13, 1234235.123, 2342, "user_x", MARKET, cr3, Price("34.56"), 750, None)
     oec.apply_acknowledgement_report(ack4)
     assert len(oec.open_exposure_requests()) == 0
     assert oec.current_exposure() == Exposure(Price("34.56"), 750, 13)
 
 
 def test_basic_full_fill_on_acked_order():
-    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # now ack it
-    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 1000, 1000)
+    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, 1000)
     oec.apply_acknowledgement_report(ack)
     assert oec.visible_qty() == 1000
     assert oec.current_exposure().qty() == 1000
     assert oec.current_exposure().price() == Price("34.52")
     assert oec.is_open()
-    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MRKT, ASK_SIDE, FAR, Price("34.52"), 1000)
-    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MRKT, aggressor, 1000, Price('34.52'), BID_SIDE, 12345)
+    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MARKET, ASK_SIDE, FAR, Price("34.52"), 1000)
+    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MARKET, aggressor, 1000, Price('34.52'), BID_SIDE, 12345)
     oec.apply_full_fill_report(full_fill)
     assert oec.visible_qty() == 0
     assert oec.current_exposure().price() is None
@@ -381,14 +381,14 @@ def test_basic_full_fill_on_acked_order():
 
 
 def test_basic_full_fill_on_unacked_order():
-    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     assert oec.visible_qty() == 0
     assert oec.current_exposure() is None
     assert oec.most_recent_requested_exposure().price() == Price("34.52")
     assert oec.most_recent_requested_exposure().qty() == 1000
     assert oec.is_open()
-    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MRKT, n, 1000, Price('34.52'), BID_SIDE, 12345)
+    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MARKET, n, 1000, Price('34.52'), BID_SIDE, 12345)
     oec.apply_full_fill_report(full_fill)
     assert oec.visible_qty() == 0
     assert oec.current_exposure().price() is None
@@ -399,10 +399,10 @@ def test_basic_full_fill_on_unacked_order():
 
 
 def test_full_fill_on_acked_order_with_unacked_cr_in_flight():
-    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # now ack it
-    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 1000, 1000)
+    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, 1000)
     oec.apply_acknowledgement_report(ack)
     assert oec.visible_qty() == 1000
     assert oec.current_exposure().qty() == 1000
@@ -410,7 +410,7 @@ def test_full_fill_on_acked_order_with_unacked_cr_in_flight():
     assert len(oec.open_exposure_requests()) == 0
     assert oec.is_open()
 
-    cr = CancelReplaceCommand(2, 1234236.842, 2342, "user_x", MRKT, BID_SIDE, Price("34.56"), 800)
+    cr = CancelReplaceCommand(2, 1234236.842, 2342, "user_x", MARKET, BID_SIDE, Price("34.56"), 800)
     oec.apply_cancel_replace_command(cr)
     # now should have 2 open exposures
     assert oec.visible_qty() == 1000
@@ -420,8 +420,8 @@ def test_full_fill_on_acked_order_with_unacked_cr_in_flight():
     assert len(oec.open_exposure_requests()) == 1
     assert oec.most_recent_requested_exposure() == Exposure(Price("34.56"), 800, 2)
 
-    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MRKT, ASK_SIDE, FAR, Price("34.52"), 1000)
-    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MRKT, aggressor, 1000, Price('34.52'), BID_SIDE, 12345)
+    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MARKET, ASK_SIDE, FAR, Price("34.52"), 1000)
+    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MARKET, aggressor, 1000, Price('34.52'), BID_SIDE, 12345)
     oec.apply_full_fill_report(full_fill)
     assert oec.visible_qty() == 0
     assert oec.current_exposure().price() is None
@@ -432,10 +432,10 @@ def test_full_fill_on_acked_order_with_unacked_cr_in_flight():
 
 
 def test_full_fill_on_unacked_cr_with_acked_new_order():
-    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # now ack it
-    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 1000, 1000)
+    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, 1000)
     oec.apply_acknowledgement_report(ack)
     assert oec.visible_qty() == 1000
     assert oec.current_exposure().qty() == 1000
@@ -443,7 +443,7 @@ def test_full_fill_on_unacked_cr_with_acked_new_order():
     assert len(oec.open_exposure_requests()) == 0
     assert oec.is_open()
 
-    cr = CancelReplaceCommand(3, 1234236.842, 2342, "user_x", MRKT, BID_SIDE, Price("34.56"), 800)
+    cr = CancelReplaceCommand(3, 1234236.842, 2342, "user_x", MARKET, BID_SIDE, Price("34.56"), 800)
     oec.apply_cancel_replace_command(cr)
     # now should have 2 open exposures
     assert oec.visible_qty() == 1000
@@ -453,7 +453,7 @@ def test_full_fill_on_unacked_cr_with_acked_new_order():
     assert len(oec.open_exposure_requests()) == 1
     assert oec.most_recent_requested_exposure() == Exposure(Price("34.56"), 800, 3)
 
-    full_fill = FullFillReport(4, 1234237.123, 2342, "user_x", MRKT, cr, 800, Price("34.56"), BID_SIDE, 12345)
+    full_fill = FullFillReport(4, 1234237.123, 2342, "user_x", MARKET, cr, 800, Price("34.56"), BID_SIDE, 12345)
     oec.apply_full_fill_report(full_fill)
     assert oec.visible_qty() == 0
     assert oec.current_exposure().price() is None
@@ -465,17 +465,17 @@ def test_full_fill_on_unacked_cr_with_acked_new_order():
 
 def test_full_fill_with_not_enough_size_on_acked_new_order():
     # should balk but shouldn't keep it from working
-    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # now ack it
-    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 1000, 1000)
+    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, 1000)
     oec.apply_acknowledgement_report(ack)
     assert oec.visible_qty() == 1000
     assert oec.current_exposure().qty() == 1000
     assert oec.current_exposure().price() == Price("34.52")
     assert oec.is_open()
-    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MRKT, ASK_SIDE, FAR, Price("34.52"), 1000)
-    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MRKT, aggressor, 17, Price('34.52'), BID_SIDE, 12345)
+    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MARKET, ASK_SIDE, FAR, Price("34.52"), 1000)
+    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MARKET, aggressor, 17, Price('34.52'), BID_SIDE, 12345)
     oec.apply_full_fill_report(full_fill)
     assert oec.visible_qty() == 0
     assert oec.current_exposure().price() is None
@@ -486,17 +486,17 @@ def test_full_fill_with_not_enough_size_on_acked_new_order():
 
 def test_full_fill_with_too_much_size_on_acked_new_order():
     # should balk but shouldn't keep it from working
-    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     # now ack it
-    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MRKT, n, Price("34.52"), 1000, 1000)
+    ack = AcknowledgementReport(2, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, 1000)
     oec.apply_acknowledgement_report(ack)
     assert oec.visible_qty() == 1000
     assert oec.current_exposure().qty() == 1000
     assert oec.current_exposure().price() == Price("34.52")
     assert oec.is_open()
-    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MRKT, ASK_SIDE, FAR, Price("34.52"), 1000)
-    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MRKT, aggressor, 3400, Price('34.52'), BID_SIDE, 12345)
+    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MARKET, ASK_SIDE, FAR, Price("34.52"), 1000)
+    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MARKET, aggressor, 3400, Price('34.52'), BID_SIDE, 12345)
     oec.apply_full_fill_report(full_fill)
     assert oec.visible_qty() == 0
     assert oec.current_exposure().price() is None
@@ -507,14 +507,14 @@ def test_full_fill_with_too_much_size_on_acked_new_order():
 
 def test_full_fill_with_not_enough_size_on_unacked_new_order():
     # should balk but shouldn't keep it from working
-    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     assert oec.visible_qty() == 0
     assert oec.current_exposure() is None
     assert oec.most_recent_requested_exposure().price() == Price("34.52")
     assert oec.most_recent_requested_exposure().qty() == 1000
     assert oec.is_open()
-    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MRKT, n, 17, Price('34.52'), BID_SIDE, 12345)
+    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MARKET, n, 17, Price('34.52'), BID_SIDE, 12345)
     oec.apply_full_fill_report(full_fill)
     assert oec.visible_qty() == 0
     assert oec.current_exposure().price() is None
@@ -525,14 +525,14 @@ def test_full_fill_with_not_enough_size_on_unacked_new_order():
 
 def test_full_fill_with_too_much_size_on_unacked_new_order():
     # should balk but shouldn't keep it from working
-    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAR, Price("34.52"), 1000)
+    n = NewOrderCommand(1, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     assert oec.visible_qty() == 0
     assert oec.current_exposure() is None
     assert oec.most_recent_requested_exposure().price() == Price("34.52")
     assert oec.most_recent_requested_exposure().qty() == 1000
     assert oec.is_open()
-    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MRKT, n, 17, Price('34.52'), BID_SIDE, 12345)
+    full_fill = FullFillReport(3, 1234237.123, 2342, "user_x", MARKET, n, 17, Price('34.52'), BID_SIDE, 12345)
     oec.apply_full_fill_report(full_fill)
     assert oec.visible_qty() == 0
     assert oec.current_exposure().price() is None
@@ -543,18 +543,18 @@ def test_full_fill_with_too_much_size_on_unacked_new_order():
 
 @raises(AssertionError)
 def test_creation_without_neworder():
-    cr = CancelReplaceCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, Price("43.01"), 234)
+    cr = CancelReplaceCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, Price("43.01"), 234)
     OrderEventChain(cr, LOGGER, MonotonicIntID())
 
 
 def test_cancel_replace_not_allowed_on_fak_or_fok():
     # FAK
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FAK, Price("34.52"), 1000)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAK, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
-    cr = CancelReplaceCommand(121235, 1234235.324, 2342, "user_x", MRKT, BID_SIDE, Price("43.01"), 234)
+    cr = CancelReplaceCommand(121235, 1234235.324, 2342, "user_x", MARKET, BID_SIDE, Price("43.01"), 234)
     assert_raises(AssertionError, oec.apply_cancel_replace_command, cr)
     # FOK
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MRKT, BID_SIDE, FOK, Price("34.52"), 1000)
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FOK, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
-    cr = CancelReplaceCommand(121235, 1234235.324, 2342, "user_x", MRKT, BID_SIDE, Price("43.01"), 234)
+    cr = CancelReplaceCommand(121235, 1234235.324, 2342, "user_x", MARKET, BID_SIDE, Price("43.01"), 234)
     assert_raises(AssertionError, oec.apply_cancel_replace_command, cr)
