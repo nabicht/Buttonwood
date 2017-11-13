@@ -33,115 +33,130 @@ from MarketPy.MarketObjects.PriceLevel import PriceLevel
 from MarketPy.MarketObjects.Price import Price
 from MarketPy.MarketObjects.Side import BID_SIDE, ASK_SIDE
 
-def test_pricelevel_creation():
-   pl = PriceLevel(Price("84.5"), 12)
-   assert pl.price().price() == Decimal("84.5")
-   assert pl.number_of_orders() is None
-   assert pl.visible_qty() == 12
-   assert pl.hidden_qty() == 0
 
-   pl = PriceLevel(Price("32.134"), 14, 23)
-   assert pl.price().price() == Decimal("32.134")
-   assert pl.number_of_orders() is None
-   assert pl.visible_qty() == 14
-   assert pl.hidden_qty() == 23
+def test_pricelevel_creation():
+    pl = PriceLevel(Price("84.5"), 12)
+    assert pl.price().price() == Decimal("84.5")
+    assert pl.number_of_orders() is None
+    assert pl.visible_qty() == 12
+    assert pl.hidden_qty() == 0
+
+    pl = PriceLevel(Price("32.134"), 14, 23)
+    assert pl.price().price() == Decimal("32.134")
+    assert pl.number_of_orders() is None
+    assert pl.visible_qty() == 14
+    assert pl.hidden_qty() == 23
+
 
 @raises(AssertionError)
 def test_negative_visible_qty_fails():
     PriceLevel(Price("23.33"), -2)
 
+
 @raises(AssertionError)
 def test_zero_visible_qty_fails():
     PriceLevel(Price("23.33"), 0)
+
 
 def test_zero_hidden_qty_works():
     pl = PriceLevel(Price("23.33"), 3, 0)
     assert pl.hidden_qty() == 0
 
+
 @raises(AssertionError)
 def test_negative_hidden_qty_failes():
-   PriceLevel(Price("23.33"), 3, -3)
+    PriceLevel(Price("23.33"), 3, -3)
+
 
 @raises(AssertionError)
 def test_pricelevel_must_have_price():
     PriceLevel(None, -2)
 
+
 @raises(AssertionError)
 def test_visible_qty_must_be_int():
-   PriceLevel(Price("1.1"), 3.0)
+    PriceLevel(Price("1.1"), 3.0)
+
 
 @raises(AssertionError)
 def test_hidden_qty_must_be_int():
-   PriceLevel(Price("1.1"), 3, 4.0)
+    PriceLevel(Price("1.1"), 3, 4.0)
+
 
 @raises(AssertionError)
 def test_negative_num_orders_fails():
-   PriceLevel(Price("1.1"), 3, 4, -2)
+    PriceLevel(Price("1.1"), 3, 4, -2)
+
 
 @raises(AssertionError)
 def test_zero_num_orders_fails():
-   PriceLevel(Price("1.1"), 3, 4, 0)
+    PriceLevel(Price("1.1"), 3, 4, 0)
+
 
 @raises(AssertionError)
 def test_cannot_have_more_orders_than_qty():
-   PriceLevel(Price("1.1"), 3, 2, 8)
+    PriceLevel(Price("1.1"), 3, 2, 8)
+
 
 def test_better_than():
-   pl1 = PriceLevel(Price("1.4"), 2, 3, 2)
-   pl2 = PriceLevel(Price("1.1"), 2, 3, 2)
-   assert pl1.better_than(pl2, BID_SIDE)
-   assert pl2.better_than(pl1, BID_SIDE) == False
-   assert pl1.better_than(pl2, ASK_SIDE) == False
-   assert pl2.better_than(pl1, ASK_SIDE)
+    pl1 = PriceLevel(Price("1.4"), 2, 3, 2)
+    pl2 = PriceLevel(Price("1.1"), 2, 3, 2)
+    assert pl1.better_than(pl2, BID_SIDE)
+    assert pl2.better_than(pl1, BID_SIDE) == False
+    assert pl1.better_than(pl2, ASK_SIDE) == False
+    assert pl2.better_than(pl1, ASK_SIDE)
+
 
 def test_better_or_same_as():
-   pl1 = PriceLevel(Price("1.4"), 2, 3, 2)
-   pl2 = PriceLevel(Price("1.1"), 2, 3, 2)
-   pl3 = PriceLevel(Price("1.4"), 24, 4, 22)
-   assert pl1.better_or_same_as(pl2, BID_SIDE)
-   assert pl2.better_or_same_as(pl1, BID_SIDE) == False
-   assert pl1.better_or_same_as(pl2, ASK_SIDE) == False
-   assert pl2.better_or_same_as(pl1, ASK_SIDE)
-   assert pl1.better_or_same_as(pl3, BID_SIDE)
-   assert pl1.better_or_same_as(pl3, ASK_SIDE)
+    pl1 = PriceLevel(Price("1.4"), 2, 3, 2)
+    pl2 = PriceLevel(Price("1.1"), 2, 3, 2)
+    pl3 = PriceLevel(Price("1.4"), 24, 4, 22)
+    assert pl1.better_or_same_as(pl2, BID_SIDE)
+    assert pl2.better_or_same_as(pl1, BID_SIDE) == False
+    assert pl1.better_or_same_as(pl2, ASK_SIDE) == False
+    assert pl2.better_or_same_as(pl1, ASK_SIDE)
+    assert pl1.better_or_same_as(pl3, BID_SIDE)
+    assert pl1.better_or_same_as(pl3, ASK_SIDE)
+
 
 def test_worse_than():
-   pl1 = PriceLevel(Price("1.6"), 2, 3, 2)
-   pl2 = PriceLevel(Price("2.1"), 2, 3, 2)
-   assert pl1.worse_than(pl2, BID_SIDE)
-   assert pl2.worse_than(pl1, BID_SIDE) == False
-   assert pl1.worse_than(pl2, ASK_SIDE) == False
-   assert pl2.worse_than(pl1, ASK_SIDE)
+    pl1 = PriceLevel(Price("1.6"), 2, 3, 2)
+    pl2 = PriceLevel(Price("2.1"), 2, 3, 2)
+    assert pl1.worse_than(pl2, BID_SIDE)
+    assert pl2.worse_than(pl1, BID_SIDE) == False
+    assert pl1.worse_than(pl2, ASK_SIDE) == False
+    assert pl2.worse_than(pl1, ASK_SIDE)
+
 
 def test_worse_or_same_as():
-   pl1 = PriceLevel(Price("1.6"), 2, 3, 2)
-   pl2 = PriceLevel(Price("2.1"), 2, 3, 2)
-   pl3 = PriceLevel(Price("1.6"), 24, 4, 22)
-   assert pl1.worse_or_same_as(pl2, BID_SIDE)
-   assert pl2.worse_or_same_as(pl1, BID_SIDE) == False
-   assert pl1.worse_or_same_as(pl2, ASK_SIDE) == False
-   assert pl2.worse_or_same_as(pl1, ASK_SIDE)
-   assert pl1.worse_or_same_as(pl3, BID_SIDE)
-   assert pl1.worse_or_same_as(pl3, ASK_SIDE)
+    pl1 = PriceLevel(Price("1.6"), 2, 3, 2)
+    pl2 = PriceLevel(Price("2.1"), 2, 3, 2)
+    pl3 = PriceLevel(Price("1.6"), 24, 4, 22)
+    assert pl1.worse_or_same_as(pl2, BID_SIDE)
+    assert pl2.worse_or_same_as(pl1, BID_SIDE) == False
+    assert pl1.worse_or_same_as(pl2, ASK_SIDE) == False
+    assert pl2.worse_or_same_as(pl1, ASK_SIDE)
+    assert pl1.worse_or_same_as(pl3, BID_SIDE)
+    assert pl1.worse_or_same_as(pl3, ASK_SIDE)
+
 
 def test_equality():
-   pl1 = PriceLevel(Price("1.1"),2,3,2)
-   pl2 = PriceLevel(Price("1.1"),2,3,2)
-   pl_price_different = PriceLevel(Price("1.2"),2,3,2)
-   pl_visible_qty_different = PriceLevel(Price("1.1"),3,3,2)
-   pl_hidden_qty_different = PriceLevel(Price("1.1"), 2, 332, 2)
-   pl_num_orders_different = PriceLevel(Price("1.1"),2,3,3)
-   pl_num_orders_none = PriceLevel(Price("1.1"),2,3,None)
-   assert pl1 == pl2
-   assert pl1 != pl_price_different
-   assert pl1 != pl_visible_qty_different
-   assert pl1 != pl_hidden_qty_different
-   assert pl1 != pl_num_orders_different
-   assert pl1 != pl_num_orders_none
+    pl1 = PriceLevel(Price("1.1"), 2, 3, 2)
+    pl2 = PriceLevel(Price("1.1"), 2, 3, 2)
+    pl_price_different = PriceLevel(Price("1.2"), 2, 3, 2)
+    pl_visible_qty_different = PriceLevel(Price("1.1"), 3, 3, 2)
+    pl_hidden_qty_different = PriceLevel(Price("1.1"), 2, 332, 2)
+    pl_num_orders_different = PriceLevel(Price("1.1"), 2, 3, 3)
+    pl_num_orders_none = PriceLevel(Price("1.1"), 2, 3, None)
+    assert pl1 == pl2
+    assert pl1 != pl_price_different
+    assert pl1 != pl_visible_qty_different
+    assert pl1 != pl_hidden_qty_different
+    assert pl1 != pl_num_orders_different
+    assert pl1 != pl_num_orders_none
 
-   pl1_num_orders_none = PriceLevel(Price("1.1"),2,3)
-   pl2_num_orders_none = PriceLevel(Price("1.1"),2,3)
-   assert pl1_num_orders_none == pl2_num_orders_none
-   assert pl1 != pl2_num_orders_none
-   assert pl2 != pl1_num_orders_none
-
+    pl1_num_orders_none = PriceLevel(Price("1.1"), 2, 3)
+    pl2_num_orders_none = PriceLevel(Price("1.1"), 2, 3)
+    assert pl1_num_orders_none == pl2_num_orders_none
+    assert pl1 != pl2_num_orders_none
+    assert pl2 != pl1_num_orders_none
