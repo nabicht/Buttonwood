@@ -46,8 +46,9 @@ def test_quote_creation():
     assert q.visible_qty() == 94
     assert q.hidden_qty() == 0
     assert q._price_level.number_of_orders() == 1
-    assert q.product().name() == "Microsoft"
-    assert q.product().symbol() == "MSFT"
+    assert q.market().product().name() == "Microsoft"
+    assert q.market().product().symbol() == "MSFT"
+    assert q.market().endpoint().name() == "Nasdaq"
 
 
 @raises(AssertionError)
@@ -76,7 +77,7 @@ def test_equality():
     q2 = Quote(MARKET, BID_SIDE, Price("95.42"), 94)
     assert q1 == q2
 
-    q2 = Quote(Product("APPL", "Apple", "0.01", "0.01"), BID_SIDE, Price("95.42"), 94)
+    q2 = Quote(MARKET, BID_SIDE, Price("95.42"), 94)
     assert q1 != q2
 
     q2 = Quote(MARKET, BID_SIDE, Price("95.43"), 94)
