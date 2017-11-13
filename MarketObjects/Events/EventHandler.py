@@ -127,8 +127,8 @@ class OrderEventHandler:
         if logging.DEBUG >= self._logger.getEffectiveLevel():
             self._logger.debug("%s: Processing chain %s event %s: %s" %
                                (self.__class__.__name__, str(event.chain_id()), str(event.event_id()), str(event)))
-        order_chain = self._handle_event(event)
-        return order_chain
+        order_chain, updated_products = self._handle_event(event)
+        return order_chain, updated_products
 
     def _handle_new_order_command(self, new_order_command):
         chain_id = new_order_command.chain_id()
@@ -190,6 +190,7 @@ class OrderEventHandler:
         self._full_fill_report_notification(full_fill_report, order_chain)
 
     def _apply_to_orderbooks(self, event, order_chain):
+        products_updated = set()
         if order_chain is not None:
             market = event.market()
             if market in self._market_book_id_to_book:
@@ -200,24 +201,38 @@ class OrderEventHandler:
                                         str(event.chain_id()),
                                         str(event.event_id()),
                                         orderbook_id))
+                    order_book_updated = False
                     if isinstance(event, AcknowledgementReport):
-                        orderbook.handle_acknowledgement_report(event, order_chain)
+                        order_book_updated = orderbook.handle_acknowledgement_report(event, order_chain)
                     elif isinstance(event, CancelReport):
-                        orderbook.handle_cancel_report(event, order_chain)
+                        order_book_updated = orderbook.handle_cancel_report(event, order_chain)
                     elif isinstance(event, PartialFillReport):
-                        orderbook.handle_partial_fill_report(event, order_chain)
+                        order_book_updated = orderbook.handle_partial_fill_report(event, order_chain)
                     elif isinstance(event, FullFillReport):
-                        orderbook.handle_full_fill_report(event, order_chain)
+                        order_book_updated = orderbook.handle_full_fill_report(event, order_chain)
                     else:
                         self._logger.warning("%s: don't know how to handle %s when applying to order book." %
                                              (self.__class__.__name__, event.__class__.__name__))
+                    if order_book_updated:
+                        products_updated.add(product)
+        return products_updated
 
     def _handle_event(self, event):
+        """
+        A clearing house that takes in an event, figures out what the event is, apply them to the correct order chain,
+         and update the correct order book(s) if the event impacts the order book.
+
+        Returns a tuple of the updated data: the order chain and an iterable of products that had updated order books.
+
+        :param event: MarketPy.MarketObjects.Events.OrderEvent
+        :return: (MarketPy.MarketObjects.Events.EventChains.OrderEventChain, set of products)
+        """
         # while the command vs execution report check seems unnecessary,
         # it prevents execution reports from having to be checked for each Command
         is_closed_before = False
         is_closed_after = False
         chain_id = event.chain_id()
+        products_with_updated_books = set()
         if isinstance(event, OrderCommand):
             # order is such because in most markets I expect New, than Replace, then cancel in that order
             if isinstance(event, NewOrderCommand):
@@ -256,22 +271,23 @@ class OrderEventHandler:
                 self._logger.error("%s: Cannot handle unknown ExecutionReport: %s" %
                                    (self.__class__.__name__,
                                     event.__class__.__name__))
-                return None
+                return None, products_with_updated_books
             is_closed_after = not order_chain.is_open()
 
             # apply to the registered order book (if one is registered)
-            self._apply_to_orderbooks(event, order_chain)
+            # only execution reports impact an order book so only applying to order book here
+            products_with_updated_books = self._apply_to_orderbooks(event, order_chain)
         else:
             self._logger.error("%s: Cannot handle unknown Event: %s" %
                                (self.__class__.__name__,
                                 event.__class__.__name__))
-            return None
+            return None, products_with_updated_books
 
         # order_chain close notifications
         order_chain = self._chain_id_to_chain.get(chain_id)
         if order_chain is not None and not is_closed_before and is_closed_after:
             self._close_chain_notification(order_chain)
-        return order_chain
+        return order_chain, products_with_updated_books
 
     def _new_order_command_notification(self, new_order_command, resulting_order_chain):
         for listener in self._event_listeners.itervalues():

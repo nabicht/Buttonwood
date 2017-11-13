@@ -102,8 +102,8 @@ def test_better_than():
     pl1 = PriceLevel(Price("1.4"), 2, 3, 2)
     pl2 = PriceLevel(Price("1.1"), 2, 3, 2)
     assert pl1.better_than(pl2, BID_SIDE)
-    assert pl2.better_than(pl1, BID_SIDE) == False
-    assert pl1.better_than(pl2, ASK_SIDE) == False
+    assert pl2.better_than(pl1, BID_SIDE) is False
+    assert pl1.better_than(pl2, ASK_SIDE) is False
     assert pl2.better_than(pl1, ASK_SIDE)
 
 
@@ -112,8 +112,8 @@ def test_better_or_same_as():
     pl2 = PriceLevel(Price("1.1"), 2, 3, 2)
     pl3 = PriceLevel(Price("1.4"), 24, 4, 22)
     assert pl1.better_or_same_as(pl2, BID_SIDE)
-    assert pl2.better_or_same_as(pl1, BID_SIDE) == False
-    assert pl1.better_or_same_as(pl2, ASK_SIDE) == False
+    assert pl2.better_or_same_as(pl1, BID_SIDE) is False
+    assert pl1.better_or_same_as(pl2, ASK_SIDE) is False
     assert pl2.better_or_same_as(pl1, ASK_SIDE)
     assert pl1.better_or_same_as(pl3, BID_SIDE)
     assert pl1.better_or_same_as(pl3, ASK_SIDE)
@@ -123,8 +123,8 @@ def test_worse_than():
     pl1 = PriceLevel(Price("1.6"), 2, 3, 2)
     pl2 = PriceLevel(Price("2.1"), 2, 3, 2)
     assert pl1.worse_than(pl2, BID_SIDE)
-    assert pl2.worse_than(pl1, BID_SIDE) == False
-    assert pl1.worse_than(pl2, ASK_SIDE) == False
+    assert pl2.worse_than(pl1, BID_SIDE) is False
+    assert pl1.worse_than(pl2, ASK_SIDE) is False
     assert pl2.worse_than(pl1, ASK_SIDE)
 
 
@@ -133,8 +133,8 @@ def test_worse_or_same_as():
     pl2 = PriceLevel(Price("2.1"), 2, 3, 2)
     pl3 = PriceLevel(Price("1.6"), 24, 4, 22)
     assert pl1.worse_or_same_as(pl2, BID_SIDE)
-    assert pl2.worse_or_same_as(pl1, BID_SIDE) == False
-    assert pl1.worse_or_same_as(pl2, ASK_SIDE) == False
+    assert pl2.worse_or_same_as(pl1, BID_SIDE) is False
+    assert pl1.worse_or_same_as(pl2, ASK_SIDE) is False
     assert pl2.worse_or_same_as(pl1, ASK_SIDE)
     assert pl1.worse_or_same_as(pl3, BID_SIDE)
     assert pl1.worse_or_same_as(pl3, ASK_SIDE)

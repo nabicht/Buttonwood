@@ -45,7 +45,7 @@ class MatchSeriesTracker(OrderEventListener):
             series = MatchSeries(fill.match_id())
             series.add_fill(fill)
             self._id_to_series[fill.match_id()] = series
-            self._aggressor_event_id_to_series = series
+            self._aggressor_event_id_to_series[fill.aggressing_command().event_id()] = series
             self._fill_event_id_to_series[fill.event_id()] = series
         else:
             series.add_fill(fill)

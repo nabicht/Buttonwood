@@ -77,6 +77,7 @@ class MatchSeries:
         self._pas_fills = []
         self._series_id = match_series_id
         self._match_time = None
+        self._agg_fully_filled = False
 
     def series_id(self):
         return self._series_id
@@ -107,6 +108,8 @@ class MatchSeries:
             assert (fill_event.side() == self._aggressor.side()), "An aggressive fill should have same side as aggressor event."
             self._agg_price_to_qty[fill_event.fill_price()] += fill_event.fill_qty()
             self._agg_fills.append(fill_event)
+            if isinstance(fill_event, FullFillReport):
+                self._agg_fully_filled = True
         else:
             assert (fill_event.side() != self._aggressor.side()), "A passive fill should have different side than aggressor event."
             self._pas_price_to_qty[fill_event.fill_price()] += fill_event.fill_qty()
@@ -155,10 +158,22 @@ class MatchSeries:
     def match_qty(self, sanity_check=True):
         if sanity_check:
             self._price_qty_sanity_check()
-        total_qty = 0
-        for qty in self._agg_price_to_qty.itervalues():
-            total_qty += qty
-        return total_qty
+        return self.aggressive_qty()
+
+    def aggressive_qty(self):
+        qty = 0
+        for fill in self._agg_fills:
+            qty += fill.fill_qty()
+        return qty
+
+    def passive_qty(self):
+        qty = 0
+        for fill in self._pas_fills:
+            qty += fill.fill_qty()
+        return qty
+
+    def balanced_match_qty(self):
+        return self.aggressive_qty() == self.passive_qty()
 
     def prices(self, sanity_check=True):
         if sanity_check:
@@ -172,6 +187,9 @@ class MatchSeries:
 
     def aggressive_fills(self):
         return self._agg_fills
+
+    def aggressor_fully_filled(self):
+        return self._agg_fully_filled
 
     def passive_fills(self):
         return self._pas_fills
