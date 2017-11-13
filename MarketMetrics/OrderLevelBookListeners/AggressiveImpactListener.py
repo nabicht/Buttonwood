@@ -138,7 +138,7 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
                 if agg_act.balanced_match_qty():
                     agg_act.calculate(self._market_to_orderbook[market])
                 else: # we need to get the order level books after all the updates are done.
-                    self._market_to_agg_acts_to_close[pr].add(self._market_event_id_aggressive_act.get((market, event_id)))
+                    self._market_to_agg_acts_to_close[market].add(self._market_event_id_aggressive_act.get((market, event_id)))
             else:
                 raise Exception("Got an aggressive full fill but not tracking aggressive acts for event: %s" % str(event_id))
 
@@ -149,7 +149,7 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
         agg_event = self._market_event_id_aggressive_act.get((market, event_id))
         # if aggressor is cancelled then all fills on both sides should be done and we can calculate
         if agg_event:
-            agg_event.calculate(self._market_to_orderbook[market]
+            agg_event.calculate(self._market_to_orderbook[market])
 
     def clean_up(self, order_chain):
         """
