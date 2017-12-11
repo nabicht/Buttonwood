@@ -60,6 +60,7 @@ class BasicOrderBook:
 
         :return: MarketObjects.Market.Market
         """
+        return self._market
 
     def name(self):
         """
