@@ -49,7 +49,7 @@ class Endpoint(object):
         :param abbreviation: str. an abbreviation of the endpoint. Optional. Defaults to name.
         """
         assert isinstance(name, str)
-        assert isinstance(abbreviation, str)
+        assert abbreviation is None or isinstance(abbreviation, str)
         self._name = name
         self._abbr = abbreviation if abbreviation is None else name
         self._hash = hash(name)
