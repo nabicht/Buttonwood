@@ -75,3 +75,6 @@ class Market(object):
 
     def to_json(self):
         return {"product": self.product().to_json(), "endpoint": self.endpoint().to_json()}
+
+    def __hash__(self):
+        return self._hash
