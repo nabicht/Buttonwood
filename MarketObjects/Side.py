@@ -38,12 +38,13 @@ class Side(object):
     def __init__(self, bid_or_ask):
         assert bid_or_ask in [0, 1]
         self.__bid_or_ask = bid_or_ask
+        self._is_bid = self.__bid_or_ask == self.BID
 
     def is_bid(self):
-        return self.__bid_or_ask == self.BID
+        return self._is_bid
 
     def is_ask(self):
-        return self.__bid_or_ask == self.ASK
+        return not self._is_bid
 
     def is_other_side(self, side):
         if self.is_bid() and side.is_ask():
