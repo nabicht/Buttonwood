@@ -29,6 +29,7 @@ SOFTWARE.
 
 from MarketPy.MarketObjects.OrderBookListeners.OrderLevelBookListener import OrderLevelBookListener
 from MarketPy.utils.dicts import NDeepDict
+import operator
 
 
 class LastTimeTOBListener(OrderLevelBookListener):
@@ -106,9 +107,9 @@ class LastTimeTOBListener(OrderLevelBookListener):
         times = []
 
         resting_prices_to_time = self._market_side_price_time.get((market, resting_side))
-        for resting_price, time in resting_prices_to_time.iteritems():
-            if price.better_or_same_as(resting_price, side):
-                times.append(time)
-        if len(times) == 0:
-            return None
-        return max(times)
+
+        sorted_x = sorted(resting_prices_to_time.items(), key=operator.itemgetter(1), reverse=True)
+        for x in sorted_x:
+            if price.better_or_same_as(x[0], side):
+                return x[1]
+        return None
