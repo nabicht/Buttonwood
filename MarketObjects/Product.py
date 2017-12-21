@@ -121,7 +121,7 @@ class Product(object):
   
         :return: Decimal
         """
-        return self.min_price_increment()
+        return self._min_price_increment
 
     def mpi_value(self):
         """
@@ -129,7 +129,7 @@ class Product(object):
   
         :return: Decimal
         """
-        return self.min_price_increment_value()
+        return self._min_price_increment_value
 
     def is_valid_price(self, price):
         return (price / self._min_price_increment) % 1 == 0
