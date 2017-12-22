@@ -150,9 +150,9 @@ class Price(object):
             return None
 
         if side.is_bid():
-            return (other_price.price() - self.price()) / product.mpi()
-        if side.is_ask():
-            return (self.price() - other_price) / product.mpi()
+            return (other_price._price - self._price) / product.mpi()
+        else:
+            return (self._price - other_price._price) / product.mpi()
 
     def __lt__(self, other):
         if isinstance(other, Price):
