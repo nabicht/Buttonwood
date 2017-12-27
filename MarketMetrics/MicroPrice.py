@@ -27,12 +27,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from MarketPy.MarketObjects.Price import Price
+
 
 def size_weighted_midpoint(bid_price, bid_qty, ask_price, ask_qty):
+    assert(isinstance(bid_price, Price))
+    assert(isinstance(ask_price, Price))
     bid_plus_ask_qty = bid_qty + ask_qty
     if bid_plus_ask_qty == 0:
         return None
-    return ((bid_qty * ask_price) + (ask_qty * bid_price)) / bid_plus_ask_qty
+    return ((bid_qty * ask_price.price()) + (ask_qty * bid_price.price())) / bid_plus_ask_qty
 
 
 def size_weighted_midpoint_from_price_levels(bid_price_level, ask_price_level, include_hidden=False):
