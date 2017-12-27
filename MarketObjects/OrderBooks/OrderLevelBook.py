@@ -78,7 +78,10 @@ class TimePriorityOrderLevel(object):
                                 str(order_chain.current_exposure().price())))
         else:
             self._order_chains[order_chain.chain_id()] = order_chain
-            self._dirty = True
+            #self._dirty = True
+            self._visible_qty += order_chain.visible_qty()
+            self._hidden_qty += order_chain.hidden_qty()
+            self._num_orders += 1
             self._logger.debug("%s: Added %s to %s." %
                                (self.__class__.__name__,
                                 str(order_chain.chain_id()),
@@ -92,6 +95,8 @@ class TimePriorityOrderLevel(object):
                                 str(order_chain.current_exposure().price())))
         else:
             del self._order_chains[order_chain.chain_id()]
+            # removes not as easy as adds because if orderchain is already closed visible and hidden quantities are 0.
+            #  so can't just subtract out out the chain's quantities in order to maintain level sizes
             self._dirty = True
             self._logger.debug("%s: Removed %s from %s." %
                                (self.__class__.__name__,
@@ -99,9 +104,9 @@ class TimePriorityOrderLevel(object):
                                 str(order_chain.current_exposure().price())))
 
     def force_dirty(self):
-        # this function needs to exist because if there is a cancel replace down in qty this class will never know,
-        #  so whatever calls add_to_level and remove_from_level needs to be responsible for forcing the dirty flag to
-        #  true
+        # this function needs to exist because if there is a cancel replace down in qty or a partial fill this class
+        #  will never know, so whatever calls add_to_level and remove_from_level needs to be responsible for forcing
+        #  the dirty flag to true
         self._dirty = True
 
     def _set_level_quantities(self):
