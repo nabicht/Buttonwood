@@ -48,6 +48,7 @@ class LastTimeTOBListener(OrderLevelBookListener):
         OrderLevelBookListener.__init__(self, logger)
         self._market_to_side_prev_price = NDeepDict(depth=2, default_value=None)
         self._market_side_price_time = NDeepDict(depth=3, default_value=None)  # market to side to price to last time it was top of book
+        self._market_side_best_price = NDeepDict(depth=2, default_value=None)
 
     def notify_book_update(self, order_book, causing_order_chain):
         """
@@ -69,6 +70,9 @@ class LastTimeTOBListener(OrderLevelBookListener):
         # if current book best price is not none then need to set its time
         if best_price is not None:
             self._market_side_price_time.set((market, side, best_price), value=time)
+            prev_best_price = self._market_side_best_price.get((market, side))
+            if prev_best_price is None or best_price.better_than(prev_best_price, side):
+                self._market_side_best_price.set((market, side), value=best_price)
         # if previous best price is not none and is different than new best price then need to set its time to
         #  update it to include previous price period since it was best price until the change
         prev_best_price = self._market_to_side_prev_price.get((market, side))
@@ -101,15 +105,24 @@ class LastTimeTOBListener(OrderLevelBookListener):
         :param price: MarketObjects.Price.Price (price of the order we are checking)
         :return: float. (Could be None)
         """
+
         resting_side = side.other_side()
         # if book hasn't been established yet, so return None
 
-        times = []
+        # there are a lot of messages that come in that never would have crossed. so just tracking a "best bid and best
+        # offer seen all day" would keep us from doing the below sorting and iterating for these and save a ton of time
+        best_resting_price = self._market_side_best_price.get((market, resting_side))
+        if best_resting_price is None or price.worse_than(best_resting_price, side):
+            return None
+        else:
 
-        resting_prices_to_time = self._market_side_price_time.get((market, resting_side))
+            resting_prices_to_time = self._market_side_price_time.get((market, resting_side))
 
-        sorted_x = sorted(resting_prices_to_time.items(), key=operator.itemgetter(1), reverse=True)
-        for x in sorted_x:
-            if price.better_or_same_as(x[0], side):
-                return x[1]
+            #sort list based on time, where most recent time (highest number) is first
+            sorted_x = sorted(resting_prices_to_time.items(), key=operator.itemgetter(1), reverse=True)
+            for x in sorted_x:
+                if price.better_or_same_as(x[0], side):
+                    return x[1]
+        self._logger.error("last_time_crossed has a price that would have crossed today but still has no cross time value. Something is broken!")
+        # failsafe return?
         return None
