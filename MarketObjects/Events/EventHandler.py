@@ -287,6 +287,8 @@ class OrderEventHandler:
         order_chain = self._chain_id_to_chain.get(chain_id)
         if order_chain is not None and not is_closed_before and is_closed_after:
             self._close_chain_notification(order_chain)
+            # if closed then no longer need to keep it in map:
+            del self._chain_id_to_chain[chain_id]
         return order_chain, markets_with_updated_books
 
     def _new_order_command_notification(self, new_order_command, resulting_order_chain):
