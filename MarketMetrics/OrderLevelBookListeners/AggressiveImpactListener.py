@@ -163,8 +163,9 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
 
         :param order_chain: MarketObjects.Events.EventChains.OrderEventChain
         """
-        # TODO
-        pass
+        market = order_chain.market()
+        for event in order_chain.events():
+            self._market_event_id_aggressive_act.delete([market,event.event_id()])
 
     def notify_book_update(self, order_book, causing_order_chain):
         market = order_book.market()

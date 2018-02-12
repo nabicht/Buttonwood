@@ -123,6 +123,11 @@ class SubchainTimeAtTopPriorityListener(OrderLevelBookListener):
 
         return total_time
 
+    def clean_up_order_chain(self, order_chain):
+        market = order_chain.market()
+        for subchain in order_chain.subchains():
+            self._market_to_subchain_id_to_time.delete([market, subchain.subchain_id()])
+
 
 
 class SubchainTimeAtTOBListener(OrderLevelBookListener):
@@ -234,5 +239,7 @@ class SubchainTimeAtTOBListener(OrderLevelBookListener):
 
         return total_time
 
-    # TODO need some sort of cleanup for orderbook listeners that cleans up by the orderchain
-
+    def clean_up_order_chain(self, order_chain):
+        market = order_chain.market()
+        for subchain in order_chain.subchains():
+            self._market_to_subchain_id_to_time.delete([market, subchain.subchain_id()])
