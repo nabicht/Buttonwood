@@ -28,11 +28,14 @@ SOFTWARE.
 """
 
 from MarketPy.MarketObjects.OrderBookListeners.OrderLevelBookListener import OrderLevelBookListener
+from MarketPy.MarketObjects.EventListeners.OrderEventListener import OrderEventListener
+from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand, CancelReplaceCommand
+
 from MarketPy.utils.dicts import NDeepDict
 import operator
 
 
-class LastTimeTOBListener(OrderLevelBookListener):
+class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
     """
     Tracks when prices were top of book so that at any given time we can query
      with a price and side and determine when the last time that price was top
@@ -46,9 +49,42 @@ class LastTimeTOBListener(OrderLevelBookListener):
     # TODO UNIT TEST
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
+        OrderEventListener.__init__(self, logger)
         self._market_to_side_prev_price = NDeepDict(depth=2, default_value=None)
         self._market_side_price_time = NDeepDict(depth=3, default_value=None)  # market to side to price to last time it was top of book
         self._market_side_best_price = NDeepDict(depth=2, default_value=None)
+        self._event_id_to_last_time_crossed = dict()
+        self._event_id_to_last_time_tob = dict()
+
+    def handle_new_order_command(self, new_order_command, resulting_order_chain):
+        assert isinstance(new_order_command, NewOrderCommand)
+        event_id = new_order_command.event_id()
+        market = new_order_command.market()
+        price = new_order_command.price()
+        side = new_order_command.side()
+        if event_id not in self._event_id_to_last_time_crossed.keys():
+            self._event_id_to_last_time_crossed[event_id] = self._last_time_crossed(market, side, price)
+        if event_id not in self._event_id_to_last_time_tob.keys():
+            self._event_id_to_last_time_tob[event_id] = self._last_time_was_tob(market, side, price)
+
+    def handle_cancel_replace_command(self, cancel_replace_command, resulting_order_chain):
+        assert isinstance(cancel_replace_command, CancelReplaceCommand)
+        event_id = cancel_replace_command.event_id()
+        market = cancel_replace_command.market()
+        price = cancel_replace_command.price()
+        side = cancel_replace_command.side()
+        if event_id not in self._event_id_to_last_time_crossed.keys():
+            self._event_id_to_last_time_crossed[event_id] = self._last_time_crossed(market, side, price)
+        if event_id not in self._event_id_to_last_time_tob.keys():
+            self._event_id_to_last_time_tob[event_id] = self._last_time_was_tob(market, side, price)
+
+    def last_time_tob(self, event_id):
+        last_time_tob = self._event_id_to_last_time_tob.get(event_id)
+        return last_time_tob
+
+    def last_time_crossed(self, event_id):
+        last_time_crossed = self._event_id_to_last_time_crossed.get(event_id)
+        return last_time_crossed
 
     def notify_book_update(self, order_book, causing_order_chain):
         """
@@ -81,7 +117,7 @@ class LastTimeTOBListener(OrderLevelBookListener):
         # set previous best price to be the current best price
         self._market_to_side_prev_price.set((market, side), value=best_price)
 
-    def last_time_was_tob(self, market, side, price):
+    def _last_time_was_tob(self, market, side, price):
         """
         Returns the last time the price was the top of book
         Will return None if the passed in price has never been top of book for
@@ -94,7 +130,7 @@ class LastTimeTOBListener(OrderLevelBookListener):
         """
         return self._market_side_price_time.get((market, side, price))
 
-    def last_time_crossed(self, market, side, price):
+    def _last_time_crossed(self, market, side, price):
         """
         Returns the last time the price for the given side would have crossed the book.
         
@@ -126,3 +162,7 @@ class LastTimeTOBListener(OrderLevelBookListener):
         self._logger.error("last_time_crossed has a price that would have crossed today but still has no cross time value. Something is broken!")
         # failsafe return?
         return None
+
+    def clean_up(self, order_chain=None):
+        self._event_id_to_last_time_crossed = dict()
+        self._event_id_to_last_time_tob = dict()
