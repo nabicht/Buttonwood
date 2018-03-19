@@ -30,6 +30,7 @@ SOFTWARE.
 from MarketPy.MarketObjects.OrderBookListeners.OrderLevelBookListener import OrderLevelBookListener
 from MarketPy.MarketObjects.EventListeners.OrderEventListener import OrderEventListener
 from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand, CancelReplaceCommand
+from MarketPy.MarketObjects.Events.EventChains import OrderEventChain
 
 from MarketPy.utils.dicts import NDeepDict
 import operator
@@ -163,6 +164,12 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         # failsafe return?
         return None
 
-    def clean_up(self, order_chain=None):
-        self._event_id_to_last_time_crossed = dict()
-        self._event_id_to_last_time_tob = dict()
+    def clean_up(self, order_chain):
+        # if order chain events in map, clean up
+        assert isinstance(order_chain, OrderEventChain)
+        events = order_chain.events()
+        for event in events:
+            if event.event_id() in self._event_id_to_last_time_crossed.keys():
+                del self._event_id_to_last_time_crossed[event.event_id()]
+            if event.event_id() in self._event_id_to_last_time_tob.keys():
+                del self._event_id_to_last_time_tob[event.event_id()]
