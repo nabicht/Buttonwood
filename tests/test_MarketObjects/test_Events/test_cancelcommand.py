@@ -30,17 +30,15 @@ SOFTWARE.
 from nose.tools import *
 from MarketPy.MarketObjects.Events.OrderEvents import CancelCommand
 from MarketPy.MarketObjects import CancelReasons
-from MarketPy.MarketObjects.Endpoint import Endpoint
-from MarketPy.MarketObjects.Market import Market
 from MarketPy.MarketObjects.Product import Product
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+PRODUCT = Product("MSFT", "Microsoft", "0.01", "0.01")
 
 def test_creation():
-    cancel = CancelCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, CancelReasons.SYSTEM_CANCEL)
+    cancel = CancelCommand(12, 324893458.324313, "342adf24441", "user_x", PRODUCT, CancelReasons.SYSTEM_CANCEL)
     assert cancel.cancel_type() == CancelReasons.SYSTEM_CANCEL
     assert cancel.cancel_type_str() == CancelReasons.CANCEL_TYPES_STRINGS[CancelReasons.SYSTEM_CANCEL]
-    assert cancel.market() == MARKET
+    assert cancel.product() == PRODUCT
     assert cancel.user_id() == "user_x"
     assert cancel.timestamp() == 324893458.324313
     assert cancel.event_id() == 12

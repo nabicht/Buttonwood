@@ -29,19 +29,15 @@ SOFTWARE.
 
 from nose.tools import *
 from MarketPy.MarketObjects.Quote import Quote
-from MarketPy.MarketObjects.Side import ASK_SIDE
-from MarketPy.MarketObjects.Side import BID_SIDE
-from MarketPy.MarketObjects.Endpoint import Endpoint
-from MarketPy.MarketObjects.Market import Market
+from MarketPy.MarketObjects.Side import BID_SIDE, ASK_SIDE
 from MarketPy.MarketObjects.Product import Product
 from MarketPy.MarketObjects.TwoSidedQuote import TwoSidedQuote
 
 
 def test_successful_instantiation_no_cross():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     assert tsq.buy_quote() == bid_quote
     assert tsq.sell_quote() == ask_quote
@@ -61,64 +57,56 @@ def test_failed_instantiation_bid_quote_not_a_bid():
 
 @raises(AssertionError)
 def test_failed_instantiation_sell_quote_not_an_ask():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, BID_SIDE, "26.20", 233)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, BID_SIDE, "26.20", 233)
     TwoSidedQuote(bid_quote, ask_quote)
 
 
 @raises(Exception)
 def test_failed_instantiation_products_not_the_same():
-    market1 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                     Endpoint("Nasdaq", "NSDQ"))
-    market2 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                     Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market1, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market2, ASK_SIDE, "26.20", 233)
+    product1 = Product("MSFT", "microsoft", "0.01", "0.01")
+    product2 = Product("APPL", "Apple", "0.01", "0.01")
+    bid_quote = Quote(product1, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product2, ASK_SIDE, "26.20", 233)
     TwoSidedQuote(bid_quote, ask_quote)
 
 
 @raises(Exception)
 def test_failed_instantiation_locked_market():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "25.23", 233)
+    product1 = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product1, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product1, ASK_SIDE, "25.23", 233)
     TwoSidedQuote(bid_quote, ask_quote)
 
 
 @raises(Exception)
 def test_failed_instantiation_crossed_market():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "25.20", 233)
+    product1 = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product1, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product1, ASK_SIDE, "25.20", 233)
     TwoSidedQuote(bid_quote, ask_quote)
 
 
 def test_successful_instantiation_locked_market_allowed():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "25.23", 233)
+    product1 = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product1, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product1, ASK_SIDE, "25.23", 233)
     TwoSidedQuote(bid_quote, ask_quote, True)
 
 
 def test_successful_instantiation_crossed_market_allowed():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "18.42", 233)
+    product1 = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product1, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product1, ASK_SIDE, "18.42", 233)
     TwoSidedQuote(bid_quote, ask_quote, True)
 
 
 def test_successful_set_buy_quote():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    bid_quote2 = Quote(market, BID_SIDE, "25.25", 43)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    bid_quote2 = Quote(product, BID_SIDE, "25.25", 43)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     assert tsq.buy_quote() == bid_quote
     assert tsq.sell_quote() == ask_quote
@@ -128,11 +116,10 @@ def test_successful_set_buy_quote():
 
 
 def test_successful_set_sell_quote():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    ask_quote2 = Quote(market, ASK_SIDE, "25.98", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    ask_quote2 = Quote(product, ASK_SIDE, "25.98", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     assert tsq.buy_quote() == bid_quote
     assert tsq.sell_quote() == ask_quote
@@ -143,151 +130,134 @@ def test_successful_set_sell_quote():
 
 @raises(Exception)
 def test_failed_set_sell_quote_wrong_product():
-    market1 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                     Endpoint("Nasdaq", "NSDQ"))
-    market2 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                     Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market1, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market1, ASK_SIDE, "26.20", 233)
-    ask_quote2 = Quote(market2, ASK_SIDE, "25.98", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    product2 = Product("APPL", "Apple", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    ask_quote2 = Quote(product2, ASK_SIDE, "25.98", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     tsq.set_sell_quote(ask_quote2)
 
 
 @raises(AssertionError)
 def test_failed_set_sell_quote_wrong_side():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    ask_quote2 = Quote(market, BID_SIDE, "25.98", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    ask_quote2 = Quote(product, BID_SIDE, "25.98", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     tsq.set_sell_quote(ask_quote2)
 
 
 @raises(AssertionError)
 def test_failed_set_buy_quote_wrong_side():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    buy_quote2 = Quote(market, ASK_SIDE, "25.98", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    buy_quote2 = Quote(product, ASK_SIDE, "25.98", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     tsq.set_buy_quote(buy_quote2)
 
 
 @raises(Exception)
 def test_failed_set_buy_quote_crossed_market():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    buy_quote2 = Quote(market, BID_SIDE, "26.98", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    buy_quote2 = Quote(product, BID_SIDE, "26.98", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     tsq.set_buy_quote(buy_quote2)
 
 
 @raises(Exception)
 def test_failed_set_buy_quote_locked_market():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    buy_quote2 = Quote(market, BID_SIDE, "26.20", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    buy_quote2 = Quote(product, BID_SIDE, "26.20", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     tsq.set_buy_quote(buy_quote2)
 
 
 @raises(Exception)
 def test_failed_set_buy_quote_wrong_product():
-    market1 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                     Endpoint("Nasdaq", "NSDQ"))
-    market2 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                     Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market1, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market1, ASK_SIDE, "26.20", 233)
-    buy_quote2 = Quote(market2, BID_SIDE, "25.98", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    product2 = Product("APPL", "Apple", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    buy_quote2 = Quote(product2, BID_SIDE, "25.98", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     tsq.set_buy_quote(buy_quote2)
 
 
 @raises(Exception)
 def test_failed_set_sell_quote_crossed_market():
-    market1 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                     Endpoint("Nasdaq", "NSDQ"))
-    market2 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                     Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market1, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market1, ASK_SIDE, "26.20", 233)
-    ask_quote2 = Quote(market2, ASK_SIDE, "24.98", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    ask_quote2 = Quote(product, ASK_SIDE, "24.98", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     tsq.set_sell_quote(ask_quote2)
 
 
 @raises(Exception)
 def test_failed_set_sell_quote_locked_market():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    ask_quote2 = Quote(market, BID_SIDE, "25.23", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    ask_quote2 = Quote(product, BID_SIDE, "25.23", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote)
     tsq.set_sell_quote(ask_quote2)
 
 
 def test_successful_set_buy_quote_locked_market():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    buy_quote2 = Quote(market, BID_SIDE, "26.20", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    buy_quote2 = Quote(product, BID_SIDE, "26.20", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote, True)
     tsq.set_buy_quote(buy_quote2)
 
 
 def test_successful_set_buy_quote_crossed_market():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    buy_quote2 = Quote(market, BID_SIDE, "28.20", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    buy_quote2 = Quote(product, BID_SIDE, "28.20", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote, True)
     tsq.set_buy_quote(buy_quote2)
 
 
 def test_successful_set_sell_quote_crossed_market():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    ask_quote2 = Quote(market, ASK_SIDE, "24.20", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    ask_quote2 = Quote(product, ASK_SIDE, "24.20", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote, True)
     tsq.set_sell_quote(ask_quote2)
 
 
 def test_successful_set_sell_quote_locked_market():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
-    ask_quote2 = Quote(market, ASK_SIDE, "25.23", 3)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
+    ask_quote2 = Quote(product, ASK_SIDE, "25.23", 3)
     tsq = TwoSidedQuote(bid_quote, ask_quote, True)
     tsq.set_sell_quote(ask_quote2)
 
 
 def test_spread():
-    market = Market(Product("MSFT", "Microsoft", "0.01", "0.01"),
-                    Endpoint("Nasdaq", "NSDQ"))
-    bid_quote = Quote(market, BID_SIDE, "25.23", 18)
-    ask_quote = Quote(market, ASK_SIDE, "26.20", 233)
+    product = Product("MSFT", "microsoft", "0.01", "0.01")
+    bid_quote = Quote(product, BID_SIDE, "25.23", 18)
+    ask_quote = Quote(product, ASK_SIDE, "26.20", 233)
     tsq = TwoSidedQuote(bid_quote, ask_quote, True)
     assert tsq.spread() == 97
     # now lock the market
-    ask_quote2 = Quote(market, ASK_SIDE, "25.23", 2334)
+    ask_quote2 = Quote(product, ASK_SIDE, "25.23", 2334)
     tsq.set_sell_quote(ask_quote2)
     assert tsq.spread() == 0
     # now cross the market
-    ask_quote3 = Quote(market, ASK_SIDE, "24.23", 2334)
+    ask_quote3 = Quote(product, ASK_SIDE, "24.23", 2334)
     tsq.set_sell_quote(ask_quote3)
     assert tsq.spread() == -100
     # now test ask None
