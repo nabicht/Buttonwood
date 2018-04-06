@@ -32,13 +32,15 @@ from nose.tools import *
 from MarketPy.MarketObjects.Quote import Quote
 from MarketPy.MarketObjects.Price import Price
 from MarketPy.MarketObjects.Side import BID_SIDE
+from MarketPy.MarketObjects.Endpoint import Endpoint
+from MarketPy.MarketObjects.Market import Market
 from MarketPy.MarketObjects.Product import Product
 
-PROD = Product("MSFT", "Microsoft", Decimal("0.01"), Decimal("0.01"))
+MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
 
 
 def test_quote_creation():
-    q = Quote(PROD, BID_SIDE, Price("95.42"), 94)
+    q = Quote(MARKET, BID_SIDE, Price("95.42"), 94)
     assert q.price().price() == Decimal("95.42")
     assert q.visible_qty() == 94
     assert q.hidden_qty() == 0
@@ -50,44 +52,44 @@ def test_quote_creation():
 @raises(AssertionError)
 def test_price_does_not_work_for_product():
     # price has to pass the test of being divisible evenly by the product's minimum price increment
-    Quote(PROD, BID_SIDE, Price("94.342"), 94)
+    Quote(MARKET, BID_SIDE, Price("94.342"), 94)
 
 
 @raises(AssertionError)
 def test_visible_qty_not_negative():
-    Quote(PROD, BID_SIDE, Price("94.34"), -3)
+    Quote(MARKET, BID_SIDE, Price("94.34"), -3)
 
 
 @raises(AssertionError)
 def test_visible_qty_not_zero():
-    Quote(PROD, BID_SIDE, Price("94.34"), 0)
+    Quote(MARKET, BID_SIDE, Price("94.34"), 0)
 
 
 @raises(AssertionError)
 def test_hidden_qty_not_negative():
-    Quote(PROD, BID_SIDE, Price("94.34"), 23, -23)
+    Quote(MARKET, BID_SIDE, Price("94.34"), 23, -23)
 
 
 def test_equality():
-    q1 = Quote(PROD, BID_SIDE, Price("95.42"), 94)
-    q2 = Quote(PROD, BID_SIDE, Price("95.42"), 94)
+    q1 = Quote(MARKET, BID_SIDE, Price("95.42"), 94)
+    q2 = Quote(MARKET, BID_SIDE, Price("95.42"), 94)
     assert q1 == q2
 
     q2 = Quote(Product("APPL", "Apple", "0.01", "0.01"), BID_SIDE, Price("95.42"), 94)
     assert q1 != q2
 
-    q2 = Quote(PROD, BID_SIDE, Price("95.43"), 94)
+    q2 = Quote(MARKET, BID_SIDE, Price("95.43"), 94)
     assert q1 != q2
 
-    q2 = Quote(PROD, BID_SIDE, Price("95.42"), 91)
+    q2 = Quote(MARKET, BID_SIDE, Price("95.42"), 91)
     assert q1 != q2
 
-    q2 = Quote(PROD, BID_SIDE, Price("95.42"), 94, 2)
+    q2 = Quote(MARKET, BID_SIDE, Price("95.42"), 94, 2)
     assert q1 != q2
 
-    q2 = Quote(PROD, BID_SIDE, Price("95.42"), 94, 0)
+    q2 = Quote(MARKET, BID_SIDE, Price("95.42"), 94, 0)
     assert q1 == q2
 
-    q1 = Quote(PROD, BID_SIDE, Price("95.42"), 94, 3)
-    q2 = Quote(PROD, BID_SIDE, Price("95.42"), 94, 3)
+    q1 = Quote(MARKET, BID_SIDE, Price("95.42"), 94, 3)
+    q2 = Quote(MARKET, BID_SIDE, Price("95.42"), 94, 3)
     assert q1 == q2
