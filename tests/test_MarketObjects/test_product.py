@@ -84,7 +84,7 @@ def test_equality_identifiers():
     # same identifier exists in both with same value, so should be equal
     prod2.set_identifier("CUSIP", "XTR2302")
     assert prod1 == prod2
-    assert (prod1 <> prod2) is False
+    assert (prod1 != prod2) is False
 
     # same identifier exists in both with different values, then not equal
     prod1.set_identifier("bbid", "asads222")
