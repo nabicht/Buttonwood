@@ -53,22 +53,22 @@ def test_basic_equality():
     prod1 = Product("msft", "mICRoSOFT", Decimal("0.01"), Decimal("0.01"))
     prod2 = Product("MSFT", "Microsoft", Decimal("0.01"), Decimal("0.01"))
     assert prod1 == prod2
-    assert (prod1 <> prod2) is False
+    assert (prod1 != prod2) is False
 
     prod1 = Product("AAPL", "Apple", Decimal("0.01"), Decimal("0.01"))
     prod2 = Product("MSFT", "Microsoft", Decimal("0.01"), Decimal("0.01"))
     assert (prod1 == prod2) is False
-    assert prod1 <> prod2
+    assert prod1 != prod2
 
     prod1 = Product("msft", "mICRoSOFT", Decimal("0.01"), Decimal("0.03"))
     prod2 = Product("MSFT", "Microsoft", Decimal("0.01"), Decimal("0.01"))
     assert (prod1 == prod2) is False
-    assert prod1 <> prod2
+    assert prod1 != prod2
 
     prod1 = Product("msft", "mICRoSOFT", Decimal("0.1"), Decimal("0.01"))
     prod2 = Product("MSFT", "Microsoft", Decimal("0.01"), Decimal("0.01"))
     assert (prod1 == prod2) is False
-    assert prod1 <> prod2
+    assert prod1 != prod2
 
 
 def test_equality_identifiers():
@@ -79,7 +79,7 @@ def test_equality_identifiers():
     prod1.set_identifier("cusip", "XTR2302")
     prod2.set_identifier("BBID", "weq34")
     assert prod1 == prod2
-    assert (prod1 <> prod2) is False
+    assert (prod1 != prod2) is False
 
     # same identifier exists in both with same value, so should be equal
     prod2.set_identifier("CUSIP", "XTR2302")
@@ -89,13 +89,13 @@ def test_equality_identifiers():
     # same identifier exists in both with different values, then not equal
     prod1.set_identifier("bbid", "asads222")
     assert (prod1 == prod2) is False
-    assert prod1 <> prod2
+    assert prod1 != prod2
 
 
 def test_price_validation():
     p = Price("23.455")
     prod = Product("MSFT", "Microsoft", Decimal("0.01"), Decimal("0.01"))
-    assert prod.is_valid_price(p) == False
+    assert prod.is_valid_price(p) is False
 
     p = Price("23.45")
     prod = Product("MSFT", "Microsoft", Decimal("0.005"), Decimal("0.01"))
@@ -107,8 +107,8 @@ def test_price_validation():
 
     p = Price("23.45")
     prod = Product("GEU5", "Eurdollar Sep 2015", Decimal("1"), Decimal("12.50"))
-    assert prod.is_valid_price(p) == False
+    assert prod.is_valid_price(p) is False
 
     p = Price("23.45")
     prod = Product("GEU5", "Eurdollar Sep 2015", Decimal(".45"), Decimal(".45"))
-    assert prod.is_valid_price(p) == False
+    assert prod.is_valid_price(p) is False
