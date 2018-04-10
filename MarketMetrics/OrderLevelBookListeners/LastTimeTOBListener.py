@@ -29,7 +29,7 @@ SOFTWARE.
 
 from MarketPy.MarketObjects.OrderBookListeners.OrderLevelBookListener import OrderLevelBookListener
 from MarketPy.MarketObjects.EventListeners.OrderEventListener import OrderEventListener
-from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand, CancelReplaceCommand
+from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand, CancelReplaceCommand, FullFillReport, AcknowledgementReport
 from MarketPy.MarketObjects.Events.EventChains import OrderEventChain
 
 from MarketPy.utils.dicts import NDeepDict
@@ -79,12 +79,14 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         if event_id not in self._event_id_to_last_time_tob.keys():
             self._event_id_to_last_time_tob[event_id] = self._last_time_was_tob(market, side, price)
 
-    def last_time_tob(self, event_id):
-        last_time_tob = self._event_id_to_last_time_tob.get(event_id)
+    def last_time_was_tob(self, event_id):
+        last_time_tob = self._event_id_to_last_time_tob[event_id]
         return last_time_tob
 
     def last_time_crossed(self, event_id):
-        last_time_crossed = self._event_id_to_last_time_crossed.get(event_id)
+        last_time_crossed = self._event_id_to_last_time_crossed[event_id]
+        if last_time_crossed is not None:
+            del self._event_id_to_last_time_crossed[event_id]
         return last_time_crossed
 
     def notify_book_update(self, order_book, causing_order_chain):
