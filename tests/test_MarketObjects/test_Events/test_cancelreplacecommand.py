@@ -30,17 +30,19 @@ SOFTWARE.
 from nose.tools import *
 
 from MarketPy.MarketObjects.Events.OrderEvents import CancelReplaceCommand
+from MarketPy.MarketObjects.Endpoint import Endpoint
+from MarketPy.MarketObjects.Market import Market
 from MarketPy.MarketObjects.Price import Price
 from MarketPy.MarketObjects.Product import Product
 from MarketPy.MarketObjects.Side import ASK_SIDE
 
-PRODUCT = Product("MSFT", "Microsoft", "0.01", "0.01")
+MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
 
 def test_creation():
-    cr = CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", PRODUCT, ASK_SIDE, Price("23.01"), 234, 2)
+    cr = CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), 234, 2)
     assert cr.event_type_str() == "Cancel Replace Command"
     assert cr.price() == Price("23.01")
-    assert cr.product() == PRODUCT
+    assert cr.market() == MARKET
     assert cr.user_id() == "user_x"
     assert cr.timestamp() == 324893458.324313
     assert cr.event_id() == 12
@@ -49,12 +51,12 @@ def test_creation():
 
 @raises(AssertionError)
 def test_error_on_negative_qty():
-    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", PRODUCT, ASK_SIDE, Price("23.01"), -8, 2)
+    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), -8, 2)
 
 @raises(AssertionError)
 def test_error_on_negative_iceberg_qty():
-    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", PRODUCT, ASK_SIDE, Price("23.01"), 8, -2)
+    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), 8, -2)
 
 @raises(AssertionError)
 def test_error_on_price_not_matching_product():
-    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", PRODUCT, ASK_SIDE, Price("23.001"), 8, -2)
+    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.001"), 8, -2)
