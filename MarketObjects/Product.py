@@ -37,7 +37,7 @@ class Product(object):
   
         A product + an endpoint == a trade-able asset
         :param symbol: str. the common symbol of the product
-        :param name: str. the name of the product (more verbose than product.
+        :param name: str. the name of the product (more verbose than product. This is also the unique hash of the product
         :param min_price_increment: float or int. the smallest increment of the product, also often called a tick.
         :param min_price_increment_value: float or int. the value of the smallest increment the products trades in.
         """
@@ -53,6 +53,7 @@ class Product(object):
         # equality of product ends up getting called pretty frequently so rather than doing a bunch of comparison of a
         #  bunch of getters i'm just going to have one nice tuple and do and do a direct comparison of the tuple
         self._equality_comparitor = (name.lower(), symbol.lower(), self.min_price_increment(), self._min_price_increment_value)
+        self.__hash = hash(name)
 
     def set_identifier(self, id_type, id_name):
         """
@@ -150,6 +151,9 @@ class Product(object):
 
     def __str__(self):
         return "%s %s  {mpi: %s mpiValue: %s}" % (self.symbol(), self.name(), str(self.mpi()), str(self.mpi_value()))
+
+    def __hash__(self):
+        return self.__hash
 
     def to_json(self):
         return {"symbol": self.symbol(), "name": self.name(), "mpi": self.mpi(), "mpi_value": self.mpi_value}
