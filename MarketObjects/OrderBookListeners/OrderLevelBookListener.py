@@ -32,7 +32,7 @@ class OrderLevelBookListener(object):
     def __init__(self, logger):
         self._logger = logger
 
-    def notify_book_update(self, order_book, causing_order_chain):
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
         This is a stub to be filled in by each implementing inheriting class.
 
@@ -41,6 +41,7 @@ class OrderLevelBookListener(object):
 
         :param order_book: MarketStructures.OrderBooks.OrderLevelOrderBook.OrderLevelOrderBook
         :param causing_order_chain: MarketStructures.Events.EventChains.OrderEventChain
+        :param tob_updated: boolean. Whether or not the top of book updated. This is for speed/convenience for the listener.
         """
         raise NotImplemented("notify_book_update to be implemented by inheriting class.")
 

@@ -89,9 +89,13 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
             del self._event_id_to_last_time_crossed[event_id]
         return last_time_crossed
 
-    def notify_book_update(self, order_book, causing_order_chain):
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
+        #FIXME  I think this has a bug. When best price changes last time prev price was best still needs to be updated to current time because it was best time up until the current time
+        #FIXME if the above is correct then I need to update the time for prev best price any time I receive a new message so I always have the most recent time.
         """
         Every time an orderbook comes in, look at the top of book price.
+
+        If TOB didn't change at all then just
 
         If the same as the previous top of book price then we just update that
          price's last TOB time.

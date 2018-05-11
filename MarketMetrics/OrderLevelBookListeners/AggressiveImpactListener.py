@@ -167,7 +167,7 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
         for event in order_chain.events():
             self._market_event_id_aggressive_act.delete([market,event.event_id()])
 
-    def notify_book_update(self, order_book, causing_order_chain):
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         market = order_book.market()
         self._market_to_orderbook[market] = order_book
         remove_set = set()

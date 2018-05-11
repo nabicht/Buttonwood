@@ -306,7 +306,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         self._market_to_event_to_priority.set((market, event_id), value=priority)
         self._market_to_event_to_priority_before.set((market, event_id), value=priority)
 
-    def notify_book_update(self, order_book, causing_order_chain):
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
         All that needs to be done here is save off the most order_book to be used
          when an event listener call back needs it.
