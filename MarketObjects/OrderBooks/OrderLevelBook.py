@@ -260,9 +260,9 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
         """
         return self._listeners.get(listener_id)
 
-    def _notify_listeners(self, order_chain):
+    def _notify_listeners(self, order_chain, tob_updated):
         for listener in self._listeners.itervalues():
-            listener.notify_book_update(self, order_chain)
+            listener.notify_book_update(self, order_chain, tob_updated)
 
     def best_priority_chain(self, side):
         """
@@ -425,23 +425,33 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
         # if orderchain is NOT a FAR then don't do anything
         self._last_update_time = acknowledgement_report.timestamp()
         order_book_updated = False
+        tob_updated = False
         if resulting_order_chain.time_in_force() != TIF.FAR:
             self._logger.error("%s: OrderChain %s Ack %s is a %s, not a FAR. Cannot apply to order book" %
                                (self.name(),
                                 str(acknowledgement_report.chain_id()),
                                 str(acknowledgement_report.event_id()),
                                 TIF.time_in_force_str(resulting_order_chain.time_in_force())))
-            return
-        price_to_level = self._bid_price_to_level if resulting_order_chain.side().is_bid() else self._ask_price_to_level
+            return order_book_updated, tob_updated
+        is_bid = resulting_order_chain.side().is_bid()
+        price_to_level = self._bid_price_to_level if is_bid else self._ask_price_to_level
         # if a new order then just add it
         if isinstance(acknowledgement_report.acknowledged_command(), NewOrderCommand):
+            pre_add_best_price = price_to_level.max_price() if is_bid else price_to_level.min_price()
             if acknowledgement_report.price() not in price_to_level:
                 price_to_level[acknowledgement_report.price()] = TimePriorityOrderLevel(self._logger)
             price_to_level[acknowledgement_report.price()].add_to_level(resulting_order_chain)
+            if is_bid:
+                if acknowledgement_report.price() >= pre_add_best_price:
+                    tob_updated = True
+            else:
+                if acknowledgement_report.price() <= pre_add_best_price:
+                    tob_updated = True
             order_book_updated = True
         else:  # otherwise cancel replace and we need to be more careful
             cr_hist = resulting_order_chain.cancel_replace_information(acknowledgement_report.event_id())
             price = acknowledgement_report.price()
+            pre_cr_best_price = price_to_level.max_price() if is_bid else price_to_level.min_price()
             if cr_hist is None:
                 self._logger.error(
                     "%s: OrderChain %s Cannot apply ack of cancel replace %s. No cancel replace history." %
@@ -450,18 +460,28 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                      str(acknowledgement_report.event_id())))
             elif cr_hist.is_price_change():
                 # on price changes remove from old price and apply to new price.
+                prev_exposure_price = cr_hist.previous_exposure().price()
+                new_exposure_price = cr_hist.new_exposure().price()
                 self._logger.debug("%s: OrderChain %s Cancel Replace Ack %s. From %s to %s." %
                                    (self.name(),
                                     str(acknowledgement_report.chain_id()),
                                     str(acknowledgement_report.event_id()),
-                                    str(cr_hist.previous_exposure().price()),
-                                    str(cr_hist.new_exposure().price())))
-                price_to_level[cr_hist.previous_exposure().price()].remove_from_level(resulting_order_chain)
-                if len(price_to_level[cr_hist.previous_exposure().price()]) == 0:
-                    del price_to_level[cr_hist.previous_exposure().price()]
-                if cr_hist.new_exposure().price() not in price_to_level:
-                    price_to_level[cr_hist.new_exposure().price()] = TimePriorityOrderLevel(self._logger)
-                price_to_level[cr_hist.new_exposure().price()].add_to_level(resulting_order_chain)
+                                    str(prev_exposure_price),
+                                    str(new_exposure_price)))
+                price_to_level[prev_exposure_price].remove_from_level(resulting_order_chain)
+                if prev_exposure_price == pre_cr_best_price:
+                    tob_updated = True
+                if len(price_to_level[prev_exposure_price]) == 0:
+                    del price_to_level[prev_exposure_price]
+                if new_exposure_price not in price_to_level:
+                    price_to_level[new_exposure_price] = TimePriorityOrderLevel(self._logger)
+                price_to_level[new_exposure_price].add_to_level(resulting_order_chain)
+                if is_bid:
+                    if new_exposure_price >= pre_cr_best_price:
+                        tob_updated = True
+                else:
+                    if new_exposure_price <= pre_cr_best_price:
+                        tob_updated = True
                 order_book_updated = True
             elif cr_hist.is_qty_increase():
                 # increased qty means move the back of the line, so remove from the price and then add back to the price
@@ -476,6 +496,8 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                 if price not in price_to_level:
                     price_to_level[price] = TimePriorityOrderLevel(self._logger)
                 price_to_level[price].add_to_level(resulting_order_chain)
+                if price == pre_cr_best_price:
+                    tob_updated = True
                 order_book_updated = True
             elif cr_hist.is_qty_decrease():
                 if acknowledgement_report.qty() == 0:
@@ -488,6 +510,9 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                          cr_hist.new_exposure().qty(),
                          str(price)))
                     price_to_level[acknowledgement_report.price()].remove_from_level(resulting_order_chain)
+                    # TODO don't I need to delete level if now nothing?
+                    if price == pre_cr_best_price:
+                        tob_updated = True
                     order_book_updated = True
                 else:
                     self._logger.debug(
@@ -500,30 +525,36 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                          str(price)))
                     # need to force the dirty flag at the price level
                     price_to_level[price].force_dirty()
+                    if price == pre_cr_best_price:
+                        tob_updated = True
                     order_book_updated = True
         if order_book_updated:
-            self._notify_listeners(resulting_order_chain)
-        return order_book_updated
+            self._notify_listeners(resulting_order_chain, tob_updated)
+        return order_book_updated, tob_updated
 
     def handle_partial_fill_report(self, partial_fill_report, resulting_order_chain):
         # only need to updat the orderbook if a passive fill, if its the
         #  aggressive fill then it shouldn't be in the order book so the fill
         #  doesn't impact the order book
         self._last_update_time = partial_fill_report.timestamp()
+        is_bid = resulting_order_chain.side().is_bid()
         price_to_level = self._bid_price_to_level if resulting_order_chain.side().is_bid() else self._ask_price_to_level
+        pre_fill_best_price = price_to_level.max_price() if is_bid else price_to_level.min_price()
         order_book_updated = False
+        tob_updated = False
         if not partial_fill_report.is_aggressor():
             if resulting_order_chain.visible_qty() > 0:
+                price = resulting_order_chain.current_price()
                 self._logger.debug("%s: OrderChain %s Partial Fill %s. Updated exposure %d (%d) @ %s." %
                                    (self.name(),
                                     str(partial_fill_report.chain_id()),
                                     str(partial_fill_report.event_id()),
                                     resulting_order_chain.visible_qty(),
                                     resulting_order_chain.hidden_qty(),
-                                    str(resulting_order_chain.current_price())))
+                                    str(price)))
                 # a partial fill might not result in any modification of the level, but requires that visible/hidden be
                 #  recalculated so force the dirty flag
-                price_to_level[resulting_order_chain.current_price()].force_dirty()
+                price_to_level[price].force_dirty()
                 # if the visible qty replenished from hidden reserve then need to move to back of line
                 if resulting_order_chain.caused_visible_qty_refresh(partial_fill_report.event_id()):
                     self._logger.debug(
@@ -531,12 +562,19 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                         (self.name(),
                          str(partial_fill_report.chain_id()),
                          str(partial_fill_report.event_id())))
-                    price_to_level[resulting_order_chain.current_price()].remove_from_level(resulting_order_chain)
-                    if resulting_order_chain.current_price() not in price_to_level:
-                        price_to_level[resulting_order_chain.current_price()] = TimePriorityOrderLevel(self._logger)
-                    price_to_level[resulting_order_chain.current_price()].add_to_level(resulting_order_chain)
+                    price_to_level[price].remove_from_level(resulting_order_chain)
+                    if price not in price_to_level:
+                        price_to_level[price] = TimePriorityOrderLevel(self._logger)
+                    price_to_level[price].add_to_level(resulting_order_chain)
                     order_book_updated = True
+                    if is_bid:
+                        if price >= pre_fill_best_price:
+                            tob_updated = True
+                    else:
+                        if price <= pre_fill_best_price:
+                            tob_updated = True
             else:
+                price = partial_fill_report.fill_price()
                 self._logger.error(
                     "%s: OrderChain %s Partial Fill %s. Resulted in no visible qty %d (%d) @ %s. Removing from order book." %
                     (self.name(),
@@ -544,38 +582,46 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                      str(partial_fill_report.event_id()),
                      resulting_order_chain.visible_qty(),
                      resulting_order_chain.hidden_qty(),
-                     str(partial_fill_report.fill_price())))
-                if price_to_level[partial_fill_report.fill_price()].has_order_chain(partial_fill_report.chain_id()):
-                    price_to_level[partial_fill_report.fill_price()].remove_from_level(resulting_order_chain)
+                     str(price)))
+                if price_to_level[price].has_order_chain(partial_fill_report.chain_id()):
+                    price_to_level[price].remove_from_level(resulting_order_chain)
                 else:
                     self._logger.error(
                         "%s: OrderChain %s Partial Fill %s. OrderChain not at price @ %s. Cannot remove from OrderBook." %
                         (self.name(),
                          str(partial_fill_report.chain_id()),
                          str(partial_fill_report.event_id()),
-                         str(partial_fill_report.fill_price())))
-                if len(price_to_level[partial_fill_report.fill_price()].order_chains()) == 0:
-                    del price_to_level[partial_fill_report.fill_price()]
+                         str(price)))
+                if len(price_to_level[price].order_chains()) == 0:
+                    del price_to_level[price]
                 order_book_updated = True
+                if price == pre_fill_best_price:
+                    tob_updated = True
         if order_book_updated:
-            self._notify_listeners(resulting_order_chain)
-        return order_book_updated
+            self._notify_listeners(resulting_order_chain, tob_updated)
+        return order_book_updated, tob_updated
 
     def handle_full_fill_report(self, full_fill_report, resulting_order_chain):
         self._last_update_time = full_fill_report.timestamp()
-        price_to_level = self._bid_price_to_level if resulting_order_chain.side().is_bid() else self._ask_price_to_level
+        is_bid = resulting_order_chain.side().is_bid()
+        price_to_level = self._bid_price_to_level if is_bid else self._ask_price_to_level
+        pre_fill_best_price = price_to_level.max_price() if is_bid else price_to_level.min_price()
         order_book_updated = False
+        tob_updated = False
         if not full_fill_report.is_aggressor():
+            fill_price = full_fill_report.fill_price()
             self._logger.debug("%s: OrderChain %s Full Fill %s. Removing order from price %s." %
                                (self.name(),
                                 str(full_fill_report.chain_id()),
                                 str(full_fill_report.event_id()),
-                                str(full_fill_report.fill_price())))
-            if price_to_level[full_fill_report.fill_price()].has_order_chain(full_fill_report.chain_id()):
-                price_to_level[full_fill_report.fill_price()].remove_from_level(resulting_order_chain)
+                                str(fill_price)))
+            if price_to_level[fill_price].has_order_chain(full_fill_report.chain_id()):
+                price_to_level[fill_price].remove_from_level(resulting_order_chain)
                 order_book_updated = True
-                if len(price_to_level[full_fill_report.fill_price()].order_chains()) == 0:
-                    del price_to_level[full_fill_report.fill_price()]
+                if fill_price == pre_fill_best_price:
+                    tob_updated = True
+                if len(price_to_level[fill_price].order_chains()) == 0:
+                    del price_to_level[fill_price]
             else:
                 self._logger.error(
                     "%s: OrderChain %s Full Fill %s. OrderChain not at price @ %s. Cannot remove from OrderBook." %
@@ -586,33 +632,42 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
         else:  # if it is the full fill then if there was an ack, we need to remove from that ack, as full fill comes from cancel replace to new price
             last_ack = resulting_order_chain.last_acknowledgement()
             if last_ack is not None:
-                price_to_level[last_ack.price()].remove_from_level(resulting_order_chain)
+                price = last_ack.price()
+                price_to_level[price].remove_from_level(resulting_order_chain)
                 order_book_updated = True
-                if len(price_to_level[last_ack.price()].order_chains()) == 0:
-                    del price_to_level[last_ack.price()]
+                if price == pre_fill_best_price:
+                    tob_updated = True
+                if len(price_to_level[price].order_chains()) == 0:
+                    del price_to_level[price]
 
         # if the order book has updated, we need to notify the listeners that a change occurred
         if order_book_updated:
-            self._notify_listeners(resulting_order_chain)
+            self._notify_listeners(resulting_order_chain, tob_updated)
 
-        return order_book_updated
+        return order_book_updated, tob_updated
 
     def handle_cancel_report(self, cancel_report, resulting_order_chain):
         self._last_update_time = cancel_report.timestamp()
-        price_to_level = self._bid_price_to_level if resulting_order_chain.side().is_bid() else self._ask_price_to_level
+        is_bid = resulting_order_chain.side().is_bid()
+        price_to_level = self._bid_price_to_level if is_bid else self._ask_price_to_level
+        pre_cancel_best_price = price_to_level.max_price() if is_bid else price_to_level.min_price()
         order_book_updated = False
+        tob_updated = False
         # remove it from the price at the time of close if it is a FAR and if it has been ack'd
         if resulting_order_chain.is_far() and resulting_order_chain.has_acknowledgement():
-            level = price_to_level.get(resulting_order_chain.price_at_close())
+            price = resulting_order_chain.price_at_close()
+            level = price_to_level.get(price)
             if level.has_order_chain(resulting_order_chain.chain_id()):
                 level.remove_from_level(resulting_order_chain)
                 self._logger.debug("%s: OrderChain %s Cancel Confirm %s. Removed from %s." %
                                    (self.name(),
                                     str(cancel_report.chain_id()),
                                     str(cancel_report.event_id()),
-                                    str(resulting_order_chain.price_at_close())))
-                if len(price_to_level[resulting_order_chain.price_at_close()].order_chains()) == 0:
-                    del price_to_level[resulting_order_chain.price_at_close()]
+                                    str(price)))
+                if len(price_to_level[price].order_chains()) == 0:
+                    del price_to_level[price]
+                if price == pre_cancel_best_price:
+                    tob_updated = True
                 order_book_updated = True
             else:
                 # go through all other prices on side and see if there, if so then remove it
@@ -634,6 +689,8 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                         if len(price_to_level[price].order_chains()) == 0:
                             del price_to_level[price]
                         order_book_updated = True
+                        if price == pre_cancel_best_price:
+                            tob_updated = True
                         break
         if not order_book_updated:
             # no there was never an ack then no need to log, cancelled before ever resting.
@@ -645,8 +702,8 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                      str(cancel_report.event_id()),
                      str(resulting_order_chain.price_at_close())))
         else:
-            self._notify_listeners(resulting_order_chain)
-        return order_book_updated
+            self._notify_listeners(resulting_order_chain, tob_updated)
+        return order_book_updated, tob_updated
 
     # TODO add handle_chain_close() and delete order if it is still in order book
     # If it was still in the order book that's a problem.

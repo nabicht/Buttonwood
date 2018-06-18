@@ -45,17 +45,15 @@ class TopOfBookBeforeEventListener(OrderLevelBookListener):
         self._event_id_to_tob = {}
         self._market_to_previous_tob = {}
 
-    def notify_book_update(self, order_book, causing_order_chain):
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         # set the event to the previous tob
         market = order_book.market()
         tob = self._market_to_previous_tob.get(market)
         event_id = causing_order_chain.most_recent_event().event_id()
         self._event_id_to_tob[event_id] = tob
-
-        # set the previous tob to the new tob
-
-        self._market_to_previous_tob[market] = (order_book.best_level(BID_SIDE),
-                                                order_book.best_level(ASK_SIDE))
+        # set the previous tob to the new tob (but only do it if TOB changed
+        if tob_updated:
+            self._market_to_previous_tob[market] = (order_book.best_level(BID_SIDE), order_book.best_level(ASK_SIDE))
 
     def clean_up_order_chain(self, order_chain):
         for event in order_chain.events():
@@ -79,6 +77,8 @@ class TopOfBookAfterEventListener(OrderLevelBookListener):
     """
     Tracks top of book after an event for the market the event occurred in. Keeps track in dict of 
       event_id -> (PriceLevel, PriceLevel), where the first PriceLevel is the bid and second is the ask
+
+      if event does not impact the book it doesn't end up getting tracked.
     """
 
     # TODO UNIT TEST
@@ -86,8 +86,7 @@ class TopOfBookAfterEventListener(OrderLevelBookListener):
         OrderLevelBookListener.__init__(self, logger)
         self._event_id_to_tob = {}
 
-    def notify_book_update(self, order_book, causing_order_chain):
-        # set the event to the previous tob
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         event_id = causing_order_chain.most_recent_event().event_id()
         # print type(causing_order_chain.most_recent_event())
         self._event_id_to_tob[event_id] = (order_book.best_level(BID_SIDE), order_book.best_level(ASK_SIDE))

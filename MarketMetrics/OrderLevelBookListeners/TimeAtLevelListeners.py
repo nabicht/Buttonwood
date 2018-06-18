@@ -38,7 +38,7 @@ class SubchainTimeAtTopPriorityListener(OrderLevelBookListener):
         self._market_to_subchain_id_to_time = NDeepDict(depth=2, default_value=list)
         self._market_to_side_to_prev_tob_subchain_id = NDeepDict(depth=2, default_value=lambda: None)
 
-    def notify_book_update(self, order_book, causing_order_chain):
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
         every time an order book updates, for the side of the causing order chain check the top priority subchain and
          track the amount of time that subchain is at top priority.
@@ -144,7 +144,7 @@ class SubchainTimeAtTOBListener(OrderLevelBookListener):
         self._market_to_subchain_id_to_time = NDeepDict(depth=2, default_value=list) # this a list of tuples (start_time, end_time)
         self._market_to_side_to_prev_tob_subchain_ids = NDeepDict(depth=2, default_value=set)
 
-    def notify_book_update(self, order_book, causing_order_chain):
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
         Every time an orderbook comes in, look at the top of book subchains. Only need to do it for the side that is 
          updating.

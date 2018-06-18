@@ -42,9 +42,12 @@ class CrossedBookListener(OrderLevelBookListener):
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
 
-    def notify_book_update(self, order_book, causing_order_chain):
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
         only time it makes sense to look for crossed books is after an ack, so only doing that.
+
+        we care about more than just TOB updated scenarios because of the possibility of multiple levels crossing and
+          this is a rather unsophisticated listener.
         """
         if isinstance(causing_order_chain.most_recent_event(), AcknowledgementReport):
             best_bid_price = order_book.best_bid_price()

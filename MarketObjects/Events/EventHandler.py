@@ -203,13 +203,13 @@ class OrderEventHandler:
                                         orderbook_id))
                     order_book_updated = False
                     if isinstance(event, AcknowledgementReport):
-                        order_book_updated = orderbook.handle_acknowledgement_report(event, order_chain)
+                        order_book_updated, tob_updated = orderbook.handle_acknowledgement_report(event, order_chain)
                     elif isinstance(event, CancelReport):
-                        order_book_updated = orderbook.handle_cancel_report(event, order_chain)
+                        order_book_updated, tob_updated = orderbook.handle_cancel_report(event, order_chain)
                     elif isinstance(event, PartialFillReport):
-                        order_book_updated = orderbook.handle_partial_fill_report(event, order_chain)
+                        order_book_updated, tob_updated = orderbook.handle_partial_fill_report(event, order_chain)
                     elif isinstance(event, FullFillReport):
-                        order_book_updated = orderbook.handle_full_fill_report(event, order_chain)
+                        order_book_updated, tob_updated = orderbook.handle_full_fill_report(event, order_chain)
                     else:
                         self._logger.warning("%s: don't know how to handle %s when applying to order book." %
                                              (self.__class__.__name__, event.__class__.__name__))
