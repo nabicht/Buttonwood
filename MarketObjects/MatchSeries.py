@@ -180,6 +180,16 @@ class MatchSeries:
             self._price_qty_sanity_check()
         return self._agg_price_to_qty.keys()
 
+    def average_price(self, sanity_check=True):
+        if sanity_check:
+            self._price_qty_sanity_check()
+        total_qty = 0
+        price_weighted_qty = 0.0
+        for price, qty in self._agg_price_to_qty:
+            total_qty += qty
+            price_weighted_qty += (price * qty)
+        return price_weighted_qty / total_qty
+
     def price_in_series(self, price, sanity_check=True):
         if sanity_check:
             self._price_qty_sanity_check()
