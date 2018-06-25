@@ -53,8 +53,9 @@ class MarketOrderTicksFromCrossing(OrderLevelBookListener, OrderEventListener):
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
         self._market_chain_id_ticks = NDeepDict(2)
-        self._market_bid_tob = defaultdict()
-        self._market_ask_tob = defaultdict()
+        self._market_side_tob = {}
+        self._market_side_tob[BID_SIDE] = defaultdict()
+        self._market_side_tob[ASK_SIDE] = defaultdict()
 
     def handle_new_order_command(self, new_order_command, resulting_order_chain):
         # only applies to new order commands
@@ -63,18 +64,19 @@ class MarketOrderTicksFromCrossing(OrderLevelBookListener, OrderEventListener):
             price = new_order_command.price()
             market = new_order_command.market()
             mpi = market.product().mpi()
-            opp_price = self._market_bid_tob[market] if side.is_ask() else self._market_ask_tob[market]
+            opp_price = self._market_side_tob[market][side.other_side()]
             ticks_away = ((opp_price - price) if side.is_bid() else (price - opp_price)) / mpi
             self._market_chain_id_ticks.set([market, new_order_command.chain_id()], value=ticks_away)
 
-    def notify_book_update(self, order_book, causing_order_chain):
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
-        Every time an orderbook comes in need to save the bid price and the ask
-         price
+        Every time an orderbook comes in and tob updated need to save the bid price and the ask
+         price. And only need to update for the side that is being updated.
         """
-        market = order_book.market()
-        self._market_bid_tob[market] = order_book.best_price(BID_SIDE)
-        self._market_ask_tob[market] = order_book.best_price(ASK_SIDE)
+        if tob_updated:
+            market = order_book.market()
+            side = causing_order_chain.side()
+            self._market_side_tob[market][side] = order_book.best_price(side)
 
     def ticks_from_crossing(self, market, chain_id):
         """
