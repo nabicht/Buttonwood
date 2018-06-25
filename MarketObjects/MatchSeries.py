@@ -185,9 +185,9 @@ class MatchSeries:
             self._price_qty_sanity_check()
         total_qty = 0
         price_weighted_qty = 0.0
-        for price, qty in self._agg_price_to_qty:
+        for price, qty in self._agg_price_to_qty.iteritems():
             total_qty += qty
-            price_weighted_qty += (price * qty)
+            price_weighted_qty += float(price * qty)
         return price_weighted_qty / total_qty
 
     def price_in_series(self, price, sanity_check=True):
