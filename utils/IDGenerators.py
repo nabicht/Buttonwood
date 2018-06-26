@@ -28,6 +28,7 @@ SOFTWARE.
 """
 
 import sys
+import random
 
 
 class IDGenerator:
@@ -84,3 +85,29 @@ class MonotonicIntID(IDGenerator):
 
     def increment(self):
         return self._increment
+
+
+class RandomPositiveIntID(IDGenerator):
+
+    def __init__(self, floor=1, ceiling=sys.maxint, attempts=20000):
+        assert isinstance(floor, int)
+        assert isinstance(ceiling, int)
+        assert ceiling > floor
+        IDGenerator.__init__(self)
+        self._floor = floor
+        self._ceiling = ceiling
+        self._attempts = attempts
+        self._ids = set()
+        self._id_count = 0 # should be cheaper to do this then do len over and over again
+        self._max_id_count = ceiling - floor + 1
+
+    def id(self):
+        if self._id_count >= self._max_id_count:
+            raise Exception("%d IDs distributed. All possible IDs have been used." % self._id_count)
+        for x in xrange(1, self._attempts):
+            x = random.randint(self._floor, self._ceiling)
+            if x not in self._ids:
+                self._ids.add(x)
+                self._id_count += 1
+                return x
+        raise Exception("%d attempts at generating an ID. You need a bigger ID universe or to allow for more attempts" % self._attempts)
