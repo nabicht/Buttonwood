@@ -51,6 +51,9 @@ class MatchSeriesTracker(OrderEventListener):
             series.add_fill(fill)
             self._fill_event_id_to_series[fill.event_id()] = series
 
+    def match_ids(self):
+        return self._id_to_series.keys()
+
     def handle_partial_fill_report(self, partial_fill_report, resulting_order_chain):
         self._handle_fill(partial_fill_report)
 
