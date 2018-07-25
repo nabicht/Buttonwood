@@ -31,6 +31,8 @@ from MarketPy.MarketObjects.OrderBookListeners.OrderLevelBookListener import Ord
 from MarketPy.MarketObjects.EventListeners.OrderEventListener import OrderEventListener
 from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand, CancelReplaceCommand, FullFillReport, AcknowledgementReport
 from MarketPy.MarketObjects.Events.EventChains import OrderEventChain
+from MarketPy.MarketObjects.Side import ASK_SIDE
+from MarketPy.MarketObjects.Side import BID_SIDE
 
 from MarketPy.utils.dicts import NDeepDict
 import operator
@@ -57,10 +59,20 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         self._event_id_to_last_time_crossed = dict()
         self._event_id_to_last_time_tob = dict()
 
+    def _update_based_on_new_event(self, market, time):
+        for side in [BID_SIDE, ASK_SIDE]:
+            # TODO could also loop over every market if we needed to do so here but that impacts performance for what I think is minimal gain
+            prev_best_price = self._market_to_side_prev_price.get((market, side))
+            if prev_best_price is not None:
+                self._market_side_price_time.set((market, side, prev_best_price), value=time)
+
+
     def handle_new_order_command(self, new_order_command, resulting_order_chain):
         assert isinstance(new_order_command, NewOrderCommand)
         event_id = new_order_command.event_id()
         market = new_order_command.market()
+        time = new_order_command.timestamp()
+        self._update_based_on_new_event(market, time)
         price = new_order_command.price()
         side = new_order_command.side()
         if event_id not in self._event_id_to_last_time_crossed.keys():
@@ -72,6 +84,8 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         assert isinstance(cancel_replace_command, CancelReplaceCommand)
         event_id = cancel_replace_command.event_id()
         market = cancel_replace_command.market()
+        time = cancel_replace_command.timestamp()
+        self._update_based_on_new_event(market, time)
         price = cancel_replace_command.price()
         side = cancel_replace_command.side()
         if event_id not in self._event_id_to_last_time_crossed.keys():
