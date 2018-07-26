@@ -29,7 +29,7 @@ SOFTWARE.
 
 from MarketPy.MarketObjects.OrderBookListeners.OrderLevelBookListener import OrderLevelBookListener
 from MarketPy.MarketObjects.EventListeners.OrderEventListener import OrderEventListener
-from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand, CancelReplaceCommand, FullFillReport, AcknowledgementReport
+from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand, CancelReplaceCommand
 from MarketPy.MarketObjects.Events.EventChains import OrderEventChain
 from MarketPy.MarketObjects.Side import ASK_SIDE
 from MarketPy.MarketObjects.Side import BID_SIDE
@@ -65,7 +65,6 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
             prev_best_price = self._market_to_side_prev_price.get((market, side))
             if prev_best_price is not None:
                 self._market_side_price_time.set((market, side, prev_best_price), value=time)
-
 
     def handle_new_order_command(self, new_order_command, resulting_order_chain):
         assert isinstance(new_order_command, NewOrderCommand)
@@ -173,7 +172,7 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
 
             resting_prices_to_time = self._market_side_price_time.get((market, resting_side))
 
-            #sort list based on time, where most recent time (highest number) is first
+            # sort list based on time, where most recent time (highest number) is first
             sorted_x = sorted(resting_prices_to_time.items(), key=operator.itemgetter(1), reverse=True)
             for x in sorted_x:
                 if price.better_or_same_as(x[0], side):
