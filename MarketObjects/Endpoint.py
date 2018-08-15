@@ -52,7 +52,7 @@ class Endpoint(object):
         assert abbreviation is None or isinstance(abbreviation, str)
         self._name = name
         self._abbr = abbreviation if abbreviation is None else name
-        self._hash = hash(name)
+        self.__hash = hash(name)
 
     def name(self):
         """
@@ -81,3 +81,6 @@ class Endpoint(object):
 
     def to_json(self):
         return {"name": self.name(), "abbreviation": self.abbreviation()}
+
+    def __hash__(self):
+        return self.__hash
