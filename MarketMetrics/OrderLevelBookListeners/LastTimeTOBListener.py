@@ -74,9 +74,9 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         self._update_based_on_new_event(market, time)
         price = new_order_command.price()
         side = new_order_command.side()
-        if event_id not in self._event_id_to_last_time_crossed.keys():
+        if event_id not in self._event_id_to_last_time_crossed:
             self._event_id_to_last_time_crossed[event_id] = self._last_time_crossed(market, side, price)
-        if event_id not in self._event_id_to_last_time_tob.keys():
+        if event_id not in self._event_id_to_last_time_tob:
             self._event_id_to_last_time_tob[event_id] = self._last_time_was_tob(market, side, price)
 
     def handle_cancel_replace_command(self, cancel_replace_command, resulting_order_chain):
@@ -87,9 +87,9 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         self._update_based_on_new_event(market, time)
         price = cancel_replace_command.price()
         side = cancel_replace_command.side()
-        if event_id not in self._event_id_to_last_time_crossed.keys():
+        if event_id not in self._event_id_to_last_time_crossed:
             self._event_id_to_last_time_crossed[event_id] = self._last_time_crossed(market, side, price)
-        if event_id not in self._event_id_to_last_time_tob.keys():
+        if event_id not in self._event_id_to_last_time_tob:
             self._event_id_to_last_time_tob[event_id] = self._last_time_was_tob(market, side, price)
 
     def last_time_was_tob(self, event_id):
