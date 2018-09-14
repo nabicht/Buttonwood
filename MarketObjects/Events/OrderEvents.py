@@ -136,6 +136,16 @@ class OrderEvent(BasicEvent):
         """
         return self._other_key_values
 
+    def _other_values_json(self):
+        d = {}
+        if self._other_key_values is not None:
+            for key, value in self._other_key_values.iteritems():
+                if hasattr(value, '__dict__'):  # cheap hack to figure out if a primative or not
+                    d[str(key)] = str(value)
+                else:
+                    d[str(key)] = value
+        return d
+
 
 class OrderCommand(OrderEvent):
     """
@@ -275,7 +285,7 @@ class NewOrderCommand(OrderCommand):
                                           'iceberg_peak_qty': self.iceberg_peak_qty(),
                                           'time_in_force': OrderEventConstants.TIME_IN_FORCE_STRINGS[
                                               self.time_in_force()],
-                                          'other_key_values': {} if self._other_key_values is None else self._other_key_values}}
+                                          'other_key_values': self._other_values_json()}}
 
 
 class CancelReplaceCommand(OrderCommand):
@@ -346,7 +356,7 @@ class CancelReplaceCommand(OrderCommand):
                                           'price': str(self.price()),
                                           'qty': self.qty(),
                                           'iceberg_peak_qty': self.iceberg_peak_qty(),
-                                          'other_key_values': {} if self._other_key_values is None else self._other_key_values}}
+                                          'other_key_values': self._other_values_json()}}
 
 
 class CancelCommand(OrderCommand):
@@ -391,7 +401,7 @@ class CancelCommand(OrderCommand):
                                           'endpoint_name': self.market().endpoint().name(),
                                           'cancel_type': self.cancel_type(),
                                           'cancel_type_str': self.cancel_type_str(),
-                                          'other_key_values': {} if self._other_key_values is None else self._other_key_values}}
+                                          'other_key_values': self._other_values_json()}}
 
 
 class ExecutionReport(OrderEvent):
@@ -501,7 +511,7 @@ class AcknowledgementReport(ExecutionReport):
                                           'price': str(self.price()),
                                           'qty': self.qty(),
                                           'iceberg_peak_qty': self.iceberg_peak_qty(),
-                                          'other_key_values': {} if self._other_key_values is None else self._other_key_values}}
+                                          'other_key_values': self._other_values_json()}}
 
 
 class RejectReport(ExecutionReport):
@@ -558,7 +568,7 @@ class RejectReport(ExecutionReport):
                                           'reject_reason': self.reject_reason(),
                                           'reject_reason_str': self.reject_reason_str(),
                                           'response_to_command': self.causing_command().to_json(),
-                                          'other_key_values': {} if self._other_key_values is None else self._other_key_values}}
+                                          'other_key_values': self._other_values_json()}}
 
 
 class CancelReport(ExecutionReport):
@@ -615,7 +625,7 @@ class CancelReport(ExecutionReport):
                                           'cancel_reason': self.cancel_reason(),
                                           'cancel_reason_str': self.cancel_reason_str(),
                                           'cancel_command': "None" if self.causing_command() is None else self.cancel_command().to_json(),
-                                          'other_key_values': {} if self._other_key_values is None else self._other_key_values}}
+                                          'other_key_values': self._other_values_json()}}
 
 
 class FillReport(ExecutionReport):
@@ -702,7 +712,7 @@ class FillReport(ExecutionReport):
                                           'fill_qty': self.fill_qty(),
                                           'match_id': self.match_id(),
                                           'aggressing_command': self.aggressing_command().to_json(),
-                                          'other_key_values': {} if self._other_key_values is None else self._other_key_values}}
+                                          'other_key_values': self._other_values_json()}}
 
 
 class PartialFillReport(FillReport):
@@ -743,7 +753,7 @@ class PartialFillReport(FillReport):
                                           'match_id': self.match_id(),
                                           'leaves_qty': self.leaves_qty(),
                                           'aggressing_command': self.aggressing_command().to_json(),
-                                          'other_key_values': {} if self._other_key_values is None else self._other_key_values}}
+                                          'other_key_values': self._other_values_json()}}
 
 
 class FullFillReport(FillReport):

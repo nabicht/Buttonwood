@@ -603,7 +603,8 @@ class OrderEventChain(object):
     def __str__(self):
         l = []
         for event in self._events:
-            l.append(event.to_json())
+            event_json = event.to_json()
+            l.append(event_json)
         s = json.dumps(l)
         s += "\n%s: %s %s %s %d (%d) @ %s" % \
              (str(self.chain_id()), self.user_id(), str(self.market()), self.side(), self.visible_qty(),
