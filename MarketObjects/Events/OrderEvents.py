@@ -140,7 +140,9 @@ class OrderEvent(BasicEvent):
         d = {}
         if self._other_key_values is not None:
             for key, value in self._other_key_values.iteritems():
-                if hasattr(value, '__dict__'):  # cheap hack to figure out if a primative or not
+                if isinstance(value, Market):
+                    d[str(key)] = value.to_json()
+                elif hasattr(value, '__dict__'):  # cheap hack to figure out if a primative or not
                     d[str(key)] = str(value)
                 else:
                     d[str(key)] = value
