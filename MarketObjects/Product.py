@@ -156,4 +156,4 @@ class Product(object):
         return self.__hash
 
     def to_json(self):
-        return {"symbol": self.symbol(), "name": self.name(), "mpi": self.mpi(), "mpi_value": self.mpi_value}
+        return {"symbol": self.symbol(), "name": self.name(), "mpi": str(self.mpi()), "mpi_value": str(self.mpi_value())}
