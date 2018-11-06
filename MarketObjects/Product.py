@@ -52,7 +52,7 @@ class Product(object):
         self._identifiers = {}  # used to store different identifiers, like CUSIP, bloomberg universal ID, etc.
         # equality of product ends up getting called pretty frequently so rather than doing a bunch of comparison of a
         #  bunch of getters i'm just going to have one nice tuple and do and do a direct comparison of the tuple
-        self._equality_comparitor = (name.lower(), symbol.lower(), self.min_price_increment(), self._min_price_increment_value)
+        self._equality_comparitor = (name.lower(), symbol.lower())
         self.__hash = hash(name)
 
     def set_identifier(self, id_type, id_name):
