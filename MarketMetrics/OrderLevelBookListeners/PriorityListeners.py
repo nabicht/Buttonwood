@@ -167,6 +167,18 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
                                                   ignore_hidden=True)
                 return Priority(ticks_from_tob, ticks_from_opposite_tob, qty_ahead)
 
+    def _best_price(self, order_book, side, order_chain_ids):
+        prices = order_book.prices(side)
+        best_price = None
+        for price in prices:
+            for order_chain in order_book.iter_order_chains_at_price(side, price):
+                if order_chain.chain_id() not in order_chain_ids:
+                    best_price = price
+                    break
+            if best_price is not None:
+                break
+        return best_price
+
     def _calculate_priority_in_book(self, order_chain):
         """
         Calculate the priority when is in the book already.
@@ -187,7 +199,8 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             if opposite_best_price is not None:  # if it is None then ticks from opposite is None
                 ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, market.product())
 
-            best_price = order_book.best_price(side)
+            # in getting best price, ignore the same order chain so it doesn't factor in with cancel-replace back off of top of book.
+            best_price = self._best_price(order_book, side, {order_chain.chain_id()})
             # if the best price is None then it is best priority and only need distance from opposite side of book
             if best_price is None:
                 return Priority(0, ticks_from_opposite_tob, 0)
