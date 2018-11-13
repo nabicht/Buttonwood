@@ -153,7 +153,8 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             if opposite_best_price is not None:  # if it is None then ticks from opposite is None
                 ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, market.product())
 
-            best_price = order_book.best_price(side)
+            #best_price = order_book.best_price(side)
+            best_price = self._best_price(order_book, side, ignore_order_ids)
             # if the best price is None then it is best priority and only need distance from opposite side of book
             if best_price is None:
                 return Priority(0, ticks_from_opposite_tob, 0)
