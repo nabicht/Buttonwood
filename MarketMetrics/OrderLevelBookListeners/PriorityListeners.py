@@ -201,7 +201,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
                 ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, market.product())
 
             # in getting best price, ignore the same order chain so it doesn't factor in with cancel-replace back off of top of book.
-            best_price = self._best_price(order_book, side, {order_chain.chain_id()})
+            best_price = order_book.best_price(side)
             # if the best price is None then it is best priority and only need distance from opposite side of book
             if best_price is None:
                 return Priority(0, ticks_from_opposite_tob, 0)

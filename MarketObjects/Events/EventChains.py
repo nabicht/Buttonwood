@@ -252,10 +252,6 @@ class OrderEventChain(object):
         Since matching engines do not typically track subchains or uniquely identify them, unique identifers have to
          be applied here. The passed in instance of IDGenerator will do this creation of IDs.
 
-        WARNING: Subchains are created on the command, not the acknowledgement. If a new subchain is created and then
-         there is a reject rather than an acknowledgement and the next command would not create a new subchain, this
-         situation is not handled well at all.
-
         :param new_order_command: MarketObjects.Events.OrderEvents.NewOrderCommand. NewOrderCommand that starts the chain.
         :param logger: logger.
         :param subchain_id_generator: the IDGenerator to be used for creating subchain_IDs
