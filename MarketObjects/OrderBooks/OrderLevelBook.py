@@ -31,12 +31,13 @@ from collections import OrderedDict
 from MarketPy.MarketObjects.EventListeners.OrderEventListener import OrderEventListener
 from MarketPy.MarketObjects.Events import OrderEventConstants as TIF
 from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand
+from MarketPy.MarketObjects.Market import Market
 from MarketPy.MarketObjects.OrderBooks.BasicOrderBook import BasicOrderBook
 from MarketPy.MarketObjects.PriceLevel import PriceLevel
 from MarketPy.MarketObjects.Side import BID_SIDE
 from MarketPy.MarketObjects.Side import ASK_SIDE
 from MarketPy.MarketObjects.OrderBookListeners.OrderLevelBookListener import OrderLevelBookListener
-
+from MarketPy.MarketObjects.OrderBookListeners import OrderLevelBookListener
 
 class TimePriorityOrderLevel(object):
     # TODO document
@@ -345,7 +346,7 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
          optional argument that defaults False.
 
         :param side: MarketObjects.Side.Side
-        :param price: MarketObjects.Price.Price
+        :param price: MarketObjects.Price.Priceorder_book_output
         :return: int
         """
         level = (self._bid_price_to_level if side.is_bid() else self._ask_price_to_level).get(price)
@@ -733,3 +734,259 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                     order_chain.user_id())
             s += "\n"
         return s
+
+
+class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
+
+    def __init__(self, market, logger, component_books=None, name=None):
+        assert component_books is None or isinstance(component_books, (list, tuple, set))
+        OrderLevelBook.__init__(self, market, logger, name)
+        self._component_books = set()
+        if component_books is not None:
+            for component_book in component_books:
+                self.add_component_book(component_book)
+        self._name = "AggregateOrderLevelOrderBook" if name is None else name
+        self._market_to_component_book = {}
+
+    def _validate_component_order_book(self, order_book):
+        # an implementing inheritor of AggregateOrderBook can put logic here to test if the orderbook should even be
+        #  added to the AggregateOrderBook. For example, some aggregate order books might want to check that all
+        #  component order books are the same product or the have the same tick size or are denominated the same way.
+        # If this function returns false, it won't get added as a component order book
+        return True
+
+    def add_component_book(self, order_book):
+        """
+        returns True if added, False if not added
+        """
+        assert isinstance(order_book, OrderLevelBook)
+        should_add = self._validate_component_order_book(order_book)
+        added = False
+        if should_add:
+            self._component_books.add(order_book)
+            self._market_to_component_book[order_book.market()] = order_book
+            added = True
+        return added
+
+    def has_component_book(self, order_book):
+        assert isinstance(order_book, OrderLevelBook)
+        return order_book in self._component_books
+
+    def has_component_market(self, market):
+        assert isinstance(market, Market)
+        return market in self._market_to_component_book
+
+    def component_pool_with_price(self, side, price):
+        pools = set()
+        for ob in self._order_books:
+            if ob.visible_qty_at_price(side, price) > 0:
+                pools.add(ob.market())
+        return pools
+
+    def order_books_at_price(self, side, price):
+        obs = set()
+        for ob in self._order_books:
+            if ob.visible_qty_at_price(side, price) > 0:
+                obs.add(ob)
+        return obs
+
+    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
+        """
+        This is a stub to be filled in by each implementing inheriting class.
+
+        The causing_order_chain should have already had the the order event that
+        caused the book to update applied to it.
+
+        :param order_book: MarketStructures.OrderBooks.OrderLevelOrderBook.OrderLevelOrderBook
+        :param causing_order_chain: MarketStructures.Events.EventChains.OrderEventChain
+        :param tob_updated: boolean. Whether or not the top of book updated. This is for speed/convenience for the listener.
+        """
+        agg_tob_updated = False
+        if tob_updated:
+            # only need to check the side of the causing order chain
+            tob = order_book.best_price(causing_order_chain.side())
+            agg_tob = order_book.best_price(causing_order_chain.side())
+            # if they are both None or if they are both same price, then we need assume tob updated for agg book
+            if tob is None and agg_tob is None:
+                agg_tob_updated = True
+            if tob is not None and agg_tob is not None:
+                if tob == agg_tob:
+                    agg_tob_updated = True
+        self._notify_listeners(causing_order_chain, agg_tob_updated)
+
+    def clean_up_order_chain(self, order_chain):
+        """
+        Function let's the order book listener clean up data it might be storing for the order chain.
+
+        Should only be called if the data being kept by the listener for the order chain (or events in the order chain
+         is no longer needed)
+
+        :param order_chain: MarketPy.MarketObjects.Events.EventChains.OrderEventChain
+        :return:
+        """
+        pass  # not tracking of order chains that needs to be cleaned up
+
+    def name(self):
+        """
+        Returns the name of the OrderLevelBook instance.
+
+        :return: str
+        """
+        return self._name
+
+    def last_update_time(self):
+        """
+        Gets the last time, as a second timestamp (seconds.milli/microseconds) that the order book last updated.
+
+        :return: float
+        """
+        return max(ob.last_update_time() for ob in self._compoent_order_books)
+
+    def best_priority_chain(self, side):
+        """
+        Get the best priority live chain for the given side of the book.
+
+        :return: MarketObjects.Events.EventChains.OrderEventChain
+        """
+        raise Exception("best_priority_chain: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def prices(self, side):
+        """
+        All the prices on the given side that are currently live in the order
+         book, from best price to worse. For the bids, that is highest to
+         lowest; for the asks, that is lowest to highest.
+
+        :param side: MarketObjects.Side.Side
+        :return: list of MarketObjects.Price.Price
+        """
+        raise Exception("prices: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def best_price(self, side):
+        """
+        Returns the best price of the of the book (top of book price) for the specified side.
+        Will return None if the side is empty
+
+        :return: Price. the top of book price for the passed in side. None if side is empty
+        """
+        raise Exception("best_price: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def best_level(self, side):
+        """
+        Gets the best PriceLevel for the given side. Can be None if side is empty.
+
+        :return: MarketObjects.PriceLevel.PriceLevel
+        """
+        raise Exception("best level: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def visible_qty_at_price(self, side, price):
+        """
+        Gets the visible quantity for the price on the specified side of the
+         market. If there are no orders at that price on that side, then will
+         return 0.
+
+        :param side: MarketObjects.Side.Side
+        :param price: MarketObjects.Price.Price
+        :return: int
+        """
+        raise Exception("visible_qty_at_price: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def hidden_qty_at_price(self, side, price):
+        """
+        Gets the hidden quantity for the price on the specified side of the
+         market. If there are no orders at that price on that side, then will
+         return 0.
+
+        :param side: MarketObjects.Side.Side
+        :param price: MarketObjects.Price.Price
+        :return: int
+        """
+        raise Exception("hidden_qty_at_price: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def num_orders_at_price(self, side, price):
+        """
+        Get the number of orders at price for a given side. If price the price is
+         empty for that side, return 0.
+
+        If include_hidden_orders is True then it will include orders that are
+         hidden size only, otherwise those will not be included. This is an
+         optional argument that defaults False.
+
+        :param side: MarketObjects.Side.Side
+        :param price: MarketObjects.Price.Priceorder_book_output
+        :return: int
+        """
+        raise Exception("num_orders_at_price: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def order_chains_at_price(self, side, price):
+        """
+        Gets the order chains at given price and side, in the order of their current priority, where the first order
+         chain is first in line to be matched by the next aggressive fill and the last would only get a match if all
+         the others' visible qty was fully filled.
+
+        :param side: MarketObjects.Side.Side
+        :param price: MarketObjects.Price.Price
+        :return: list of MarketObjects.Events.EventChains.OrderEventChain
+        """
+        raise Exception("order_chains_at_price: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def iter_order_chains_at_price(self, side, price):
+        """
+        Gets the iterable of order chains at given price and side, in the order of their current priority, where the
+         first order chain is first in line to be matched by the next aggressive fill and the last would only get a
+         match if all the others' visible qty was fully filled.
+
+        This is similar to order_chains_at_price(self, side, price) but it returns the iterable rather than a list,
+         which is a much more efficient way to work with order event chains if you are just walking across them.
+
+        :param side: MarketObjects.Side.Side
+        :param price: MarketObjects.Price.Price
+        :return: list of MarketObjects.Events.EventChains.OrderEventChain
+        """
+        raise Exception("iter_order_chains_at_price: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def level_at_price(self, side, price):
+        """
+        Gets the PriceLevel at a price for a given side. Returns None if the
+         price does not exist on that Side.
+
+        :param side: MarketObjects.Side.Side
+        :param price: MarketObjects.Price.Price
+        :return: MarketObjects.PriceLevel.PriceLevel. Can be None
+        """
+        raise Exception("level_at_price: order_chains_at_price: To be implemented by implementation of AggregateOrderLevelBook")
+
+    def to_json(self):
+        ob_json = {}
+        for side in [BID_SIDE, ASK_SIDE]:
+            side_dict = {}
+            for level, price in enumerate(self.prices(side)):
+                level = self.level_at_price(side, price)
+                chain_ids = []
+                for chain in self.order_chains_at_price(side, price):
+                    chain_ids.append(chain.chain_id())
+                side_dict[level] = {"price": price,
+                                    "visible_qty": level.visible_qty(),
+                                    "hidden_qty": level.hidden_qty(),
+                                    "chains": chain_ids}
+            ob_json[str(side)] = side_dict
+        return {"order_book_type": self.name(), "market": self.market().to_json(), "order_book": ob_json}
+
+    def __str__(self):
+        s = ""
+        ask_prices = sorted(self.prices(ASK_SIDE), reverse=True)
+        for price in ask_prices:
+            if price is not None:
+                s += "%s%.12f %d (%d)\n" % (" " * 40, price.price(), self.visible_qty_at_price(ASK_SIDE, price), self.hidden_qty_at_price(ASK_SIDE, price))
+        s += "--------------------------------------\n"
+        bid_prices = self.prices(BID_SIDE)
+        for price in bid_prices:
+            if price is not None:
+                s += "%.12f %d (%d)\n" % (price.price(), self.visible_qty_at_price(BID_SIDE, price), self.hidden_qty_at_price(BID_SIDE, price))
+        return s
+
+    """
+    NO ORDER BOOK MANIPULATION
+
+    By design, aggregate books are intended for lazy evaluation of values that are aggregates of the component books. 
+     This means that there is no direct manipulation of an aggregate order book and it is not a listener of events.
+    """
