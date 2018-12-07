@@ -52,12 +52,12 @@ def timestamp_to_datetime(timestamp):
 
 
 def epoch_to_datetime(secs):
-    assert (secs, float)
+    assert isinstance(secs, float)
     return EPOCH + timedelta(seconds=secs)
 
 
 def epoch_to_timestamp(secs):
-    assert (secs, float)
+    assert isinstance(secs, float)
     return epoch_to_datetime(secs).strftime(DATETIME_TEMPLATE)
 
 
