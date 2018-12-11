@@ -751,7 +751,7 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
         if component_books is not None:
             for component_book in component_books:
                 self.add_component_book(component_book)
-        self._name = "AggregateOrderLevelOrderBook" if name is None else name
+        self._name = "AggregateOrderLevelOrderBook %s@%s" % (market.product().name(), market.endpoint().name()) if name is None else name
 
     def _validate_component_order_book(self, order_book):
         # an implementing inheritor of AggregateOrderBook can put logic here to test if the orderbook should even be
