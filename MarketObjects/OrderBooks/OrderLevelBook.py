@@ -37,7 +37,7 @@ from MarketPy.MarketObjects.PriceLevel import PriceLevel
 from MarketPy.MarketObjects.Side import BID_SIDE
 from MarketPy.MarketObjects.Side import ASK_SIDE
 from MarketPy.MarketObjects.OrderBookListeners.OrderLevelBookListener import OrderLevelBookListener
-from MarketPy.MarketObjects.OrderBookListeners import OrderLevelBookListener
+
 
 class TimePriorityOrderLevel(object):
     # TODO document
@@ -79,7 +79,7 @@ class TimePriorityOrderLevel(object):
                                 str(order_chain.current_exposure().price())))
         else:
             self._order_chains[order_chain.chain_id()] = order_chain
-            #self._dirty = True
+            # self._dirty = True
             self._visible_qty += order_chain.visible_qty()
             self._hidden_qty += order_chain.hidden_qty()
             self._num_orders += 1
@@ -718,8 +718,12 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
             s += "%s%.12f\t\t" % (" " * 40, price.price())
             order_chains = self._ask_price_to_level[price].order_chains()
             for order_chain in order_chains:
-                s += "%s %d (%d/%d) %s, " % (
-                str(order_chain.chain_id()), order_chain.most_recent_subchain().subchain_id(), order_chain.visible_qty(), order_chain.hidden_qty(), order_chain.user_id())
+                s += "%s %d (%d/%d) %s, " % \
+                     (str(order_chain.chain_id()),
+                      order_chain.most_recent_subchain().subchain_id(),
+                      order_chain.visible_qty(),
+                      order_chain.hidden_qty(),
+                      order_chain.user_id())
             s += "\n"
         s += "--------------------------------------\n"
         bid_prices = self.prices(BID_SIDE)
@@ -741,19 +745,28 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
     def __init__(self, market, logger, component_books=None, name=None):
         assert component_books is None or isinstance(component_books, (list, tuple, set))
         OrderLevelBook.__init__(self, market, logger, name)
+        OrderLevelBookListener.__init__(self, logger)
         self._component_books = set()
+        self._market_to_component_book = {}
         if component_books is not None:
             for component_book in component_books:
                 self.add_component_book(component_book)
         self._name = "AggregateOrderLevelOrderBook" if name is None else name
-        self._market_to_component_book = {}
 
     def _validate_component_order_book(self, order_book):
         # an implementing inheritor of AggregateOrderBook can put logic here to test if the orderbook should even be
         #  added to the AggregateOrderBook. For example, some aggregate order books might want to check that all
         #  component order books are the same product or the have the same tick size or are denominated the same way.
         # If this function returns false, it won't get added as a component order book
-        return True
+        assert isinstance(order_book, OrderLevelBook)
+
+    def _pre_notify_listeners(self, causing_order_chain):
+        """
+        This is a function where an implementing instance of AggregateOrderBook can do some work before listeners are
+        notified of a change.
+        :return:
+        """
+        pass
 
     def add_component_book(self, order_book):
         """
@@ -761,10 +774,12 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
         """
         assert isinstance(order_book, OrderLevelBook)
         should_add = self._validate_component_order_book(order_book)
+        self._logger.info("%s is adding order book for %s" % (self.name(), str(order_book.market())))
         added = False
         if should_add:
             self._component_books.add(order_book)
             self._market_to_component_book[order_book.market()] = order_book
+            order_book.add_order_level_book_listener(self.name(), self)
             added = True
         return added
 
@@ -778,40 +793,31 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
 
     def component_pool_with_price(self, side, price):
         pools = set()
-        for ob in self._order_books:
+        for ob in self._component_books:
             if ob.visible_qty_at_price(side, price) > 0:
                 pools.add(ob.market())
         return pools
 
     def order_books_at_price(self, side, price):
         obs = set()
-        for ob in self._order_books:
+        for ob in self._component_books:
             if ob.visible_qty_at_price(side, price) > 0:
                 obs.add(ob)
         return obs
 
     def notify_book_update(self, order_book, causing_order_chain, tob_updated):
-        """
-        This is a stub to be filled in by each implementing inheriting class.
-
-        The causing_order_chain should have already had the the order event that
-        caused the book to update applied to it.
-
-        :param order_book: MarketStructures.OrderBooks.OrderLevelOrderBook.OrderLevelOrderBook
-        :param causing_order_chain: MarketStructures.Events.EventChains.OrderEventChain
-        :param tob_updated: boolean. Whether or not the top of book updated. This is for speed/convenience for the listener.
-        """
         agg_tob_updated = False
         if tob_updated:
             # only need to check the side of the causing order chain
             tob = order_book.best_price(causing_order_chain.side())
-            agg_tob = order_book.best_price(causing_order_chain.side())
+            agg_tob = self.best_price(causing_order_chain.side())
             # if they are both None or if they are both same price, then we need assume tob updated for agg book
             if tob is None and agg_tob is None:
                 agg_tob_updated = True
             if tob is not None and agg_tob is not None:
                 if tob == agg_tob:
                     agg_tob_updated = True
+        self._pre_notify_listeners(causing_order_chain)
         self._notify_listeners(causing_order_chain, agg_tob_updated)
 
     def clean_up_order_chain(self, order_chain):
@@ -840,7 +846,7 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
 
         :return: float
         """
-        return max(ob.last_update_time() for ob in self._compoent_order_books)
+        return max(ob.last_update_time() for ob in self._component_books)
 
     def best_priority_chain(self, side):
         """
