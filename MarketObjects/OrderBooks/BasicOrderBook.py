@@ -31,7 +31,7 @@ from MarketPy.MarketObjects.Side import ASK_SIDE
 from MarketPy.MarketObjects.Side import BID_SIDE
 
 
-class BasicOrderBook:
+class BasicOrderBook(object):
 
     """
     BasicOrderBook includes the base functions for querying an order book,
