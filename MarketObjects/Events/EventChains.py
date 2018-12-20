@@ -597,11 +597,10 @@ class OrderEventChain(object):
     # TODO track qty remaining at close
 
     def __str__(self):
-        l = []
+        s = ""
         for event in self._events:
             event_json = event.to_json()
-            l.append(event_json)
-        s = json.dumps(l)
+            s += json.dumps(event_json) + "\n"
         s += "\n%s: %s %s %s %d (%d) @ %s" % \
              (str(self.chain_id()), self.user_id(), str(self.market()), self.side(), self.visible_qty(),
               self.current_qty() - self.visible_qty(), str(self.current_price()))
