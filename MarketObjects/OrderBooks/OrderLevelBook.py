@@ -978,16 +978,18 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
         return {"order_book_type": self.name(), "market": self.market().to_json(), "order_book": ob_json}
 
     def __str__(self):
-        s = ""
+        s = "%s\n" % self.name()
         ask_prices = sorted(self.prices(ASK_SIDE), reverse=True)
         for price in ask_prices:
             if price is not None:
-                s += "%s%.12f %d (%d)\n" % (" " * 40, price.price(), self.visible_qty_at_price(ASK_SIDE, price), self.hidden_qty_at_price(ASK_SIDE, price))
+                order_books = self.order_books_at_price(ASK_SIDE, price)
+                s += "%s%.12f %d (%d) [%s]\n" % (" " * 40, price.price(), self.visible_qty_at_price(ASK_SIDE, price), self.hidden_qty_at_price(ASK_SIDE, price), ",".join(order_book.market().endpoint().name() for order_book in order_books))
         s += "--------------------------------------\n"
         bid_prices = self.prices(BID_SIDE)
         for price in bid_prices:
             if price is not None:
-                s += "%.12f %d (%d)\n" % (price.price(), self.visible_qty_at_price(BID_SIDE, price), self.hidden_qty_at_price(BID_SIDE, price))
+                order_books = self.order_books_at_price(BID_SIDE, price)
+                s += "%.12f %d (%d) [%s]\n" % (price.price(), self.visible_qty_at_price(BID_SIDE, price), self.hidden_qty_at_price(BID_SIDE, price), ",".join(order_book.market().endpoint().name() for order_book in order_books))
         return s
 
     """
