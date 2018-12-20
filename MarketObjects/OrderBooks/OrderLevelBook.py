@@ -443,10 +443,10 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                 price_to_level[acknowledgement_report.price()] = TimePriorityOrderLevel(self._logger)
             price_to_level[acknowledgement_report.price()].add_to_level(resulting_order_chain)
             if is_bid:
-                if acknowledgement_report.price() >= pre_add_best_price:
+                if pre_add_best_price is None or acknowledgement_report.price() >= pre_add_best_price:
                     tob_updated = True
             else:
-                if acknowledgement_report.price() <= pre_add_best_price:
+                if pre_add_best_price is None or acknowledgement_report.price() <= pre_add_best_price:
                     tob_updated = True
             order_book_updated = True
         else:  # otherwise cancel replace and we need to be more careful
