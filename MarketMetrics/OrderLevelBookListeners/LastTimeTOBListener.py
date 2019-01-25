@@ -186,7 +186,11 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         assert isinstance(order_chain, OrderEventChain)
         events = order_chain.events()
         for event in events:
-            if event.event_id() in self._event_id_to_last_time_crossed.keys():
+            try:
                 del self._event_id_to_last_time_crossed[event.event_id()]
-            if event.event_id() in self._event_id_to_last_time_tob.keys():
+            except:
+                pass  # silent fail is okay here. All I'm doing is deleting if it exists in dict. If it doesn't exist no need to delete so failure state is acceptable and faster than checking for existence first.
+            try:
                 del self._event_id_to_last_time_tob[event.event_id()]
+            except:
+                pass  # silent fail is okay here. All I'm doing is deleting if it exists in dict. If it doesn't exist no need to delete so failure state is acceptable and faster than checking for existence first.
