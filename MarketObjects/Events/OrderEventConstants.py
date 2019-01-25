@@ -36,6 +36,8 @@ TIME_IN_FORCE_STRINGS = {FAR: "FAR",
                          FAK: "FAK",
                         }
 
+TIME_IN_FORCE_STR_TO_INT = {v: k for k, v in TIME_IN_FORCE_STRINGS.iteritems()}
+
 def time_in_force_str(int_id):
     assert isinstance(int_id, int)
     if not TIME_IN_FORCE_STRINGS.has_key(int_id):
