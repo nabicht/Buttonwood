@@ -51,3 +51,5 @@ CANCEL_REASON_STRINGS = {MARKET_CLOSED: "Closing market canceled order.",
                          UNSPECIFIED: "Unspecified",
                          USER_REQUESTED: "User requested cancel"
                         }
+
+CANCEL_REASON_INTS = {v: k for k, v in CANCEL_REASON_STRINGS.iteritems()}
