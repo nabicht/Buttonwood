@@ -53,7 +53,7 @@ class OrderEventHandler:
         self._event_listeners = OrderedDict()
         self._chain_id_to_chain = {}
         self._market_book_id_to_book = {}
-        self._market_to_registered_books = defaultdict(set())
+        self._market_to_registered_books = defaultdict(set)
         self._logger = logger
         self._sub_chain_id_generator = MonotonicIntID()
 
