@@ -783,6 +783,9 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
             added = True
         return added
 
+    def component_books(self):
+        return self._component_books
+
     def has_component_book(self, order_book):
         assert isinstance(order_book, OrderLevelBook)
         return order_book in self._component_books

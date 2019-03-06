@@ -40,9 +40,11 @@ from MarketPy.MarketObjects.Events.OrderEvents import FullFillReport
 from MarketPy.MarketObjects.Events.OrderEvents import CancelReport
 from MarketPy.MarketObjects.Events.EventChains import OrderEventChain
 from MarketPy.MarketObjects.OrderBooks.BasicOrderBook import BasicOrderBook
+from MarketPy.MarketObjects.OrderBooks.OrderLevelBook import AggregateOrderLevelBook
 from MarketPy.MarketObjects.Market import Market
 from MarketPy.utils.IDGenerators import MonotonicIntID
 from collections import OrderedDict
+from collections import defaultdict
 import logging
 
 
@@ -51,6 +53,7 @@ class OrderEventHandler:
         self._event_listeners = OrderedDict()
         self._chain_id_to_chain = {}
         self._market_book_id_to_book = {}
+        self._market_to_registered_books = defaultdict(set())
         self._logger = logger
         self._sub_chain_id_generator = MonotonicIntID()
 
@@ -71,12 +74,18 @@ class OrderEventHandler:
         assert isinstance(market, Market)
         assert isinstance(order_book_id, str)
 
+        if isinstance(order_book, AggregateOrderLevelBook):
+            for component_order_book in order_book.component_books():
+                comp_book_id = "%s Component Book (%s)" % (order_book_id, str(component_order_book.market()))
+                self.register_orderbook(market, comp_book_id, component_order_book)
+
         if market not in self._market_book_id_to_book:
             self._market_book_id_to_book[market] = {}
         if order_book_id not in self._market_book_id_to_book[market]:
             self._market_book_id_to_book[market][order_book_id] = order_book
         else:
             raise Exception("%s is already registered for %s" % (order_book_id, str(market)))
+        self._market_to_registered_books[market].add(order_book)
 
     def order_book(self, market, order_book_id):
         if market in self._market_book_id_to_book:
@@ -193,23 +202,23 @@ class OrderEventHandler:
         markets_updated = set()
         if order_chain is not None:
             market = event.market()
-            if market in self._market_book_id_to_book:
-                for orderbook_id, orderbook in self._market_book_id_to_book[market].iteritems():
+            if market in self._market_to_registered_books:
+                for order_book in self._market_to_registered_books[market]:
                     self._logger.debug("%s: applying %s chain %s event %s to orderbook %s" %
                                        (self.__class__.__name__,
                                         event.__class__.__name__,
                                         str(event.chain_id()),
                                         str(event.event_id()),
-                                        orderbook_id))
+                                        order_book.name()))
                     order_book_updated = False
                     if isinstance(event, AcknowledgementReport):
-                        order_book_updated, tob_updated = orderbook.handle_acknowledgement_report(event, order_chain)
+                        order_book_updated, tob_updated = order_book.handle_acknowledgement_report(event, order_chain)
                     elif isinstance(event, CancelReport):
-                        order_book_updated, tob_updated = orderbook.handle_cancel_report(event, order_chain)
+                        order_book_updated, tob_updated = order_book.handle_cancel_report(event, order_chain)
                     elif isinstance(event, PartialFillReport):
-                        order_book_updated, tob_updated = orderbook.handle_partial_fill_report(event, order_chain)
+                        order_book_updated, tob_updated = order_book.handle_partial_fill_report(event, order_chain)
                     elif isinstance(event, FullFillReport):
-                        order_book_updated, tob_updated = orderbook.handle_full_fill_report(event, order_chain)
+                        order_book_updated, tob_updated = order_book.handle_full_fill_report(event, order_chain)
                     else:
                         self._logger.warning("%s: don't know how to handle %s when applying to order book." %
                                              (self.__class__.__name__, event.__class__.__name__))
