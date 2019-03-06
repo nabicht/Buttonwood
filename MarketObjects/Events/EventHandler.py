@@ -77,7 +77,7 @@ class OrderEventHandler:
         if isinstance(order_book, AggregateOrderLevelBook):
             for component_order_book in order_book.component_books():
                 comp_book_id = "%s Component Book (%s)" % (order_book_id, str(component_order_book.market()))
-                self.register_orderbook(market, comp_book_id, component_order_book)
+                self.register_orderbook(component_order_book.market(), comp_book_id, component_order_book)
 
         if market not in self._market_book_id_to_book:
             self._market_book_id_to_book[market] = {}
