@@ -658,6 +658,13 @@ class OrderEventChain(object):
             closed_exposure = True
         return closed_exposure
 
+    def _close_current_subchain(self, subchain_close_reason):
+        self.most_recent_subchain().close_subchain(subchain_close_reason)
+
+    def _open_new_subchain(self, opening_cmd, open_reason):
+        new_subchain = SubChain(self._subchain_id_generator.id(), opening_cmd, open_reason, self._logger)
+        self._sub_chains.append(new_subchain)
+
     def apply_acknowledgement_report(self, ack):
         """
         Apply an acknowledgement to the OrderEventChain.
@@ -707,11 +714,9 @@ class OrderEventChain(object):
         # don't need to worry about opening and closing if this already happened due to a aggressing partial fill
         if self.most_recent_subchain() is None or self.most_recent_subchain().open_event().event_id() != ack.acknowledged_command().event_id():
             if subchain_close_reason is not None:
-                self.most_recent_subchain().close_subchain(subchain_close_reason)
+                self._close_current_subchain(subchain_close_reason)
             if subchain_open_reason is not None:  # if a new one is open then the ack'd event opens it
-                self._sub_chains.append(
-                    SubChain(self._subchain_id_generator.id(), ack.acknowledged_command(), subchain_open_reason,
-                             self._logger))
+                self._open_new_subchain(ack.acknowledged_command(), subchain_open_reason)
             else:  # else the ack'd event gets added to already open SubChain
                 self.most_recent_subchain().add_event(ack.acknowledged_command())
         # now, add the ack to the most recently open subchain
@@ -790,8 +795,8 @@ class OrderEventChain(object):
         #  ack'd, and then the order is cancelled.
         #  This can also happen when there is a new order then cancel, like a FOK or FAK with no fill.
         if len(self._sub_chains) == 0:
-            self._sub_chains.append(
-                SubChain(self._subchain_id_generator.id(), self._new_order_command, SubChain.NEW_ORDER, self._logger))
+            self._open_new_subchain()
+            self._open_new_subchain(self._new_order_command, SubChain.NEW_ORDER)
             for event in self._events[1:]:  # skipping first one since already added in the creation of subchain
                 self._sub_chains[0].add_event(event)
         else:
@@ -805,26 +810,13 @@ class OrderEventChain(object):
         # close order chain
         self._close_chain(cr)
 
-    def apply_partial_fill_report(self, pf):
-        """
-        Apply the partial fill report to the order chain.
-
-        :param pf: MarketObjects.Events.OrderEvents.PartialFillReport
-        """
-        assert isinstance(pf, PartialFillReport), "applyPartialFill called with an event that is not a PartialFillReport."
-        # add to the list of events
-        self._events.append(pf)
-        # populate the map of qty at price for fills
-        self._filled_price_to_qty[pf.fill_price()] = pf.fill_qty()
-        # track the match id
-        self._match_ids.add(pf.match_id())
-        close_sub_chain = False
+    def _modify_exposure_by_partial_fill(self, pf):
+        # if the aggressor then
+        #  change outstanding exposure request because not ack'd yet
+        #       - if outstanding exposure for causing event goes to zero or below then log an error
+        #             and close order chain and subchain
+        # don't need to change visible qty because not ack'd yet
         if pf.is_aggressor():
-            # if the aggressor then
-            #  1) change outstanding exposure request because not ack'd yet
-            #       - if outstanding exposure for causing event goes to zero or below then log an error
-            #             and close order chain and subchain
-            #  2) don't need to change visible qty because not ack'd yet
             requested_exposure = self.find_requested_exposure(pf.aggressing_command().event_id())
             if requested_exposure is None:
                 self._logger.error(
@@ -841,30 +833,11 @@ class OrderEventChain(object):
                     close_sub_chain = True
                     self._close_requested_exposure(pf)
                     self._close_chain(pf)
-            # if aggressor then could be opening a new subchain
-            # but dont' need to worry about it if second partial fill of subchain, only handle it if aggressing event id doens't match the current subchain open id
-            if self.most_recent_subchain() is None or self.most_recent_subchain().open_event().event_id() != pf.aggressing_command().event_id():
-                subchain_open_reason = None
-                subchain_close_reason = None
-                if isinstance(pf.aggressing_command(), NewOrderCommand):
-                    subchain_open_reason = SubChain.NEW_ORDER
-                elif isinstance(pf.aggressing_command(), CancelReplaceCommand):
-                    if self.most_recent_subchain() is not None:  # if it is then there is no subchain to close
-                        subchain_close_reason = SubChain.CANCEL_REPLACE_PRICE
-                    subchain_open_reason = SubChain.CANCEL_REPLACE_PRICE
-                # if we have a subchain reason then we need to close current subchain and open a new one
-                if subchain_close_reason is not None:
-                    if self.most_recent_subchain() is not None:
-                        self.most_recent_subchain().close_subchain(subchain_close_reason)
-                if subchain_open_reason is not None:  # if a new one is open then the ack'd event opens it
-                    self._sub_chains.append(
-                        SubChain(self._subchain_id_generator.id(), pf.aggressing_command(), subchain_open_reason,
-                                 self._logger))
         else:
             # if passive then
-            #  1) change open exposure by the fill size (because it has been ack'd)
+            #  change open exposure by the fill size (because it has been ack'd)
             #       - if exposure goes to 0 or less then log a critical error and close order chain and subchain
-            #  2) change visible size
+            # change visible size
             #       - reduce by amount filled. If this is 0 or less then replenish min(iceberg peak qty, open exposure qty)
             if self._current_exposure is None:
                 self._logger.error("OrderChain state issue: %s. Passive partial fill (%s) with no current exposure." %
@@ -885,6 +858,40 @@ class OrderEventChain(object):
                     if self._visible_qty <= 0:
                         self._visible_qty = min(self.iceberg_peak_qty(), self._current_exposure.qty())
                         self._events_that_caused_visible_qty_refresh.add(pf.event_id())
+
+    def apply_partial_fill_report(self, pf):
+        """
+        Apply the partial fill report to the order chain.
+
+        :param pf: MarketObjects.Events.OrderEvents.PartialFillReport
+        """
+        assert isinstance(pf, PartialFillReport), "applyPartialFill called with an event that is not a PartialFillReport."
+        # add to the list of events
+        self._events.append(pf)
+        # populate the map of qty at price for fills
+        self._filled_price_to_qty[pf.fill_price()] = pf.fill_qty()
+        # track the match id
+        self._match_ids.add(pf.match_id())
+        close_sub_chain = False
+        self._modify_exposure_by_partial_fill(pf)
+        if pf.is_aggressor():
+            # if aggressor then could be opening a new subchain
+            # but dont' need to worry about it if second partial fill of subchain, only handle it if aggressing event id doens't match the current subchain open id
+            if self.most_recent_subchain() is None or self.most_recent_subchain().open_event().event_id() != pf.aggressing_command().event_id():
+                subchain_open_reason = None
+                subchain_close_reason = None
+                if isinstance(pf.aggressing_command(), NewOrderCommand):
+                    subchain_open_reason = SubChain.NEW_ORDER
+                elif isinstance(pf.aggressing_command(), CancelReplaceCommand):
+                    if self.most_recent_subchain() is not None:  # if it is then there is no subchain to close
+                        subchain_close_reason = SubChain.CANCEL_REPLACE_PRICE
+                    subchain_open_reason = SubChain.CANCEL_REPLACE_PRICE
+                # if we have a subchain reason then we need to close current subchain and open a new one
+                if subchain_close_reason is not None:
+                    if self.most_recent_subchain() is not None:
+                        self._close_current_subchain(subchain_close_reason)
+                if subchain_open_reason is not None:  # if a new one is open then the ack'd event opens it
+                    self._open_new_subchain(pf.aggressing_command(), subchain_open_reason)
 
         # add to the open subchain
         self.most_recent_subchain().add_event(pf)
