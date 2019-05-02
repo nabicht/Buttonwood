@@ -795,7 +795,6 @@ class OrderEventChain(object):
         #  ack'd, and then the order is cancelled.
         #  This can also happen when there is a new order then cancel, like a FOK or FAK with no fill.
         if len(self._sub_chains) == 0:
-            self._open_new_subchain()
             self._open_new_subchain(self._new_order_command, SubChain.NEW_ORDER)
             for event in self._events[1:]:  # skipping first one since already added in the creation of subchain
                 self._sub_chains[0].add_event(event)
