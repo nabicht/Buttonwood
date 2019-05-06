@@ -139,6 +139,11 @@ class OrderEventHandler:
         order_chain, updated_markets = self._handle_event(event)
         return order_chain, updated_markets
 
+    def _create_new_event_chain(self, new_order_command):
+        order_chain = OrderEventChain(new_order_command, self._logger,
+                                      subchain_id_generator=self._sub_chain_id_generator)
+        return order_chain
+
     def _handle_new_order_command(self, new_order_command):
         chain_id = new_order_command.chain_id()
         if self._chain_id_to_chain.get(chain_id) is not None:
@@ -148,9 +153,7 @@ class OrderEventHandler:
                                 new_order_command.event_type_str(),
                                 str(self._chain_id_to_chain.get(chain_id))))
         else:
-            order_chain = OrderEventChain(new_order_command,
-                                          self._logger,
-                                          subchain_id_generator=self._sub_chain_id_generator)
+            order_chain = self._create_new_event_chain(new_order_command)
             self._chain_id_to_chain[chain_id] = order_chain
             self._new_order_command_notification(new_order_command, order_chain)
 
