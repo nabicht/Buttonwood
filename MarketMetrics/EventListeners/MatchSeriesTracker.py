@@ -65,7 +65,7 @@ class MatchSeriesTracker(OrderEventListener):
         Get the MatchSeries for the given match_id. Can be None if unknown match_id.
         
         :param match_id: unique identifier of MatchSeries 
-        :return: MarketPy.MarketObjects.MatchSeries.MatchSeries
+        :return: Buttonwood.MarketObjects.MatchSeries.MatchSeries
         """
         return self._id_to_series.get(match_id)
 
@@ -73,8 +73,8 @@ class MatchSeriesTracker(OrderEventListener):
         """
         Returns a list of all MatchSeries that had an aggressive side that matches the passed in side
         
-        :param side: MarketPy.MarketObjects.Side.Side
-        :return: list() of MarketPy.MarketObjects.MatchSeries.MatchSeries
+        :param side: Buttonwood.MarketObjects.Side.Side
+        :return: list() of Buttonwood.MarketObjects.MatchSeries.MatchSeries
         """
         l = []
         for series in self._id_to_series.itervalues():
@@ -87,7 +87,7 @@ class MatchSeriesTracker(OrderEventListener):
         Return the match series for a given aggressor event id. It will return None if aggressor_event_id is not known.
         
         :param aggressor_event_id: unique identifier of the aggressor event 
-        :return: MarketPy.MarketObjects.MatchSeries.MatchSeries
+        :return: Buttonwood.MarketObjects.MatchSeries.MatchSeries
         """
         return self._aggressor_event_id_to_series.get(aggressor_event_id)
 
@@ -96,6 +96,6 @@ class MatchSeriesTracker(OrderEventListener):
         Return the match series for a given fill event id. It will be return None if the fill event id is not known.
         
         :param fill_event_id: unique identifier of the fille vent 
-        :return: MarketPy.MarketObjects.MatchSeries.MatchSeries 
+        :return: Buttonwood.MarketObjects.MatchSeries.MatchSeries
         """
         return self._fill_event_id_to_series.get(fill_event_id)

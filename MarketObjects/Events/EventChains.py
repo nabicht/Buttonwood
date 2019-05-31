@@ -533,7 +533,7 @@ class OrderEventChain(object):
         """
         Gets the last acknowledgement in the order chain. Can be None.
         
-        :return: MarketPy.MarketObjects.Price.Price (can be None)
+        :return: Buttonwood.MarketObjects.Price.Price (can be None)
         """
         for event in reversed(self._events):
             if isinstance(event, AcknowledgementReport):

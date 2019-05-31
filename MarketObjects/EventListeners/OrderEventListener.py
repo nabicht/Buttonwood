@@ -160,7 +160,7 @@ class OrderEventListener(object):
         analytic that needs to run, or at the very least some cleanup that could
         occur.
 
-        :param closed_order_chain: MarketPy.MarketObjects.Events.EventChains.OrderEventChain
+        :param closed_order_chain: Buttonwood.MarketObjects.Events.EventChains.OrderEventChain
         """
         # to be optionally implemented by child class
         pass
@@ -184,7 +184,7 @@ class OrderEventListener(object):
         If an inheritng class of OrderEventListener does not implement this
          function then simply nothing is done to do the clean up.
         
-        :param order_chain: MarketPy.MarketObjects.Events.EventChains.OrderEventChain
+        :param order_chain: Buttonwood.MarketObjects.Events.EventChains.OrderEventChain
         """
         # to be optionally implemented by child class
         pass

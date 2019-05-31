@@ -46,9 +46,9 @@ def modified_qty_at_price(order_book, side, price, ignore_order_ids, ignore_hidd
     
     If the price does not exist at that side of the order book, will return 0
     
-    :param order_book: MarketPy.MarketObjects.OrderBooks.OrderLevelOrderBook.OrderLevelOrderBook 
-    :param side: MarketPy.MarketObjects.Side.Side
-    :param price: MarketPy.MarketObjects.Price.Price
+    :param order_book: Buttonwood.MarketObjects.OrderBooks.OrderLevelOrderBook.OrderLevelOrderBook
+    :param side: Buttonwood.MarketObjects.Side.Side
+    :param price: Buttonwood.MarketObjects.Price.Price
     :param ignore_order_ids: set, list or any other collection that allows for "in" query
     :param ignore_hidden: bool
     :return: 

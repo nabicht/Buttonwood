@@ -89,7 +89,7 @@ class MatchSeries:
         """
         Adds the passed in fill_event to the MatchSeries.
         
-        :param fill_event: MarketPy.MarketObject.Events.OrderEvents.FillEvent 
+        :param fill_event: Buttonwood.MarketObject.Events.OrderEvents.FillEvent 
         :return: 
         """
         assert (fill_event is not None)

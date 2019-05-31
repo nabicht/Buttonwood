@@ -104,7 +104,7 @@ class OrderEventHandler:
         The order the event listeners are registered is also the order that they are updated in.
 
         :param event_listener_id: String. The human readable, unique identifier for the event listener.
-        :param event_listener: MarketPy.MarketObjects.OrderEventListener.OrderEventListener
+        :param event_listener: Buttonwood.MarketObjects.OrderEventListener.OrderEventListener
         """
         assert isinstance(event_listener_id, str)
         assert isinstance(event_listener, OrderEventListener)
@@ -126,7 +126,7 @@ class OrderEventHandler:
          registered it will return 100
          
         :param event_listener_id: 
-        :return: MarketPy.MarketObjects.EventListeners.EventListener 
+        :return: Buttonwood.MarketObjects.EventListeners.EventListener 
         """
         return self._event_listeners.get(event_listener_id)
 
@@ -236,8 +236,8 @@ class OrderEventHandler:
 
         Returns a tuple of the updated data: the order chain and an iterable of markets that had updated order books.
 
-        :param event: MarketPy.MarketObjects.Events.OrderEvent
-        :return: (MarketPy.MarketObjects.Events.EventChains.OrderEventChain, set of markets)
+        :param event: Buttonwood.MarketObjects.Events.OrderEvent
+        :return: (Buttonwood.MarketObjects.Events.EventChains.OrderEventChain, set of markets)
         """
         # while the command vs execution report check seems unnecessary,
         # it prevents execution reports from having to be checked for each Command

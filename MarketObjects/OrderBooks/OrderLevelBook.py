@@ -830,7 +830,7 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
         Should only be called if the data being kept by the listener for the order chain (or events in the order chain
          is no longer needed)
 
-        :param order_chain: MarketPy.MarketObjects.Events.EventChains.OrderEventChain
+        :param order_chain: Buttonwood.MarketObjects.Events.EventChains.OrderEventChain
         :return:
         """
         pass  # not tracking of order chains that needs to be cleaned up

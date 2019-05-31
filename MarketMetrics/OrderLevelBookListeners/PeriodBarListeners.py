@@ -191,7 +191,7 @@ class ConfigurablePeriodBarListener(OrderLevelBookListener):
         Can be None instead of a tuple if the event_id is not known.
         
         :param event_id: unique identifier of the event 
-        :return: (MarketPy.MarketObjects.PriceLevel.PriceLevel, MarketPy.MarketObjects.PriceLevel.PriceLevel)
+        :return: (Buttonwood.MarketObjects.PriceLevel.PriceLevel, Buttonwood.MarketObjects.PriceLevel.PriceLevel)
         """
         return self._event_id_to_tob.get(event_id)
 
@@ -229,6 +229,6 @@ class TopOfBookAfterEventListener(OrderLevelBookListener):
         Can be None instead of a tuple if the event_id is not known.
 
         :param event_id: unique identifier of the event 
-        :return: (MarketPy.MarketObjects.PriceLevel.PriceLevel, MarketPy.MarketObjects.PriceLevel.PriceLevel)
+        :return: (Buttonwood.MarketObjects.PriceLevel.PriceLevel, Buttonwood.MarketObjects.PriceLevel.PriceLevel)
         """
         return self._event_id_to_tob.get(event_id)
