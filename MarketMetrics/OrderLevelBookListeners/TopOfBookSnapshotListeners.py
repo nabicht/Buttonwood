@@ -88,7 +88,6 @@ class TopOfBookAfterEventListener(OrderLevelBookListener):
 
     def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         event_id = causing_order_chain.most_recent_event().event_id()
-        # print type(causing_order_chain.most_recent_event())
         self._event_id_to_tob[event_id] = (order_book.best_level(BID_SIDE), order_book.best_level(ASK_SIDE))
 
     def clean_up_order_chain(self, order_chain):
