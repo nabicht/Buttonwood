@@ -1,8 +1,10 @@
 from distutils.core import setup
+from setuptools import find_packages
+
 setup(
   name = 'buttonwood',
-  packages = ['buttonwood'],
-  version = '1.0',
+  packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+  version = '1.0.0',
   license='MIT',
   description = 'Buttonwood is a python software package created to help quickly create, (re)build, or analyze markets, market structures, and market participants.',
   author = 'Peter F. Nabicht',
