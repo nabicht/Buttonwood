@@ -29,15 +29,15 @@ SOFTWARE.
 
 from nose.tools import *
 
-from MarketPy.MarketObjects.Events.OrderEventConstants import *
-from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand
-from MarketPy.MarketObjects.Endpoint import Endpoint
-from MarketPy.MarketObjects.Market import Market
-from MarketPy.MarketObjects.Price import Price
-from MarketPy.MarketObjects.Product import Product
-from MarketPy.MarketObjects.Side import BID_SIDE
-from MarketPy.MarketObjects.Events.OrderEventConstants import MARKET as MARKET_ORDER
-from MarketPy.MarketObjects.Events.OrderEventConstants import LIMIT as LIMIT_ORDER
+from Buttonwood.MarketObjects.Events.OrderEventConstants import *
+from Buttonwood.MarketObjects.Events.OrderEvents import NewOrderCommand
+from Buttonwood.MarketObjects.Endpoint import Endpoint
+from Buttonwood.MarketObjects.Market import Market
+from Buttonwood.MarketObjects.Price import Price
+from Buttonwood.MarketObjects.Product import Product
+from Buttonwood.MarketObjects.Side import BID_SIDE
+from Buttonwood.MarketObjects.Events.OrderEventConstants import MARKET as MARKET_ORDER
+from Buttonwood.MarketObjects.Events.OrderEventConstants import LIMIT as LIMIT_ORDER
 
 MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
 

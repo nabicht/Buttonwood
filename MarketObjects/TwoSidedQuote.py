@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from MarketPy.MarketObjects.Quote import Quote
+from Buttonwood.MarketObjects.Quote import Quote
 
 
 class TwoSidedQuote(object):

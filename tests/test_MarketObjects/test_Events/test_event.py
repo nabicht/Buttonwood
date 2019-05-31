@@ -28,7 +28,7 @@ SOFTWARE.
 """
 
 from nose.tools import *
-from MarketPy.MarketObjects.Events.BasicEvents import BasicEvent
+from Buttonwood.MarketObjects.Events.BasicEvents import BasicEvent
 
 def test_event_creation():
     e = BasicEvent(124, 2312523.342345)

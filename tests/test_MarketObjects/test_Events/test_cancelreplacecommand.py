@@ -29,12 +29,12 @@ SOFTWARE.
 
 from nose.tools import *
 
-from MarketPy.MarketObjects.Events.OrderEvents import CancelReplaceCommand
-from MarketPy.MarketObjects.Endpoint import Endpoint
-from MarketPy.MarketObjects.Market import Market
-from MarketPy.MarketObjects.Price import Price
-from MarketPy.MarketObjects.Product import Product
-from MarketPy.MarketObjects.Side import ASK_SIDE
+from Buttonwood.MarketObjects.Events.OrderEvents import CancelReplaceCommand
+from Buttonwood.MarketObjects.Endpoint import Endpoint
+from Buttonwood.MarketObjects.Market import Market
+from Buttonwood.MarketObjects.Price import Price
+from Buttonwood.MarketObjects.Product import Product
+from Buttonwood.MarketObjects.Side import ASK_SIDE
 
 MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
 

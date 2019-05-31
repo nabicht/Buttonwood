@@ -28,13 +28,13 @@ SOFTWARE.
 """
 
 from nose.tools import *
-from MarketPy.MarketObjects.Quote import Quote
-from MarketPy.MarketObjects.Side import ASK_SIDE
-from MarketPy.MarketObjects.Side import BID_SIDE
-from MarketPy.MarketObjects.Endpoint import Endpoint
-from MarketPy.MarketObjects.Market import Market
-from MarketPy.MarketObjects.Product import Product
-from MarketPy.MarketObjects.TwoSidedQuote import TwoSidedQuote
+from Buttonwood.MarketObjects.Quote import Quote
+from Buttonwood.MarketObjects.Side import ASK_SIDE
+from Buttonwood.MarketObjects.Side import BID_SIDE
+from Buttonwood.MarketObjects.Endpoint import Endpoint
+from Buttonwood.MarketObjects.Market import Market
+from Buttonwood.MarketObjects.Product import Product
+from Buttonwood.MarketObjects.TwoSidedQuote import TwoSidedQuote
 
 MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
 

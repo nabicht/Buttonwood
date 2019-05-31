@@ -27,9 +27,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from MarketPy.MarketObjects import Side
-from MarketPy.MarketObjects.Side import BID_SIDE
-from MarketPy.MarketObjects.Side import ASK_SIDE
+from Buttonwood.MarketObjects import Side
+from Buttonwood.MarketObjects.Side import BID_SIDE
+from Buttonwood.MarketObjects.Side import ASK_SIDE
 
 
 def test_bid_or_ask_constants():

@@ -28,9 +28,9 @@ SOFTWARE.
 """
 
 from cdecimal import Decimal
-from MarketPy.MarketObjects.Price import Price
-from MarketPy.MarketObjects.Side import BID_SIDE
-from MarketPy.MarketObjects.Side import ASK_SIDE
+from Buttonwood.MarketObjects.Price import Price
+from Buttonwood.MarketObjects.Side import BID_SIDE
+from Buttonwood.MarketObjects.Side import ASK_SIDE
 
 
 def test_setting_price():

@@ -28,7 +28,7 @@ SOFTWARE.
 """
 
 from nose.tools import *
-from MarketPy.utils.dicts import NDeepDict
+from Buttonwood.utils.dicts import NDeepDict
 
 
 def test_ndeepdict_2_deep():

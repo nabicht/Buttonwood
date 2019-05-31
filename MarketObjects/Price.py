@@ -28,7 +28,7 @@ SOFTWARE.
 """
 
 from cdecimal import Decimal
-from MarketPy.MarketObjects.Side import Side
+from Buttonwood.MarketObjects.Side import Side
 
 
 class Price(object):

@@ -27,8 +27,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from MarketPy.MarketObjects.Price import Price
-from MarketPy.MarketObjects.Side import Side
+from Buttonwood.MarketObjects.Price import Price
+from Buttonwood.MarketObjects.Side import Side
 
 
 class PriceLevel(object):

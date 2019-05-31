@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from MarketPy.utils import timehelpers
+from Buttonwood.utils import timehelpers
 
 
 class TimeRange(object):

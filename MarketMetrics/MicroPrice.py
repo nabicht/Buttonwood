@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from MarketPy.MarketObjects.Price import Price
+from Buttonwood.MarketObjects.Price import Price
 
 
 def size_weighted_midpoint(bid_price, bid_qty, ask_price, ask_qty):
