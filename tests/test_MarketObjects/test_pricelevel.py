@@ -29,9 +29,9 @@ SOFTWARE.
 
 from cdecimal import Decimal
 from nose.tools import *
-from Buttonwood.MarketObjects.PriceLevel import PriceLevel
-from Buttonwood.MarketObjects.Price import Price
-from Buttonwood.MarketObjects.Side import BID_SIDE, ASK_SIDE
+from buttonwood.MarketObjects.PriceLevel import PriceLevel
+from buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketObjects.Side import BID_SIDE, ASK_SIDE
 
 
 def test_pricelevel_creation():

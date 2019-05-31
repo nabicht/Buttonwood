@@ -27,8 +27,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from Buttonwood.MarketObjects.OrderBooks.OrderLevelBook import SideDict
-from Buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketObjects.OrderBooks.OrderLevelBook import SideDict
+from buttonwood.MarketObjects.Price import Price
 
 def test_creation():
     sd = SideDict()

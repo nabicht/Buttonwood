@@ -28,11 +28,11 @@ SOFTWARE.
 """
 
 from nose.tools import *
-from Buttonwood.MarketObjects.Events.OrderEvents import CancelCommand
-from Buttonwood.MarketObjects import CancelReasons
-from Buttonwood.MarketObjects.Endpoint import Endpoint
-from Buttonwood.MarketObjects.Market import Market
-from Buttonwood.MarketObjects.Product import Product
+from buttonwood.MarketObjects.Events.OrderEvents import CancelCommand
+from buttonwood.MarketObjects import CancelReasons
+from buttonwood.MarketObjects.Endpoint import Endpoint
+from buttonwood.MarketObjects.Market import Market
+from buttonwood.MarketObjects.Product import Product
 
 MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
 

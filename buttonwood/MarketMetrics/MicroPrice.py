@@ -1,8 +1,8 @@
 """
 This file is part of Buttonwood.
 
-Buttonwood is a python software package created to help quickly create, (re)build, or 
-analyze markets, market structures, and market participants. 
+Buttonwood is a python software package created to help quickly create, (re)build, or
+analyze markets, market structures, and market participants.
 
 MIT License
 
@@ -27,31 +27,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from nose.tools import *
-from buttonwood.utils.IDGenerators import MonotonicIntID
+from buttonwood.MarketObjects.Price import Price
 
 
-def test_monotonicintid():
-    #test with the default values (should be 0 as the seed and 1 as the increment
-    generator = MonotonicIntID()
-    for i in xrange(1,1000):
-        assert generator.id() == i
-
-    #test with increment being 2
-    generator = MonotonicIntID(increment = 2)
-    for i in xrange(2, 1000, 2):
-        assert generator.id() == i
-
-    #test with a seed number
-    generator = MonotonicIntID(seed=2016113000000)
-    for i in range(2016113000000+1, 1000, 2):
-        assert generator.id() == i
+def size_weighted_midpoint(bid_price, bid_qty, ask_price, ask_qty):
+    assert(isinstance(bid_price, Price))
+    assert(isinstance(ask_price, Price))
+    bid_plus_ask_qty = bid_qty + ask_qty
+    if bid_plus_ask_qty == 0:
+        return None
+    return ((bid_qty * ask_price.price()) + (ask_qty * bid_price.price())) / bid_plus_ask_qty
 
 
-@raises(AssertionError)
-def test_monotonicintid_seed_must_be_int():
-    MonotonicIntID(seed = 2.5)
-
-@raises(AssertionError)
-def test_monotonicintid_increment_must_be_int():
-    MonotonicIntID(increment = 6.5)
+def size_weighted_midpoint_from_price_levels(bid_price_level, ask_price_level, include_hidden=False):
+    if bid_price_level is None or ask_price_level is None:
+        return None
+    bid_qty = bid_price_level.visible_qty()
+    ask_qty = ask_price_level.visible_qty()
+    if include_hidden:
+        bid_qty += bid_qty + bid_price_level.hidden_qty()
+        ask_qty += ask_qty + ask_price_level.hidden_qty()
+    return size_weighted_midpoint(bid_price_level.price(), bid_qty, ask_price_level.price(), ask_qty)

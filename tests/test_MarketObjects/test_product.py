@@ -28,8 +28,8 @@ SOFTWARE.
 """
 
 from cdecimal import Decimal
-from Buttonwood.MarketObjects.Product import Product
-from Buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketObjects.Product import Product
+from buttonwood.MarketObjects.Price import Price
 
 
 def test_product_creation():
