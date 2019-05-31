@@ -12,7 +12,7 @@ setup(
   keywords = ['markets', 'finance', 'electronic markets', 'microstructure', 'market analysis'],
   install_requires=[
           'nose',
-          'cdecimal',
+          'm3-cdecimal',
       ],
   classifiers=[
     'Development Status :: 5 - Production/Stable',
