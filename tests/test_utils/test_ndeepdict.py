@@ -1,7 +1,7 @@
 """
-This file is part of MarketPy. 
+This file is part of Buttonwood.
 
-MarketPy is a python software package created to help quickly create, (re)build, or 
+Buttonwood is a python software package created to help quickly create, (re)build, or 
 analyze markets, market structures, and market participants. 
 
 MIT License
@@ -28,7 +28,7 @@ SOFTWARE.
 """
 
 from nose.tools import *
-from MarketPy.utils.dicts import NDeepDict
+from buttonwood.utils.dicts import NDeepDict
 
 
 def test_ndeepdict_2_deep():

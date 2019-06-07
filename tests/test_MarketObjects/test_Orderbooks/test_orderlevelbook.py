@@ -1,7 +1,7 @@
 """
-This file is part of MarketPy. 
+This file is part of Buttonwood.
 
-MarketPy is a python software package created to help quickly create, (re)build, or 
+Buttonwood is a python software package created to help quickly create, (re)build, or 
 analyze markets, market structures, and market participants. 
 
 MIT License
@@ -28,26 +28,26 @@ SOFTWARE.
 """
 
 import logging
-from MarketPy.MarketObjects.CancelReasons import USER_CANCEL
-from MarketPy.MarketObjects.Events.EventChains import OrderEventChain
-from MarketPy.MarketObjects.Events.OrderEventConstants import FAR
-from MarketPy.MarketObjects.Events.OrderEventConstants import FAK
-from MarketPy.MarketObjects.Events.OrderEventConstants import FOK
-from MarketPy.MarketObjects.Events.OrderEvents import AcknowledgementReport
-from MarketPy.MarketObjects.Events.OrderEvents import CancelCommand
-from MarketPy.MarketObjects.Events.OrderEvents import CancelReplaceCommand
-from MarketPy.MarketObjects.Events.OrderEvents import CancelReport
-from MarketPy.MarketObjects.Events.OrderEvents import NewOrderCommand
-from MarketPy.MarketObjects.Events.OrderEvents import PartialFillReport
-from MarketPy.MarketObjects.OrderBooks.OrderLevelBook import OrderLevelBook
-from MarketPy.MarketObjects.Endpoint import Endpoint
-from MarketPy.MarketObjects.Market import Market
-from MarketPy.MarketObjects.Price import Price
-from MarketPy.MarketObjects.PriceLevel import PriceLevel
-from MarketPy.MarketObjects.Product import Product
-from MarketPy.MarketObjects.Side import BID_SIDE
-from MarketPy.MarketObjects.Side import ASK_SIDE
-from MarketPy.utils.IDGenerators import MonotonicIntID
+from buttonwood.MarketObjects.CancelReasons import USER_CANCEL
+from buttonwood.MarketObjects.Events.EventChains import OrderEventChain
+from buttonwood.MarketObjects.Events.OrderEventConstants import FAR
+from buttonwood.MarketObjects.Events.OrderEventConstants import FAK
+from buttonwood.MarketObjects.Events.OrderEventConstants import FOK
+from buttonwood.MarketObjects.Events.OrderEvents import AcknowledgementReport
+from buttonwood.MarketObjects.Events.OrderEvents import CancelCommand
+from buttonwood.MarketObjects.Events.OrderEvents import CancelReplaceCommand
+from buttonwood.MarketObjects.Events.OrderEvents import CancelReport
+from buttonwood.MarketObjects.Events.OrderEvents import NewOrderCommand
+from buttonwood.MarketObjects.Events.OrderEvents import PartialFillReport
+from buttonwood.MarketObjects.OrderBooks.OrderLevelBook import OrderLevelBook
+from buttonwood.MarketObjects.Endpoint import Endpoint
+from buttonwood.MarketObjects.Market import Market
+from buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketObjects.PriceLevel import PriceLevel
+from buttonwood.MarketObjects.Product import Product
+from buttonwood.MarketObjects.Side import BID_SIDE
+from buttonwood.MarketObjects.Side import ASK_SIDE
+from buttonwood.utils.IDGenerators import MonotonicIntID
 
 MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
 LOGGER = logging.getLogger()

@@ -1,7 +1,7 @@
 """
-This file is part of MarketPy. 
+This file is part of Buttonwood.
 
-MarketPy is a python software package created to help quickly create, (re)build, or 
+Buttonwood is a python software package created to help quickly create, (re)build, or 
 analyze markets, market structures, and market participants. 
 
 MIT License
@@ -28,13 +28,13 @@ SOFTWARE.
 """
 
 from nose.tools import *
-from MarketPy.MarketObjects.Quote import Quote
-from MarketPy.MarketObjects.Side import ASK_SIDE
-from MarketPy.MarketObjects.Side import BID_SIDE
-from MarketPy.MarketObjects.Endpoint import Endpoint
-from MarketPy.MarketObjects.Market import Market
-from MarketPy.MarketObjects.Product import Product
-from MarketPy.MarketObjects.TwoSidedQuote import TwoSidedQuote
+from buttonwood.MarketObjects.Quote import Quote
+from buttonwood.MarketObjects.Side import ASK_SIDE
+from buttonwood.MarketObjects.Side import BID_SIDE
+from buttonwood.MarketObjects.Endpoint import Endpoint
+from buttonwood.MarketObjects.Market import Market
+from buttonwood.MarketObjects.Product import Product
+from buttonwood.MarketObjects.TwoSidedQuote import TwoSidedQuote
 
 MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
 

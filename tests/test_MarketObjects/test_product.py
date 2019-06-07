@@ -1,7 +1,7 @@
 """
-This file is part of MarketPy. 
+This file is part of Buttonwood.
 
-MarketPy is a python software package created to help quickly create, (re)build, or 
+Buttonwood is a python software package created to help quickly create, (re)build, or 
 analyze markets, market structures, and market participants. 
 
 MIT License
@@ -28,8 +28,8 @@ SOFTWARE.
 """
 
 from cdecimal import Decimal
-from MarketPy.MarketObjects.Product import Product
-from MarketPy.MarketObjects.Price import Price
+from buttonwood.MarketObjects.Product import Product
+from buttonwood.MarketObjects.Price import Price
 
 
 def test_product_creation():

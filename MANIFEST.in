@@ -1,0 +1,4 @@
+include *.md
+include *.MD
+include *.txt
+recursive-include buttonwood *.md *.MD *.txt *.py
