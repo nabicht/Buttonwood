@@ -153,22 +153,22 @@ class ConfigurablePeriodBarListener(OrderLevelBookListener):
         return self._type
 
     def notify_book_update(self, order_book, causing_order_chain, tob_updated):
-        # if top of
-        # set the event to the previous tob
-        market = order_book.market()
-        if market not in self._market_to_bars:
-            self._market_to_bars[market] = []
-        time = order_book.last_update_time()
+        if tob_updated:
+            time = order_book.last_update_time()
+            if time >= self._start_time:
+                market = order_book.market()
+                if market not in self._market_to_bars:
+                    self._market_to_bars[market] = []
 
-        # if time is < previous time we have an issue.
-        if time < self._previous_time:
-            raise Exception("Book update at %0.6f is before the time of the previous update at %0.6f" % (time, self._previous_time))
+                # if time is < previous time we have an issue.
+                if time < self._previous_time:
+                    raise Exception("Book update at %0.6f is before the time of the previous update at %0.6f" % (time, self._previous_time))
 
-        # don't do anything if before start time
-        if time < self._start_time:
-            return
+                # don't do anything if before start time
+                if time < self._start_time:
+                    return
 
-        if
+                if
 
 
         tob = self._market_to_previous_tob.get(market)
