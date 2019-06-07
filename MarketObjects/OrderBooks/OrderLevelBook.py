@@ -760,7 +760,7 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
         # If this function returns false, it won't get added as a component order book
         assert isinstance(order_book, OrderLevelBook)
 
-    def _pre_notify_listeners(self, causing_order_chain):
+    def _pre_notify_listeners(self, causing_order_chain, agg_tob_updated):
         """
         This is a function where an implementing instance of AggregateOrderBook can do some work before listeners are
         notified of a change.
@@ -808,11 +808,19 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
                 obs.add(ob)
         return obs
 
-    def notify_book_update(self, order_book, causing_order_chain, tob_updated):
+    def _tob_updated(self, component_order_book, causing_order_chain, tob_updated):
+        """
+        This gets called before the dirty flags are set (as those should be set in _pre_notify_listeners) and will
+          determine if the tob_updated flag in the update should be true or false
+        :param component_order_book:
+        :param causing_order_chain:
+        :param tob_updated:
+        :return:
+        """
         agg_tob_updated = False
         if tob_updated:
             # only need to check the side of the causing order chain
-            tob = order_book.best_price(causing_order_chain.side())
+            tob = component_order_book.best_price(causing_order_chain.side())
             agg_tob = self.best_price(causing_order_chain.side())
             # if they are both None or if they are both same price, then we need assume tob updated for agg book
             if tob is None and agg_tob is None:
@@ -820,7 +828,11 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
             if tob is not None and agg_tob is not None:
                 if tob == agg_tob:
                     agg_tob_updated = True
-        self._pre_notify_listeners(causing_order_chain)
+        return agg_tob_updated
+
+    def notify_book_update(self, component_order_book, causing_order_chain, tob_updated):
+        agg_tob_updated = self._tob_updated(component_order_book, causing_order_chain, tob_updated)
+        self._pre_notify_listeners(causing_order_chain, agg_tob_updated)
         self._notify_listeners(causing_order_chain, agg_tob_updated)
 
     def clean_up_order_chain(self, order_chain):
