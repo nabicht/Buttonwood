@@ -4,17 +4,17 @@ from setuptools import find_packages
 setup(
   name = 'buttonwood',
   packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-  version = '1.0.2',
+  version = '1.0.3',
   license='MIT',
   description = 'Buttonwood is a python software package created to help quickly create, (re)build, or analyze markets, market structures, and market participants.',
   author = 'Peter F. Nabicht',
   author_email = 'nabicht@gmail.com',
   url = 'https://github.com/nabicht/Buttonwood',
-  download_url = 'https://github.com/nabicht/Buttonwood/archive/v1.0.2.tar.gz',
+  download_url = 'https://github.com/nabicht/Buttonwood/archive/v1.0.3.tar.gz',
   keywords = ['markets', 'finance', 'electronic markets', 'microstructure', 'market analysis'],
   install_requires=[
           'nose',
-          'm3-cdecimal',
+          'cdecimal',
       ],
   classifiers=[
     'Development Status :: 5 - Production/Stable',
