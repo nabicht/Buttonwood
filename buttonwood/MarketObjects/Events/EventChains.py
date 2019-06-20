@@ -178,13 +178,14 @@ class SubChain(object):
         except NameError:
             global debug_logging
             debug_logging = self._debug = self._logger.isEnabledFor(logging.DEBUG)
+        self._chain_id = open_event.chain_id()
         self._events = [open_event]
         self._open_reason = open_reason
         self._close_reason = None
         self._close_event = None
         self._subchain_id = subchain_id
         if self._debug:
-            self._logger.debug("OrderChain %s: Created new SubChain %s" % (self.chain_id(), self.subchain_id()))
+            self._logger.debug("OrderChain %s: Created new SubChain %s" % (self._chain_id, self.subchain_id()))
 
     def add_event(self, event):
         if not self.is_open():
@@ -192,7 +193,7 @@ class SubChain(object):
                             event.event_id(), event.chain_id(), self._subchain_id)
         if self._debug:
             self._logger.debug("OrderChain %s: Add %s %s to SubChain %s" %
-                               (self.chain_id(), event.event_type_str(), event.event_id(),
+                               (self._chain_id, event.event_type_str(), event.event_id(),
                                 self.subchain_id()))
         self._events.append(event)
 
@@ -212,7 +213,7 @@ class SubChain(object):
         return self._close_reason is None
 
     def chain_id(self):
-        return self.open_event().chain_id()
+        return self._chain_id
 
     def subchain_id(self):
         return self._subchain_id
