@@ -858,6 +858,33 @@ class OrderEventChain(object):
                         self._visible_qty = min(self.iceberg_peak_qty(), self._current_exposure.qty())
                         self._events_that_caused_visible_qty_refresh.add(pf.event_id())
 
+    def _modify_exposure_by_full_fill(self, ff):
+        if ff.is_aggressor():
+            requested_exposure = self.find_requested_exposure(ff.aggressing_command().event_id())
+            if ff.fill_qty() > requested_exposure.qty():
+                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is more than open exposure for %s. Took open exposure to %d" %
+                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                   str(requested_exposure.causing_event_id()),
+                                   requested_exposure.qty() - ff.fill_qty()))
+            elif ff.fill_qty() < requested_exposure.qty():
+                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is less than open exposure for %s. Took open exposure to %d. Should NOT be full fill." %
+                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                   str(requested_exposure.causing_event_id()),
+                                   requested_exposure.qty() - ff.fill_qty()))
+                self._logger.warn(str(self))
+                self._logger.warn(str(requested_exposure))
+        else:
+            if ff.fill_qty() > self._current_exposure.qty():
+                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is more than current exposure. Took exposure to %d" %
+                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                   self._current_exposure.qty() - ff.fill_qty()))
+            elif ff.fill_qty() < self._current_exposure.qty():
+                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is less than current exposure. Took exposure to %d. Should NOT be full fill." %
+                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                   self._current_exposure.qty() - ff.fill_qty()))
+                self._logger.warn(str(self))
+                self._logger.warn(str(self._current_exposure))
+
     def apply_partial_fill_report(self, pf):
         """
         Apply the partial fill report to the order chain.
@@ -912,18 +939,8 @@ class OrderEventChain(object):
         # track the match id
         self._match_ids.add(ff.match_id())
         # log warning if amount filled wouldn't actually fully fill the chain (using open requested exposure if aggressor and acked exposure if passive)
+        self._modify_exposure_by_full_fill(ff)
         if ff.is_aggressor():
-            requested_exposure = self.find_requested_exposure(ff.aggressing_command().event_id())
-            if ff.fill_qty() > requested_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is more than open exposure for %s. Took open exposure to %d" %
-                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
-                                   str(requested_exposure.causing_event_id()),
-                                   requested_exposure.qty() - ff.fill_qty()))
-            elif ff.fill_qty() < requested_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is less than open exposure for %s. Took open exposure to %d. Should NOT be full fill." %
-                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
-                                   str(requested_exposure.causing_event_id()),
-                                   requested_exposure.qty() - ff.fill_qty()))
             # if subchain for the aggressor command is not already open then need to open it and close previous
             if self.most_recent_subchain() is None or self.most_recent_subchain().open_event().event_id() != ff.aggressing_command().event_id():
                 # cancel replace price is only thing that would result in a new subchain from a full fill
@@ -932,15 +949,6 @@ class OrderEventChain(object):
                 self._sub_chains.append(
                     SubChain(self._subchain_id_generator.id(), ff.aggressing_command(), SubChain.CANCEL_REPLACE_PRICE,
                              self._logger))
-        else:
-            if ff.fill_qty() > self._current_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is more than current exposure. Took exposure to %d" %
-                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
-                                   self._current_exposure.qty() - ff.fill_qty()))
-            elif ff.fill_qty() < self._current_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is less than current exposure. Took exposure to %d. Should NOT be full fill." %
-                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
-                                   self._current_exposure.qty() - ff.fill_qty()))
         # add to the open subchain
         self.most_recent_subchain().add_event(ff)
         # close the open subchain
