@@ -88,6 +88,7 @@ class CancelReplaceInfo(object):
     def qty_delta(self):
         return self._qty_delta
 
+
 class Exposure(object):
     # TODO document this class
 
@@ -685,7 +686,7 @@ class OrderEventChain(object):
         # close out the open exposure the ack is for
         if not self._close_requested_exposure(ack):
             raise Exception("Received an acknowledgement for event id %s but that event is not open in the chain." %
-                            str(ack.response_to_command().event_id()))  # TODO unit test this behavior
+                            str(ack.acknowledged_command().event_id()))  # TODO unit test this behavior
 
         # if current exposure is not None then we need to set the cancel replace history
         ack_exposure = Exposure(ack.price(), ack.qty(), ack.event_id())
@@ -946,9 +947,7 @@ class OrderEventChain(object):
                 # cancel replace price is only thing that would result in a new subchain from a full fill
                 if self.most_recent_subchain() is not None:
                     self.most_recent_subchain().close_subchain(SubChain.CANCEL_REPLACE_PRICE)
-                self._sub_chains.append(
-                    SubChain(self._subchain_id_generator.id(), ff.aggressing_command(), SubChain.CANCEL_REPLACE_PRICE,
-                             self._logger))
+                self._open_new_subchain(ff.aggressing_command(), SubChain.CANCEL_REPLACE_PRICE)
         # add to the open subchain
         self.most_recent_subchain().add_event(ff)
         # close the open subchain
@@ -975,8 +974,7 @@ class OrderEventChain(object):
         if self.most_recent_subchain() is not None:
             self.most_recent_subchain().add_event(rej.rejected_command())
         else:  # else it si the new order that needs to be added (new order is the only way we get here)
-            self._sub_chains.append(
-                SubChain(self._subchain_id_generator.id(), rej.rejected_command(), SubChain.NEW_ORDER, self._logger))
+            self._open_new_subchain(rej.rejected_command(), SubChain.NEW_ORDER)
         self.most_recent_subchain().add_event(rej)
 
         # close out the exposure that is open
