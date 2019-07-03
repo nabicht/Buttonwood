@@ -88,7 +88,6 @@ class CancelReplaceInfo(object):
     def qty_delta(self):
         return self._qty_delta
 
-
 class Exposure(object):
     # TODO document this class
 
@@ -375,8 +374,8 @@ class OrderEventChain(object):
     def is_far(self):
         """
         True if the time in force of the chain is FAR
-        
-        :return: bool 
+
+        :return: bool
         """
         return self._new_order_command.is_far()
 
@@ -384,7 +383,7 @@ class OrderEventChain(object):
         """
         True if the time in force of the chain is FAK
 
-        :return: bool 
+        :return: bool
         """
         return self._new_order_command.is_fak()
 
@@ -392,7 +391,7 @@ class OrderEventChain(object):
         """
         True if the time in force of the chain is FOK
 
-        :return: bool 
+        :return: bool
         """
         return self._new_order_command.is_fok()
 
@@ -455,7 +454,7 @@ class OrderEventChain(object):
     def last_update_time(self):
         """
         Gets the last time that the chain was updated (the time of the chain's last event).
-        
+
         :return: float
         """
         return self._events[-1].timestamp()
@@ -504,7 +503,7 @@ class OrderEventChain(object):
         Returns whether or not the order event chain is open. An event chain is open if it is still has exposure in the
          market. This means it has not received a Cancel Report, Full Fill Report, or has an any way had its qty set to
          0.
-        :return: 
+        :return:
         """
         return self._open
 
@@ -533,7 +532,7 @@ class OrderEventChain(object):
     def last_acknowledgement(self):
         """
         Gets the last acknowledgement in the order chain. Can be None.
-        
+
         :return: Buttonwood.MarketObjects.Price.Price (can be None)
         """
         for event in reversed(self._events):
@@ -544,19 +543,19 @@ class OrderEventChain(object):
     def caused_visible_qty_refresh(self, event_id):
         """
         Is the event one that caused a refresh of the visible qty?
-        
-        :param event_id: unique identifier of event 
+
+        :param event_id: unique identifier of event
         :return: bool
         """
         return event_id in self._events_that_caused_visible_qty_refresh
 
     def find_requested_exposure(self, causing_event_id):
         """
-        For a given event this returns the events requested exposure. 
-        
+        For a given event this returns the events requested exposure.
+
         This can be None if the event did not result in a new requested exposure.
-        
-        :param causing_event_id: unique identifier of event. 
+
+        :param causing_event_id: unique identifier of event.
         :return: Exposure. (or None)
         """
         for exposure in self._requested_exposures:
@@ -686,7 +685,7 @@ class OrderEventChain(object):
         # close out the open exposure the ack is for
         if not self._close_requested_exposure(ack):
             raise Exception("Received an acknowledgement for event id %s but that event is not open in the chain." %
-                            str(ack.acknowledged_command().event_id()))  # TODO unit test this behavior
+                            str(ack.response_to_command().event_id()))  # TODO unit test this behavior
 
         # if current exposure is not None then we need to set the cancel replace history
         ack_exposure = Exposure(ack.price(), ack.qty(), ack.event_id())
