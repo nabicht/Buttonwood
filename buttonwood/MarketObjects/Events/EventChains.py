@@ -389,8 +389,8 @@ class OrderEventChain(object):
     def is_far(self):
         """
         True if the time in force of the chain is FAR
-        
-        :return: bool 
+
+        :return: bool
         """
         return self._new_order_command.is_far()
 
@@ -398,7 +398,7 @@ class OrderEventChain(object):
         """
         True if the time in force of the chain is FAK
 
-        :return: bool 
+        :return: bool
         """
         return self._new_order_command.is_fak()
 
@@ -406,7 +406,7 @@ class OrderEventChain(object):
         """
         True if the time in force of the chain is FOK
 
-        :return: bool 
+        :return: bool
         """
         return self._new_order_command.is_fok()
 
@@ -469,7 +469,7 @@ class OrderEventChain(object):
     def last_update_time(self):
         """
         Gets the last time that the chain was updated (the time of the chain's last event).
-        
+
         :return: float
         """
         return self._events[-1].timestamp()
@@ -518,7 +518,7 @@ class OrderEventChain(object):
         Returns whether or not the order event chain is open. An event chain is open if it is still has exposure in the
          market. This means it has not received a Cancel Report, Full Fill Report, or has an any way had its qty set to
          0.
-        :return: 
+        :return:
         """
         return self._open
 
@@ -547,7 +547,7 @@ class OrderEventChain(object):
     def last_acknowledgement(self):
         """
         Gets the last acknowledgement in the order chain. Can be None.
-        
+
         :return: Buttonwood.MarketObjects.Price.Price (can be None)
         """
         for event in reversed(self._events):
@@ -558,19 +558,19 @@ class OrderEventChain(object):
     def caused_visible_qty_refresh(self, event_id):
         """
         Is the event one that caused a refresh of the visible qty?
-        
-        :param event_id: unique identifier of event 
+
+        :param event_id: unique identifier of event
         :return: bool
         """
         return event_id in self._events_that_caused_visible_qty_refresh
 
     def find_requested_exposure(self, causing_event_id):
         """
-        For a given event this returns the events requested exposure. 
-        
+        For a given event this returns the events requested exposure.
+
         This can be None if the event did not result in a new requested exposure.
-        
-        :param causing_event_id: unique identifier of event. 
+
+        :param causing_event_id: unique identifier of event.
         :return: Exposure. (or None)
         """
         for exposure in self._requested_exposures:
@@ -677,7 +677,8 @@ class OrderEventChain(object):
         self.most_recent_subchain().close_subchain(subchain_close_reason)
 
     def _open_new_subchain(self, opening_cmd, open_reason):
-        self._sub_chains.append(SubChain(self._subchain_id_generator.id(), opening_cmd, open_reason, self._logger))
+        new_subchain = SubChain(self._subchain_id_generator.id(), opening_cmd, open_reason, self._logger)
+        self._sub_chains.append(new_subchain)
 
     def apply_acknowledgement_report(self, ack):
         """
@@ -873,6 +874,33 @@ class OrderEventChain(object):
                         self._visible_qty = min(self.iceberg_peak_qty(), self._current_exposure.qty())
                         self._events_that_caused_visible_qty_refresh.add(pf.event_id())
 
+    def _modify_exposure_by_full_fill(self, ff):
+        if ff.is_aggressor():
+            requested_exposure = self.find_requested_exposure(ff.aggressing_command().event_id())
+            if ff.fill_qty() > requested_exposure.qty():
+                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is more than open exposure for %s. Took open exposure to %d" %
+                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                   str(requested_exposure.causing_event_id()),
+                                   requested_exposure.qty() - ff.fill_qty()))
+            elif ff.fill_qty() < requested_exposure.qty():
+                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is less than open exposure for %s. Took open exposure to %d. Should NOT be full fill." %
+                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                   str(requested_exposure.causing_event_id()),
+                                   requested_exposure.qty() - ff.fill_qty()))
+                self._logger.warn(str(self))
+                self._logger.warn(str(requested_exposure))
+        else:
+            if ff.fill_qty() > self._current_exposure.qty():
+                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is more than current exposure. Took exposure to %d" %
+                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                   self._current_exposure.qty() - ff.fill_qty()))
+            elif ff.fill_qty() < self._current_exposure.qty():
+                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is less than current exposure. Took exposure to %d. Should NOT be full fill." %
+                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                   self._current_exposure.qty() - ff.fill_qty()))
+                self._logger.warn(str(self))
+                self._logger.warn(str(self._current_exposure))
+
     def apply_partial_fill_report(self, pf):
         """
         Apply the partial fill report to the order chain.
@@ -927,35 +955,14 @@ class OrderEventChain(object):
         # track the match id
         self._match_ids.add(ff.match_id())
         # log warning if amount filled wouldn't actually fully fill the chain (using open requested exposure if aggressor and acked exposure if passive)
+        self._modify_exposure_by_full_fill(ff)
         if ff.is_aggressor():
-            requested_exposure = self.find_requested_exposure(ff.aggressing_command().event_id())
-            if ff.fill_qty() > requested_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is more than open exposure for %s. Took open exposure to %d" %
-                                  (self._chain_id, ff.event_id(), ff.fill_qty(),
-                                   requested_exposure.causing_event_id(),
-                                   requested_exposure.qty() - ff.fill_qty()))
-            elif ff.fill_qty() < requested_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is less than open exposure for %s. Took open exposure to %d. Should NOT be full fill." %
-                                  (self._chain_id, ff.event_id(), ff.fill_qty(),
-                                   requested_exposure.causing_event_id(),
-                                   requested_exposure.qty() - ff.fill_qty()))
             # if subchain for the aggressor command is not already open then need to open it and close previous
             if self.most_recent_subchain() is None or self.most_recent_subchain().open_event().event_id() != ff.aggressing_command().event_id():
                 # cancel replace price is only thing that would result in a new subchain from a full fill
                 if self.most_recent_subchain() is not None:
                     self.most_recent_subchain().close_subchain(SubChain.CANCEL_REPLACE_PRICE)
-                self._sub_chains.append(
-                    SubChain(self._subchain_id_generator.id(), ff.aggressing_command(), SubChain.CANCEL_REPLACE_PRICE,
-                             self._logger))
-        else:
-            if ff.fill_qty() > self._current_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is more than current exposure. Took exposure to %d" %
-                                  (self._chain_id, ff.event_id(), ff.fill_qty(),
-                                   self._current_exposure.qty() - ff.fill_qty()))
-            elif ff.fill_qty() < self._current_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is less than current exposure. Took exposure to %d. Should NOT be full fill." %
-                                  (self._chain_id, ff.event_id(), ff.fill_qty(),
-                                   self._current_exposure.qty() - ff.fill_qty()))
+                self._open_new_subchain(ff.aggressing_command(), SubChain.CANCEL_REPLACE_PRICE)
         # add to the open subchain
         self.most_recent_subchain().add_event(ff)
         # close the open subchain
@@ -970,12 +977,11 @@ class OrderEventChain(object):
         :param rej: MarketObjects.Events.OrderEvents.RejectReport
         """
         assert isinstance(rej, RejectReport)
-        rej_chain_id = rej.chain_id()
         assert rej.market() == self.market(), \
             "Reject does NOT have same market as the OrderEventChain expects"
-        assert rej_chain_id == self._chain_id, \
-            "Reject's chain ID (%s) does not match chain's ID (%s)" % (rej_chain_id, self._chain_id)
-        assert rej.rejected_command().chain_id() == rej_chain_id, \
+        assert rej.chain_id() == self.chain_id(), \
+            "Reject's chain ID (%s) does not match chain's ID (%s)" % (str(rej.chain_id()), str(self.chain_id()))
+        assert rej.rejected_command().chain_id() == rej.chain_id(), \
             "Reject should have the same chain id as the command they are in response to."
         # add reject and what is being rejected to the subchain.
         self._events.append(rej)
@@ -983,8 +989,7 @@ class OrderEventChain(object):
         if self.most_recent_subchain() is not None:
             self.most_recent_subchain().add_event(rej.rejected_command())
         else:  # else it si the new order that needs to be added (new order is the only way we get here)
-            self._sub_chains.append(
-                SubChain(self._subchain_id_generator.id(), rej.rejected_command(), SubChain.NEW_ORDER, self._logger))
+            self._open_new_subchain(rej.rejected_command(), SubChain.NEW_ORDER)
         self.most_recent_subchain().add_event(rej)
 
         # close out the exposure that is open

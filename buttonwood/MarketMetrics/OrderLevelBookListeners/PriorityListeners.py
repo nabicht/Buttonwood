@@ -68,10 +68,10 @@ class Priority:
     def worse_priority_than(self, other_priority):
         """
         Returns true if this priority is worse than the one passed in.
-        
+
         Priority is decided by next to get filled so more ticks from TOB or same
         ticks from TOB but more size ahead is worse priority.
-        
+
         :param other_priority: MarketMetrics.OrderLevelBookListeners.PriorityListeners.Priority
         :return: Bool
         """
@@ -85,7 +85,7 @@ class Priority:
         """
         Returns true if this priority is further from opposite side tob than
          the one passed in.
-    
+
         :param other_priority: MarketMetrics.OrderLevelBookListeners.PriorityListeners.Priority
         :return: Bool
         """
@@ -223,7 +223,9 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         event_id = new_order_command.event_id()
         price = new_order_command.price()
         side = resulting_order_chain.side()
-        market = resulting_order_chain.market()
+        market = new_order_command.market()
+        if market not in self._market_to_order_book:
+            return
         # new orders are not in the book so calculate what priority *would be*
         priority = self._calculate_priority_not_in_book(price, side, market)
         self._market_to_event_to_priority.set((market, event_id), value=priority)
@@ -234,6 +236,8 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         price = cancel_replace_command.price()
         side = resulting_order_chain.side()
         market = resulting_order_chain.market()
+        if market not in self._market_to_order_book:
+            return
         # need the most recently requested exposure, if none, get the ack'd exposure
         exposure = resulting_order_chain.most_recent_requested_exposure()
         if exposure is None:
@@ -260,6 +264,8 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         """
         event_id = cancel_command.event_id()
         market = resulting_order_chain.market()
+        if market not in self._market_to_order_book:
+            return
         priority = self._calculate_priority_in_book(resulting_order_chain)
         self._market_to_event_to_priority.set((market, event_id), value=priority)
         # priority before the event is the same calculated aftet event for cancel command
@@ -268,6 +274,9 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
     def handle_acknowledgement_report(self, acknowledgement_report, resulting_order_chain):
         event_id = acknowledgement_report.event_id()
         market = resulting_order_chain.market()
+        # don't do anything! orderbook not known
+        if market not in self._market_to_order_book:
+            return
         # acks are in the book already and no need to do anything fancy with ignoring orders
         priority = self._calculate_priority_in_book(resulting_order_chain)
         self._market_to_event_to_priority.set((market, event_id), value=priority)
@@ -287,6 +296,9 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         market = fill_event.market()
         event_id = fill_event.event_id()
         order_book = self._market_to_order_book.get(market)
+        # don't do anything! orderbook not known
+        if order_book is None:
+            return
         # do closes
         opposite_best_price = order_book.best_price(resulting_order_chain.side().other_side())
         ticks_from_opposite_tob = None
@@ -315,6 +327,8 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         if not (resulting_order_chain.is_far() and resulting_order_chain.is_limit_order() and resulting_order_chain.has_acknowledgement()):
             return
         market = resulting_order_chain.market()
+        if market not in self._market_to_order_book:
+            return
         event_id = cancel_report.event_id()
         priority = self._calculate_priority_in_book(resulting_order_chain)
         self._market_to_event_to_priority.set((market, event_id), value=priority)

@@ -33,7 +33,6 @@ from buttonwood.MarketObjects.Events.OrderEvents import NewOrderCommand, CancelR
 from buttonwood.MarketObjects.Events.EventChains import OrderEventChain
 from buttonwood.MarketObjects.Side import ASK_SIDE
 from buttonwood.MarketObjects.Side import BID_SIDE
-
 from buttonwood.utils.dicts import NDeepDict
 import operator
 
