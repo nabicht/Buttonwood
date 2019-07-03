@@ -106,6 +106,8 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
         event_id = acknowledgement_report.causing_command().event_id()
 
         market = acknowledgement_report.market()
+        if market not in self._market_to_orderbook:
+            return
         agg_event = self._market_event_id_aggressive_act.get((market, event_id))
         #if aggressor is acked then all fills on both sides shoud be done and we can calculate
         if agg_event:
@@ -114,6 +116,8 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
     def _handle_fill(self, fill, resulting_order_chain):
         match_id = fill.match_id()
         market = fill.market()
+        if market not in self._market_to_orderbook:
+            return
         event_id = fill.causing_command().event_id()
 
         agg_act = self._market_event_id_aggressive_act.get((market, event_id))
@@ -127,8 +131,11 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
         self._handle_fill(partial_fill_report, resulting_order_chain)
 
     def handle_full_fill_report(self, full_fill_report, resulting_order_chain):
-        self._handle_fill(full_fill_report, resulting_order_chain)
+
         market = full_fill_report.market()
+        if market not in self._market_to_orderbook:
+            return
+        self._handle_fill(full_fill_report, resulting_order_chain)
         # on an aggressive full fill we close out the open order chain
         if full_fill_report.is_aggressor():
             event_id = full_fill_report.causing_command().event_id()
@@ -145,6 +152,8 @@ class AggressiveImpactListener(OrderLevelBookListener, OrderEventListener):
     def handle_cancel_report(self, cancel_report, resulting_order_chain):
         # on a cancel we close out the open order chain because of FAKs
         market = cancel_report.market()
+        if market not in self._market_to_orderbook:
+            return
         event_id = cancel_report.causing_command().event_id()
         agg_event = self._market_event_id_aggressive_act.get((market, event_id))
         # if aggressor is cancelled then all fills on both sides should be done and we can calculate
