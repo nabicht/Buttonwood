@@ -1,8 +1,8 @@
 """
 This file is part of Buttonwood.
 
-Buttonwood is a python software package created to help quickly create, (re)build, or 
-analyze markets, market structures, and market participants. 
+Buttonwood is a python software package created to help quickly create, (re)build, or
+analyze markets, market structures, and market participants.
 
 MIT License
 
