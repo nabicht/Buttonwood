@@ -49,8 +49,8 @@ class Market(object):
         """
         assert isinstance(product, Product)
         assert isinstance(endpoint, Endpoint)
-        assert isinstance(min_price_increment, Decimal) or isinstance(min_price_increment, str)
-        assert isinstance(min_price_increment_value, Decimal) or isinstance(min_price_increment_value, str)
+        assert isinstance(min_price_increment, (Decimal, str, int))
+        assert isinstance(min_price_increment_value, (Decimal, str, int))
         self._product = product
         self._endpoint = endpoint
         self._hash = hash((self._product, self._endpoint))
