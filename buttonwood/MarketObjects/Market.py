@@ -2,7 +2,7 @@
 This file is part of Buttonwood.
 
 Buttonwood is a python software package created to help quickly create, (re)build, or
-analyze markets, market structures, and market participants. 
+analyze markets, market structures, and market participants.
 
 MIT License
 
@@ -29,10 +29,12 @@ SOFTWARE.
 
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Product import Product
+from cdecimal import Decimal
+
 
 class Market(object):
 
-    def __init__(self, product, endpoint):
+    def __init__(self, product, endpoint, min_price_increment, min_price_increment_value=1):
         """
         Contains all the information needed about a Market.
 
@@ -41,12 +43,19 @@ class Market(object):
 
         :param product: Product. the market's product.
         :param endpoint: Endpoint. the market's endpoint.
+        :param min_price_increment: Decimal or str. the smallest increment of the product, also often called a tick.
+        :param min_price_increment_value: Decimal or str. the value of the smallest increment the products trades in.
+                                           Optional. Defaults to 1.
         """
         assert isinstance(product, Product)
         assert isinstance(endpoint, Endpoint)
+        assert isinstance(min_price_increment, Decimal) or isinstance(min_price_increment, str)
+        assert isinstance(min_price_increment_value, Decimal) or isinstance(min_price_increment_value, str)
         self._product = product
         self._endpoint = endpoint
         self._hash = hash((self._product, self._endpoint))
+        self._min_price_increment = Decimal(min_price_increment)
+        self._min_price_increment_value = Decimal(min_price_increment_value)
 
     def product(self):
         """
@@ -63,6 +72,39 @@ class Market(object):
         :return:
         """
         return self._endpoint
+
+    def min_price_increment(self):
+        """
+        Gets the minimum price increment of a product. This is the smallest increment that the product trades in.
+        :return: Decimal
+        """
+        return self._min_price_increment
+
+    def min_price_increment_value(self):
+        """
+        Gets the monetary value associated with the minimum price increment of a product.
+        :return: Decimal
+        """
+        return self._min_price_increment_value
+
+    def mpi(self):
+        """
+        This is the same as `min_price_increment()'. It is just for the convenience of the developer.
+
+        :return: Decimal
+        """
+        return self._min_price_increment
+
+    def mpi_value(self):
+        """
+        This is the same as `min_price_increment_value()'. It is just for the convenience of the developer.
+
+        :return: Decimal
+        """
+        return self._min_price_increment_value
+
+    def is_valid_price(self, price):
+        return (price / self._min_price_increment) % 1 == 0
 
     def __eq__(self, other):
         return isinstance(other, Market) and other.__hash__() == self.__hash__()
