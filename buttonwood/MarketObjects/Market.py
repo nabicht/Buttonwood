@@ -34,7 +34,8 @@ from cdecimal import Decimal
 
 class Market(object):
 
-    def __init__(self, product, endpoint, min_price_increment, min_price_increment_value=1):
+    def __init__(self, product, endpoint, min_price_increment, min_price_increment_value=1, min_price=Decimal(-999999),
+                 max_price=Decimal(999999), first_price=None):
         """
         Contains all the information needed about a Market.
 
@@ -46,6 +47,7 @@ class Market(object):
         :param min_price_increment: Decimal or str. the smallest increment of the product, also often called a tick.
         :param min_price_increment_value: Decimal or str. the value of the smallest increment the products trades in.
                                            Optional. Defaults to 1.
+        :param min_price:
         """
         assert isinstance(product, Product)
         assert isinstance(endpoint, Endpoint)
@@ -56,6 +58,8 @@ class Market(object):
         self._hash = hash((self._product, self._endpoint))
         self._min_price_increment = Decimal(min_price_increment)
         self._min_price_increment_value = Decimal(min_price_increment_value)
+        self._prices = {}
+        self._create_prices()
 
     def product(self):
         """
