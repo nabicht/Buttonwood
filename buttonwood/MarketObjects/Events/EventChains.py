@@ -962,7 +962,9 @@ class OrderEventChain(object):
                 # cancel replace price is only thing that would result in a new subchain from a full fill
                 if self.most_recent_subchain() is not None:
                     self.most_recent_subchain().close_subchain(SubChain.CANCEL_REPLACE_PRICE)
-                self._open_new_subchain(ff.aggressing_command(), SubChain.CANCEL_REPLACE_PRICE)
+                    self._open_new_subchain(ff.aggressing_command(), SubChain.CANCEL_REPLACE_PRICE)
+                else:
+                    self._open_new_subchain(ff.aggressing_command(), SubChain.NEW_ORDER)
         # add to the open subchain
         self.most_recent_subchain().add_event(ff)
         # close the open subchain
