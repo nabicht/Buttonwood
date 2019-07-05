@@ -248,8 +248,8 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
             raise Exception("%s is already registered" % listener_id)
 
         self._listeners[listener_id] = order_level_book_listener
-        self._logger.info("%s %s registered listener: %s" %
-                          (self.name(), str(self._market), order_level_book_listener.__class__.__name__))
+        self._logger.debug("%s %s registered listener: %s" %
+                           (self.name(), str(self._market), order_level_book_listener.__class__.__name__))
 
     def order_level_book_listener(self, listener_id):
         """
