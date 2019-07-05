@@ -115,8 +115,8 @@ class OrderEventHandler:
                 "Registering OrderBook as an EventListener! Much downstream logic depends on EventListeners being updated before OrderBooks.")
         if event_listener_id not in self._event_listeners:
             self._event_listeners[event_listener_id] = event_listener
-            self._logger.info("Registered OrderEventListener: '%s': %s" %
-                              (event_listener_id, event_listener.__class__.__name__))
+            self._logger.debug("Registered OrderEventListener: '%s': %s" %
+                               (event_listener_id, event_listener.__class__.__name__))
         else:
             raise Exception("%s is already registered" % event_listener_id)
 
