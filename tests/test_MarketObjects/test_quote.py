@@ -36,7 +36,7 @@ from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Market import Market
 from buttonwood.MarketObjects.Product import Product
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
 
 
 def test_quote_creation():
@@ -75,7 +75,7 @@ def test_equality():
     q2 = Quote(MARKET, BID_SIDE, Price("95.42"), 94)
     assert q1 == q2
 
-    q2 = Quote(Product("APPL", "Apple", "0.01", "0.01"), BID_SIDE, Price("95.42"), 94)
+    q2 = Quote(Market(Product("APPL", "Apple"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01")), BID_SIDE, Price("95.42"), 94)
     assert q1 != q2
 
     q2 = Quote(MARKET, BID_SIDE, Price("95.43"), 94)

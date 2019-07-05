@@ -28,7 +28,7 @@ SOFTWARE.
 """
 
 from nose.tools import *
-
+from cdecimal import Decimal
 from buttonwood.MarketObjects.Events.OrderEventConstants import *
 from buttonwood.MarketObjects.Events.OrderEvents import NewOrderCommand
 from buttonwood.MarketObjects.Endpoint import Endpoint
@@ -39,7 +39,7 @@ from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Events.OrderEventConstants import MARKET as MARKET_ORDER
 from buttonwood.MarketObjects.Events.OrderEventConstants import LIMIT as LIMIT_ORDER
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
 
 
 def test_creation():

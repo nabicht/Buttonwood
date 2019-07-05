@@ -63,7 +63,7 @@ class MarketOrderTicksFromCrossing(OrderLevelBookListener, OrderEventListener):
             side = new_order_command.side()
             price = new_order_command.price()
             market = new_order_command.market()
-            mpi = market.product().mpi()
+            mpi = market.mpi()
             opp_price = self._market_side_tob[market][side.other_side()]
             ticks_away = ((opp_price - price) if side.is_bid() else (price - opp_price)) / mpi
             self._market_chain_id_ticks.set([market, new_order_command.chain_id()], value=ticks_away)

@@ -182,7 +182,7 @@ class NewOrderCommand(OrderCommand):
         assert qty > 0, "Qty must be greater than 0"
         assert iceberg_peak_qty is None or iceberg_peak_qty >= 0, "Iceberg Peak Qty must be None or an int >= 0"
         OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=other_key_values)
-        assert market.product().is_valid_price(price), "Price %s is not valid for Product %s" % (str(price), str(market))
+        assert market.is_valid_price(price), "Price %s is not valid for Product %s" % (str(price), str(market))
 
         self._side = side
         self._price = price
@@ -301,7 +301,7 @@ class CancelReplaceCommand(OrderCommand):
         assert iceberg_peak_qty is None or isinstance(iceberg_peak_qty, int)
         assert iceberg_peak_qty is None or iceberg_peak_qty >= 0, "iceberg_peak_qty cannot be negative."
         assert qty >= 0, "Qty must be greater than 0"
-        assert market.product().is_valid_price(price), "Price %s is not valid for Market %s" % (str(price), str(market))
+        assert market.is_valid_price(price), "Price %s is not valid for Market %s" % (str(price), str(market))
         OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=other_key_values)
         self._side = side
         self._price = price

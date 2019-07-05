@@ -35,8 +35,9 @@ from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Market import Market
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.TwoSidedQuote import TwoSidedQuote
+from cdecimal import Decimal
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
 
 
 def test_successful_instantiation_no_cross():
@@ -67,8 +68,8 @@ def test_failed_instantiation_sell_quote_not_an_ask():
 
 @raises(Exception)
 def test_failed_instantiation_products_not_the_same():
-    market1 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
-    market2 = Market(Product("APPL", "Apple", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+    market1 = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), Decimal(".01"))
+    market2 = Market(Product("APPL", "Apple"), Endpoint("Nasdaq", "NSDQ"))
     bid_quote = Quote(market1, BID_SIDE, "25.23", 18)
     ask_quote = Quote(market2, ASK_SIDE, "26.20", 233)
     TwoSidedQuote(bid_quote, ask_quote)
@@ -126,8 +127,8 @@ def test_successful_set_sell_quote():
 
 @raises(Exception)
 def test_failed_set_sell_quote_wrong_product():
-    market1 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
-    market2 = Market(Product("APPL", "Apple", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+    market1 = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
+    market2 = Market(Product("APPL", "Apple"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
     bid_quote = Quote(market1, BID_SIDE, "25.23", 18)
     ask_quote = Quote(market1, ASK_SIDE, "26.20", 233)
     ask_quote2 = Quote(market2, ASK_SIDE, "25.98", 3)
@@ -173,8 +174,8 @@ def test_failed_set_buy_quote_locked_market():
 
 @raises(Exception)
 def test_failed_set_buy_quote_wrong_product():
-    market1 = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
-    market2 = Market(Product("APPL", "Apple", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+    market1 = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
+    market2 = Market(Product("APPL", "Apple",), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
     bid_quote = Quote(market1, BID_SIDE, "25.23", 18)
     ask_quote = Quote(market1, ASK_SIDE, "26.20", 233)
     buy_quote2 = Quote(market2, BID_SIDE, "25.98", 3)

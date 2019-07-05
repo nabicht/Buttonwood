@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import Buttonwood.MarketObjects.Events.OrderEventConstants as TIF
+import buttonwood.MarketObjects.Events.OrderEventConstants as TIF
 
 def test_values_are_correct():
     # This is simply to test that the constants don't get changed around. A unit test breaking will at least

@@ -48,8 +48,9 @@ from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Side import ASK_SIDE
 from buttonwood.utils.IDGenerators import MonotonicIntID
+from cdecimal import Decimal
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
 LOGGER = logging.getLogger()
 SUBCHAIN_ID_GENERATOR = MonotonicIntID()
 

@@ -55,9 +55,9 @@ class Quote(object):
         use_price = price
         if isinstance(price, str):
             use_price = Price(price)
-        assert market.product().is_valid_price(use_price), \
+        assert market.is_valid_price(use_price), \
             "%s is not a valid price for a product with minimum price increment %s" % \
-            (str(use_price), str(market.product().mpi()))
+            (str(use_price), str(market.mpi()))
         self._side = side
         self._market = market
         self._price_level = PriceLevel(use_price, visible_qty, hidden_qty, num_orders=1)

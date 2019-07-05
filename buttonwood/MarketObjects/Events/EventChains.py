@@ -52,7 +52,7 @@ class CancelReplaceInfo(object):
     def __init__(self, previous_exposure, new_exposure, side, market):
         self._prev = previous_exposure
         self._new = new_exposure
-        mpi = market.product().mpi()
+        mpi = market.mpi()
         if side.is_bid():
             self._price_delta = (self._new.price() - self._prev.price()) / mpi
         else:

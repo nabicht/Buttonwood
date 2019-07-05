@@ -28,13 +28,14 @@ SOFTWARE.
 """
 
 from nose.tools import *
+from cdecimal import Decimal
 from buttonwood.MarketObjects.Events.OrderEvents import CancelCommand
 from buttonwood.MarketObjects import CancelReasons
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Market import Market
 from buttonwood.MarketObjects.Product import Product
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
 
 def test_creation():
     cancel = CancelCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, CancelReasons.SYSTEM_CANCEL)
