@@ -27,6 +27,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import json
+
 
 class Endpoint(object):
 
@@ -52,7 +54,12 @@ class Endpoint(object):
         assert isinstance(name, str)
         assert abbreviation is None or isinstance(abbreviation, str)
         self._name = name
-        self._abbr = abbreviation if abbreviation is None else name
+        self._abbr = abbreviation if abbreviation is not None else name
+        # since this should be an immutable object we can go ahead and create the following
+        #  if someone wants to overwrite how the name or abbreviation gets formatted they'll need to overwrite __str__
+        #  and to_json
+        self.__json = {"name": self._name, "abbreviation": self._abbr}
+        self.__str = json.dumps(self.__json)
         self.__hash = hash(name)
 
     def name(self):
@@ -78,10 +85,10 @@ class Endpoint(object):
         return not self.__eq__(other)
 
     def __str__(self):
-        return "%s (%s)" % (self.name(), self.abbreviation())
+        return self.__str
 
     def to_json(self):
-        return {"name": self.name(), "abbreviation": self.abbreviation()}
+        return self.__json
 
     def __hash__(self):
         return self.__hash

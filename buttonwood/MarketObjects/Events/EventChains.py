@@ -41,6 +41,7 @@ from buttonwood.MarketObjects.Events.OrderEvents import PartialFillReport
 from buttonwood.MarketObjects.Events.OrderEvents import RejectReport
 from buttonwood.utils.IDGenerators import IDGenerator
 
+import logging
 import json
 
 
@@ -87,6 +88,7 @@ class CancelReplaceInfo(object):
 
     def qty_delta(self):
         return self._qty_delta
+
 
 class Exposure(object):
     # TODO document this class
@@ -171,21 +173,28 @@ class SubChain(object):
         :param open_reason:
         """
         self._logger = logger
-        self._events = []
-        self._events.append(open_event)
+        try:
+            self._debug = debug_logging
+        except NameError:
+            global debug_logging
+            debug_logging = self._debug = self._logger.isEnabledFor(logging.DEBUG)
+        self._chain_id = open_event.chain_id()
+        self._events = [open_event]
         self._open_reason = open_reason
         self._close_reason = None
         self._close_event = None
         self._subchain_id = subchain_id
-        self._logger.debug("OrderChain %s: Created new SubChain %s" % (str(self.chain_id()), str(self.subchain_id())))
+        if self._debug:
+            self._logger.debug("OrderChain %s: Created new SubChain %s" % (self._chain_id, self.subchain_id()))
 
     def add_event(self, event):
         if not self.is_open():
             raise Exception("Adding event to closed Subchain. EventID %s, Chain %s, SubChain %s" %
                             event.event_id(), event.chain_id(), self._subchain_id)
-        self._logger.debug("OrderChain %s: Add %s %s to SubChain %s" %
-                           (str(self.chain_id()), event.event_type_str(), str(event.event_id()),
-                            str(self.subchain_id())))
+        if self._debug:
+            self._logger.debug("OrderChain %s: Add %s %s to SubChain %s" %
+                               (self._chain_id, event.event_type_str(), event.event_id(),
+                                self.subchain_id()))
         self._events.append(event)
 
     def close_subchain(self, close_reason):
@@ -204,7 +213,7 @@ class SubChain(object):
         return self._close_reason is None
 
     def chain_id(self):
-        return self.open_event().chain_id()
+        return self._chain_id
 
     def subchain_id(self):
         return self._subchain_id
@@ -259,6 +268,11 @@ class OrderEventChain(object):
         assert isinstance(new_order_command, NewOrderCommand)
         assert isinstance(subchain_id_generator, IDGenerator)
         self._logger = logger  # TODO add debug logging throughout
+        try:
+            self._debug = debug_logging
+        except NameError:
+            global debug_logging
+            debug_logging = self._debug = self._logger.isEnabledFor(logging.DEBUG)
 
         # keeping this state local, rather than looking it up in self._new_order_command all the time speeds things up
         #  (only doing it for a select few that tend to get called more than others)
@@ -283,8 +297,9 @@ class OrderEventChain(object):
         # add to list of events
         self._events = [new_order_command]
         self._filled_price_to_qty = defaultdict(int)
-        self._logger.debug("New %s created, OrderChainID %s Market %s" %
-                           (self.__class__.__name__, str(self.chain_id()), str(self.market())))
+        if self._debug:
+            self._logger.debug("New %s created, OrderChainID %s Market %s" %
+                               (self.__class__.__name__, str(self._chain_id), str(self.market())))
         # New Orders start new subchains, so start subchain and put it in list of subchains
         self._sub_chains = []
         self._visible_qty = 0  # an unack'd order has no qty showing on the book
@@ -602,7 +617,7 @@ class OrderEventChain(object):
             event_json = event.to_json()
             s += json.dumps(event_json) + "\n"
         s += "\n%s: %s %s %s %d (%d) @ %s" % \
-             (str(self.chain_id()), self.user_id(), str(self.market()), self.side(), self.visible_qty(),
+             (str(self._chain_id), self.user_id(), str(self.market()), self.side(), self.visible_qty(),
               self.current_qty() - self.visible_qty(), str(self.current_price()))
         return s
 
@@ -671,13 +686,14 @@ class OrderEventChain(object):
 
         :param ack: MarketObjects.Events.OrderEvents.AcknowledgementReport
         """
+        ack_chain_id = ack.chain_id()
+        ack_cmd = ack.acknowledged_command()
         assert isinstance(ack, AcknowledgementReport)
         assert ack.market() == self.market(), \
             "Acknowledgement does NOT have same market as the OrderEventChain expects"
-        assert ack.chain_id() == self.chain_id(), \
-            "Acknowledgement's chain ID (%s) does not match chain's ID (%s)" % (
-            str(ack.chain_id()), str(self.chain_id()))
-        assert ack.acknowledged_command().chain_id() == ack.chain_id(), \
+        assert ack_chain_id == self._chain_id, \
+            "Acknowledgement's chain ID (%s) does not match chain's ID (%s)" % (ack_chain_id, self._chain_id)
+        assert ack_cmd.chain_id() == ack_chain_id, \
             "Acknowledgements should have the same chain id as the command they are in response to."
 
         # append the ack to the underlying list of events
@@ -685,7 +701,7 @@ class OrderEventChain(object):
         # close out the open exposure the ack is for
         if not self._close_requested_exposure(ack):
             raise Exception("Received an acknowledgement for event id %s but that event is not open in the chain." %
-                            str(ack.response_to_command().event_id()))  # TODO unit test this behavior
+                            str(ack_cmd.event_id()))  # TODO unit test this behavior
 
         # if current exposure is not None then we need to set the cancel replace history
         ack_exposure = Exposure(ack.price(), ack.qty(), ack.event_id())
@@ -696,9 +712,9 @@ class OrderEventChain(object):
         # handle subchains
         subchain_open_reason = None
         subchain_close_reason = None
-        if isinstance(ack.acknowledged_command(), NewOrderCommand):
+        if isinstance(ack_cmd, NewOrderCommand):
             subchain_open_reason = SubChain.NEW_ORDER
-        elif isinstance(ack.acknowledged_command(), CancelReplaceCommand):
+        elif isinstance(ack_cmd, CancelReplaceCommand):
             if ack.qty() == 0:
                 subchain_close_reason = SubChain.CANCEL_REPLACE_TO_ZERO
             else:
@@ -712,13 +728,13 @@ class OrderEventChain(object):
                     subchain_open_reason = SubChain.CANCEL_REPLACE_INCREASE_QTY
         # if we have a subchain reason then we need to close current subchain and open a new one
         # don't need to worry about opening and closing if this already happened due to a aggressing partial fill
-        if self.most_recent_subchain() is None or self.most_recent_subchain().open_event().event_id() != ack.acknowledged_command().event_id():
+        if self.most_recent_subchain() is None or self.most_recent_subchain().open_event().event_id() != ack_cmd.event_id():
             if subchain_close_reason is not None:
                 self._close_current_subchain(subchain_close_reason)
             if subchain_open_reason is not None:  # if a new one is open then the ack'd event opens it
-                self._open_new_subchain(ack.acknowledged_command(), subchain_open_reason)
+                self._open_new_subchain(ack_cmd, subchain_open_reason)
             else:  # else the ack'd event gets added to already open SubChain
-                self.most_recent_subchain().add_event(ack.acknowledged_command())
+                self.most_recent_subchain().add_event(ack_cmd)
         # now, add the ack to the most recently open subchain
         self.most_recent_subchain().add_event(ack)
 
@@ -747,8 +763,8 @@ class OrderEventChain(object):
         assert isinstance(cr, CancelReplaceCommand)
         assert cr.market() == self.market(), \
             "Cancel Replace does NOT have same market as the OrderEventChain expects"
-        assert cr.chain_id() == self.chain_id(), \
-            "Cancel Replace's chain ID (%s) does not match chain's ID (%s)" % (str(cr.chain_id()), str(self.chain_id()))
+        assert cr.chain_id() == self._chain_id, \
+            "Cancel Replace's chain ID (%s) does not match chain's ID (%s)" % (cr.chain_id(), self._chain_id)
         assert self.time_in_force() == OrderEventConstants.FAR, \
             "Cancel Replace commands only allowed for FAR time in force. This is a %s" % OrderEventConstants.time_in_force_str(
                 self.time_in_force())
@@ -768,8 +784,8 @@ class OrderEventChain(object):
         assert isinstance(cc, CancelCommand)
         assert cc.market() == self.market(), \
             "Cancel Command does NOT have same market as the OrderEventChain expects"
-        assert cc.chain_id() == self.chain_id(), \
-            "Cancel Commnad chain ID (%s) does not match chain's ID (%s)" % (str(cc.chain_id()), str(self.chain_id()))
+        assert cc.chain_id() == self._chain_id, \
+            "Cancel Commnad chain ID (%s) does not match chain's ID (%s)" % (cc.chain_id(), self._chain_id)
 
         # append to list of events
         self._events.append(cc)
@@ -785,8 +801,8 @@ class OrderEventChain(object):
         assert isinstance(cr, CancelReport)
         assert cr.market() == self.market(), \
             "Cancel Report does NOT have same market as the OrderEventChain expects"
-        assert cr.chain_id() == self.chain_id(), \
-            "Cancel Report chain ID (%s) does not match chain's ID (%s)" % (str(cr.chain_id()), str(self.chain_id()))
+        assert cr.chain_id() == self._chain_id, \
+            "Cancel Report chain ID (%s) does not match chain's ID (%s)" % (cr.chain_id(), self._chain_id)
         # append to events
         self._events.append(cr)
 
@@ -820,13 +836,13 @@ class OrderEventChain(object):
             if requested_exposure is None:
                 self._logger.error(
                     "OrderChain state issue: %s. Aggressive partial fill (%s) with no outstanding exposure request for the aggressing event %s" %
-                    (str(self.chain_id()), str(pf.event_id()), str(pf.aggressing_command().event_id())))
+                    (self._chain_id, str(pf.event_id()), str(pf.aggressing_command().event_id())))
             else:
                 requested_exposure.dec_qty(pf.fill_qty())
                 if requested_exposure.qty() <= 0:
                     self._logger.error(
                         "OrderChain state issue: %s. Aggressive partial fill (%s) took requested exposure from %s to %d. Closing Order Chain." %
-                        (str(self.chain_id()), str(pf.event_id()), str(pf.aggressing_command().event_id()),
+                        (self._chain_id, str(pf.event_id()), str(pf.aggressing_command().event_id()),
                          pf.fill_qty()))
                     # close subchain down below after adding it
                     close_sub_chain = True
@@ -840,12 +856,12 @@ class OrderEventChain(object):
             #       - reduce by amount filled. If this is 0 or less then replenish min(iceberg peak qty, open exposure qty)
             if self._current_exposure is None:
                 self._logger.error("OrderChain state issue: %s. Passive partial fill (%s) with no current exposure." %
-                                   (str(self.chain_id()), str(pf.event_id())))
+                                   (self._chain_id, pf.event_id()))
             else:
                 if self._current_exposure.qty() - pf.fill_qty() <= 0:
                     self._logger.error(
                         "OrderChain state issue: %s. Passive partial fill (%s) took open exposure to %d" %
-                        (str(self.chain_id()), str(pf.event_id()), pf.fill_qty()))
+                        (self._chain_id, pf.event_id(), pf.fill_qty()))
                     # subchain closed down below, after the partial fill is added to it
                     close_sub_chain = True
                     # don't decrement qty because this, in essence, gets taken care of in the close and we still want
