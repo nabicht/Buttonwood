@@ -29,12 +29,9 @@ SOFTWARE.
 
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketObjects.Price import InvalidPriceException
 from buttonwood.MarketObjects.Product import Product
 from cdecimal import Decimal
-
-
-class InvalidPriceException(Exception):
-    pass
 
 
 class Market(object):

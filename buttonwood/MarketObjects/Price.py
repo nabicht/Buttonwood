@@ -31,6 +31,10 @@ from cdecimal import Decimal
 from buttonwood.MarketObjects.Side import Side
 
 
+class InvalidPriceException(Exception):
+    pass
+
+
 class Price(object):
     def __init__(self, price_value):
         """
