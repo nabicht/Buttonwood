@@ -121,3 +121,9 @@ class Product(object):
 
     def to_json(self):
         return self.__json
+
+    def to_detailed_json(self):
+        # I know that copying the dict is overkill, but it keeps the return json dict from letting someone edit the
+        #  identifiers dict accidentally (or on purpose)
+        return {"symbol": self.symbol(), "name": self.name(), "identifiers": self._identifiers.copy()}
+
