@@ -160,7 +160,7 @@ class Market(object):
         return self._min_price_increment_value
 
     def is_valid_price(self, price):
-        return (price / self._min_price_increment) % 1 == 0
+        return (self._min_price <= price <= self._max_price) and (price / self._min_price_increment) % 1 == 0
 
     def __eq__(self, other):
         return isinstance(other, Market) and other.__hash__() == self.__hash__()

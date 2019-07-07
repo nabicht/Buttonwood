@@ -32,6 +32,8 @@ from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Price import Price
 from buttonwood.MarketObjects.Market import Market
+from buttonwood.MarketObjects.Price import InvalidPriceException
+from nose.tools import *
 
 
 PRODUCT = Product("AAA", "Some Product named AAA")
@@ -158,3 +160,76 @@ def test_price_creation():
     assert Decimal("100.04") in mrkt._prices
     assert Decimal("100.05") in mrkt._prices
     assert Decimal("99.90") not in mrkt._prices
+
+
+def test_get_price():
+    mrkt = Market(PRODUCT, ENDPOINT, Decimal("0.01"), price_range=2)
+    assert len(mrkt._prices) == 0
+    p = mrkt.get_price(100)
+    assert p.price() == Decimal("100.00")
+    p = mrkt.get_price("100.01")
+    assert p.price() == Decimal("100.01")
+    p = mrkt.get_price(Decimal("222.22"))
+    assert p.price() == Decimal("222.22")
+
+
+@raises(InvalidPriceException)
+def test_get_price_wrong_mpi_str():
+    mrkt = Market(PRODUCT, ENDPOINT, Decimal("0.01"), price_range=2)
+    p = mrkt.get_price("100.001")
+
+
+@raises(InvalidPriceException)
+def test_get_price_wrong_mpi_decimal():
+    mrkt = Market(PRODUCT, ENDPOINT, Decimal("0.01"), price_range=2)
+    p = mrkt.get_price(Decimal("100.001"))
+
+
+@raises(InvalidPriceException)
+def test_get_price_wrong_mpi_int():
+    mrkt = Market(PRODUCT, ENDPOINT, Decimal("5"), price_range=2)
+    p = mrkt.get_price(7)
+
+
+def test_min_price():
+    mrkt = Market(PRODUCT, ENDPOINT, Decimal("0.01"), price_range=2, min_price=Decimal("100.0"))
+    # should work for 100.01 and 100.0 but not 99.99
+    # also, price 100.01 should and 100.00 should not create 99.00
+    mrkt.get_price("100.01")
+    assert Decimal("100.01") in mrkt._prices
+    assert Decimal("100.00") in mrkt._prices
+    assert Decimal("99.99") not in mrkt._prices
+
+    mrkt.get_price("100.00")
+    assert Decimal("100.01") in mrkt._prices
+    assert Decimal("100.00") in mrkt._prices
+    assert Decimal("99.99") not in mrkt._prices
+
+
+@raises(InvalidPriceException)
+def test_min_price_excpetion():
+    mrkt = Market(PRODUCT, ENDPOINT, Decimal("0.01"), price_range=2, min_price=Decimal("100.0"))
+    # should work for 100.01 and 100.0 but not 99.99
+    # also, price 100.01 should and 100.00 should not create 99.00
+    mrkt.get_price("99.99")
+
+
+def test_max_price():
+    mrkt = Market(PRODUCT, ENDPOINT, Decimal("0.01"), price_range=2, max_price=Decimal("100.0"))
+    # should work for 99.99 and 100.0 but not 100.01
+    # also, price 99.99 and 100.00 should be created, but should not create 99.00
+    mrkt.get_price("99.99")
+    assert Decimal("99.99") in mrkt._prices
+    assert Decimal("100.00") in mrkt._prices
+    assert Decimal("100.01") not in mrkt._prices
+
+    mrkt.get_price("100.00")
+    assert Decimal("99.99") in mrkt._prices
+    assert Decimal("100.00") in mrkt._prices
+    assert Decimal("100.01") not in mrkt._prices
+
+
+@raises(InvalidPriceException)
+def test_max_price_excpetion():
+    mrkt = Market(PRODUCT, ENDPOINT, Decimal("0.01"), price_range=2, max_price=Decimal("100.0"))
+    mrkt.get_price("100.01")
