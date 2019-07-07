@@ -33,6 +33,10 @@ from buttonwood.MarketObjects.Product import Product
 from cdecimal import Decimal
 
 
+class InvalidPriceException(Exception):
+    pass
+
+
 class Market(object):
 
     def __init__(self, product, endpoint, min_price_increment, min_price_increment_value=1, min_price=Decimal(-999999),
@@ -122,9 +126,9 @@ class Market(object):
             if self.is_valid_price(p):
                 self._create_prices(p)
             else:
-                raise Exception("%s is not a valid price for %s, which has an MPI of %s, min of %s, and max of %s" %
-                                (str(price_value), str(self), str(self._min_price_increment), str(self._min_price),
-                                 str(self._max_price)))
+                raise InvalidPriceException("%s is not a valid price for %s, which has an MPI of %s, min of %s, and max of %s" %
+                                            (str(price_value), str(self), str(self._min_price_increment),
+                                             str(self._min_price), str(self._max_price)))
             # now it should be in the dictionary so return it
             return self._prices[p]
 
