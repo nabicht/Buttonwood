@@ -27,9 +27,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from cdecimal import Decimal
+import json
 from buttonwood.MarketObjects.Product import Product
-from buttonwood.MarketObjects.Price import Price
 
 
 def test_product_creation():
@@ -80,3 +79,18 @@ def test_equality_identifiers():
     prod1.set_identifier("bbid", "asads222")
     assert (prod1 == prod2) is False
     assert prod1 != prod2
+
+
+def test_to_json():
+    # this is only testing that it isn't broken / bad code
+    prod1 = Product("msft", "mICRoSOFT")
+    json.dumps(prod1.to_json())
+
+
+def test_to_detailed_json():
+    # this is only testing that it isn't broken / bad code
+    prod1 = Product("msft", "mICRoSOFT")
+    prod1.set_identifier("CUSIP", "12345")
+    prod1.set_identifier("internal_id", "8u98792")
+    json.dumps(prod1.to_detailed_json())
+

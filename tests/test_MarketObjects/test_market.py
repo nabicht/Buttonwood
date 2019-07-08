@@ -27,6 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import json
 from cdecimal import Decimal
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Product import Product
@@ -233,3 +234,18 @@ def test_max_price():
 def test_max_price_excpetion():
     mrkt = Market(PRODUCT, ENDPOINT, Decimal("0.01"), price_range=2, max_price=Decimal("100.0"))
     mrkt.get_price("100.01")
+
+
+def test_to_json():
+    # this is only testing that it isn't broken / bad code
+    mrkt = Market(PRODUCT, ENDPOINT, Decimal("0.01"), price_range=2, max_price=Decimal("100.0"))
+    json.dumps(mrkt.to_json())
+
+
+def test_to_detailed_json():
+    # this is only testing that it isn't broken / bad code
+    prod = Product("AAA", "Some Product named AAA")
+    prod.set_identifier("CUSIP", "12345")
+    prod.set_identifier("internal_id", "8u98792")
+    mrkt = Market(prod, ENDPOINT, Decimal("0.01"), price_range=2, max_price=Decimal("100.0"))
+    json.dumps(mrkt.to_detailed_json())
