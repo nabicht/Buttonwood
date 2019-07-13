@@ -609,3 +609,4 @@ def test_subchain_getters_partial_fill_before_ack():
     assert subchain.open_event() == n
     assert subchain.first_execution_report() == pf
     assert subchain.fills() == [pf]
+
