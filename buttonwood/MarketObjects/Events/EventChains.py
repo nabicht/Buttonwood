@@ -30,11 +30,13 @@ SOFTWARE.
 from collections import defaultdict
 
 from buttonwood.MarketObjects.Events import OrderEventConstants
+from buttonwood.MarketObjects.Events.OrderEvents import OrderCommand
 from buttonwood.MarketObjects.Events.OrderEvents import AcknowledgementReport
 from buttonwood.MarketObjects.Events.OrderEvents import CancelCommand
 from buttonwood.MarketObjects.Events.OrderEvents import CancelReplaceCommand
 from buttonwood.MarketObjects.Events.OrderEvents import CancelReport
 from buttonwood.MarketObjects.Events.OrderEvents import ExecutionReport
+from buttonwood.MarketObjects.Events.OrderEvents import FillReport
 from buttonwood.MarketObjects.Events.OrderEvents import FullFillReport
 from buttonwood.MarketObjects.Events.OrderEvents import NewOrderCommand
 from buttonwood.MarketObjects.Events.OrderEvents import PartialFillReport
@@ -149,7 +151,7 @@ class SubChain(object):
     FULLY_FILLED = 70  # close
     CANCEL_REPLACE_TO_ZERO = 80  # close
 
-    def __init__(self, subchain_id, open_event, open_reason, logger):
+    def __init__(self, subchain_id, opening_cmd, open_reason, logger):
         """
         Subchain objects track the data around a subchain, including all the events, the open reason and the close
          reason.
@@ -168,24 +170,29 @@ class SubChain(object):
         In the event that a cancel replace changes price and increases quantity, the change in price should take
          precedent as to the reason for the open or close
 
-        :param subchain_id:
-        :param open_event:
-        :param open_reason:
+        :param subchain_id: unique identifier of the subchain
+        :param opening_cmd: buttonwood.MarketObjects.Events.OrderEvents.OrderCommand
+        :param open_reason: int. Should be one of the reasons defined in Subchain constants
         """
+        assert isinstance(opening_cmd, OrderCommand), "A subchain must be opened with an OrderCommand"
         self._logger = logger
         try:
             self._debug = debug_logging
         except NameError:
             global debug_logging
             debug_logging = self._debug = self._logger.isEnabledFor(logging.DEBUG)
-        self._chain_id = open_event.chain_id()
-        self._events = [open_event]
+        self._events = []
+        self._chain_id = opening_cmd.chain_id()
+        self._opening_cmd = opening_cmd
         self._open_reason = open_reason
+        self._first_execution_report = None
         self._close_reason = None
         self._close_event = None
         self._subchain_id = subchain_id
+        self._fill_events = []
         if self._debug:
             self._logger.debug("OrderChain %s: Created new SubChain %s" % (self._chain_id, self.subchain_id()))
+        self.add_event(opening_cmd)
 
     def add_event(self, event):
         if not self.is_open():
@@ -196,6 +203,11 @@ class SubChain(object):
                                (self._chain_id, event.event_type_str(), event.event_id(),
                                 self.subchain_id()))
         self._events.append(event)
+        if isinstance(event, ExecutionReport):
+            if self._first_execution_report is None:
+                self._first_execution_report = event
+            if isinstance(event, FillReport):
+                self._fill_events.append(event)
 
     def close_subchain(self, close_reason):
         if self.is_open():
@@ -204,7 +216,13 @@ class SubChain(object):
             raise Exception("Closing an already closed subchain: %s" % str(self.subchain_id()))
 
     def open_event(self):
-        return self._events[0]
+        return self._opening_cmd
+
+    def first_execution_report(self):
+        return self._first_execution_report
+
+    def fills(self):
+        return self._fill_events
 
     def events(self):
         return self._events
@@ -217,6 +235,11 @@ class SubChain(object):
 
     def subchain_id(self):
         return self._subchain_id
+
+    def __str__(self):
+        return "%s: %s\n%s\n" % \
+                (str(self._chain_id), str(self._subchain_id),
+                 "\n".join(json.dumps(event.to_json()) for event in self._events))
 
 
 class OrderEventChain(object):
