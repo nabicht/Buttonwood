@@ -187,7 +187,6 @@ class SubChain(object):
         self._open_reason = open_reason
         self._first_execution_report = None
         self._close_reason = None
-        self._close_event = None
         self._subchain_id = subchain_id
         self._fill_events = []
         if self._debug:
@@ -211,12 +210,20 @@ class SubChain(object):
 
     def close_subchain(self, close_reason):
         if self.is_open():
-            self._close_event = close_reason
+            self._close_reason = close_reason
         else:
             raise Exception("Closing an already closed subchain: %s" % str(self.subchain_id()))
 
     def open_event(self):
         return self._opening_cmd
+
+    def last_event(self):
+        """
+        Gets the last known event on the subchain. If the subchain is closed this should be the closing event. If the
+         subchain is open this should be the most recently added event
+        :return: buttonwood.MarketObject.Events.OrderEvents.OrderEvent
+        """
+        return self._events[-1]
 
     def first_execution_report(self):
         return self._first_execution_report
