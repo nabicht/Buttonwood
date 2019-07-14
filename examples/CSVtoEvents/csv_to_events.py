@@ -92,11 +92,11 @@ def get_events():
         mrkt = mrkt_dict[(prod_name, ep_name)]
 
         # get the side: not all events contain side so default is None.
-        # Buttonwood provides a helper that converts the most common string representations of Buy / Sell to Side objects
+        # Buttonwood provides a helper that converts the most common str representations of Buy & Sell to Side objects
         side = Side.get_side(parts[8])
 
         # get the time in force. Not all events need time in force so the default is None.
-        # Note: could have used OrderEventContants.TIME_IN_FORCE_STR_TO_INT here but wanted to show a more extensive use of
+        # Note: could have used OrderEventContants.TIME_IN_FORCE_STR_TO_INT here but wanted to show a more extensive use
         #   of the constants
         if parts[6] == "FAR":
             tif = OrderEventConstants.FAR
@@ -136,7 +136,7 @@ def get_events():
             # this example file has no concept of iceberg orders so iceberg_peak is None (which will cause buttonwood to
             #  to treat the entire order qty as an iceberg
             iceberg_peak = None
-            # get price, using Market's get_price function that will gets a Price object for a string, Decimal, or int
+            # get price, using Market's get_price function that gets a Price object for a string, Decimal, or int
             price = mrkt.get_price(parts[9])
             qty = int(parts[10])
             # response to command is the command it is acknowledging, get that ID and look it up from our id_to_cmd dict
@@ -160,20 +160,20 @@ def get_events():
             # the aggressing command comes from getting the id and looking it up in the id to cmd dict
             aggressing_id = int(parts[13])
             aggressing_cmd = id_to_cmd[aggressing_id]
-            # get fill price, using Market's get_price function that will gets a Price object for a string, Decimal, or int
+            # get fill price, using Market's get_price function that gets a Price object for a string, Decimal, or int
             fill_price = mrkt.get_price(parts[9])
             fill_qty = int(parts[10])
             # get leaves qty from the file
             leaves_qty = int(parts[11])
             # get the match_id from the file
             match_id = parts[14]
-            event = PartialFillReport(event_id, time_stamp, chain_id, user, market, aggressing_cmd, fill_qty, fill_price,
-                                      side, match_id, leaves_qty)
+            event = PartialFillReport(event_id, time_stamp, chain_id, user, market, aggressing_cmd, fill_qty,
+                                      fill_price, side, match_id, leaves_qty)
         elif event_type == "Full Fill":  # if event type "Full Fill" create a Partial Fill event
             # the aggressing command comes from getting the id and looking it up in the id to cmd dict
             aggressing_id = int(parts[13])
             aggressing_cmd = id_to_cmd[aggressing_id]
-            # get fill price, using Market's get_price function that will gets a Price object for a string, Decimal, or int
+            # get fill price, using Market's get_price function that gets a Price object for a string, Decimal, or int
             fill_price = mrkt.get_price(parts[9])
             fill_qty = int(parts[10])
             # full fills don't need/have a leaves qty because nothing is left.
