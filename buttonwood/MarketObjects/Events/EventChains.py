@@ -248,6 +248,11 @@ class SubChain(object):
                 (str(self._chain_id), str(self._subchain_id),
                  "\n".join(json.dumps(event.to_json()) for event in self._events))
 
+    def to_json(self):
+        return {'chain_id': self._chain_id,
+                'subchain_id': self._subchain_id,
+                'events': [event.to_json() for event in self._events]}
+
 
 class OrderEventChain(object):
     def __init__(self, new_order_command, logger, subchain_id_generator):

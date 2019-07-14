@@ -573,6 +573,20 @@ def test_subchain_str():
     str(oec.most_recent_subchain())
 
 
+def test_subchain_to_json():
+    # pretty basic, just testing that it doesn't break
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
+    oec = OrderEventChain(n, LOGGER, MonotonicIntID())
+    # now ack it
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, None)
+    oec.apply_acknowledgement_report(ack)
+    assert oec.most_recent_event() == ack
+
+    # now check I can get a to_json of the subchain no problem
+    oec.most_recent_subchain().to_json()
+
+
+
 def test_subchain_getters():
     # pretty basic, just testing that it doesn't break
     n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
