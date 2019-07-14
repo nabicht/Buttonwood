@@ -91,3 +91,10 @@ class VolumeTrackingListener(OrderEventListener):
 
     def handle_full_fill_report(self, full_fill_report, resulting_order_chain):
         self._handle_fill(full_fill_report)
+
+    def volume_tracker(self, market, user_id):
+        user_to_volume = self._market_to_participant_to_volume.get(market)
+        if user_to_volume is not None:
+            return user_to_volume.get(user_id)
+        return None
+
