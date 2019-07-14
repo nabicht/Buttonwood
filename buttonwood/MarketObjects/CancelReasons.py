@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-
+# Cancel Types
 USER_CANCEL = 1
 SYSTEM_CANCEL = 2
 
@@ -35,6 +35,7 @@ CANCEL_TYPES_STRINGS = {USER_CANCEL: "User requested cancel.",
                         SYSTEM_CANCEL: "System requested cancel.",
                        }
 
+# Cancel Reasons
 MARKET_CLOSED = 100
 SELF_TRADE = 101
 CANCEL_REPLACE_TO_ZERO = 102
