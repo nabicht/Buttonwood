@@ -144,7 +144,7 @@ class OrderEvent(BasicEvent):
                     d[str(key)] = value.to_json()
                 elif isinstance(value, Price):
                     d[str(key)] = str(value.price())
-                elif hasattr(value, '__dict__'):  # cheap hack to figure out if a primative or not
+                elif hasattr(value, '__dict__'):  # cheap hack to figure out if a primitive or not
                     d[str(key)] = str(value)
                 else:
                     d[str(key)] = value
