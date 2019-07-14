@@ -79,8 +79,8 @@ class VolumeTrackingListener(OrderEventListener):
         #  1) the user getting filled here and
         #  2) the user on the aggressive command
         if not fill_report.is_aggressor():
-            passive_user = fill_report.user()
-            aggressive_user = fill_report.aggressing_command().user()
+            passive_user = fill_report.user_id()
+            aggressive_user = fill_report.aggressing_command().user_id()
             qty = fill_report.fill_qty()
             market = fill_report.market()
             self._market_to_participant_to_volume[market][passive_user].add_passive_trade(qty, aggressive_user)
