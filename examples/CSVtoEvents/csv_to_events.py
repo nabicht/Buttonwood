@@ -6,6 +6,7 @@ import json
 from buttonwood.MarketObjects.Market import Market
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Endpoint import Endpoint
+from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects import CancelReasons
 from buttonwood.MarketObjects.Events.OrderEvents import NewOrderCommand
 from buttonwood.MarketObjects.Events.OrderEvents import CancelReplaceCommand
@@ -49,11 +50,11 @@ def get_events():
     # set up a Market for the events. For that you need at least:
     #  1) the Product
     #  2) the Endpoint
-    #  3) the Minimum Price Increment
+    #  3) the PriceFactory
     prod = Product("AAAA", "Test Product")
     ep = Endpoint("Exchange 1", "EXC1")
-    mpi = Decimal("0.01")
-    market = Market(prod, ep, mpi)
+    pf = PriceFactory("0.01")  # pricefactory needs the minimum price increment, which is 0.01 for this example
+    market = Market(prod, ep, pf)
 
     # now create a mapping of what we'll parse out of the file to the Market.
     # This comes in even more handy when there are multiple markets

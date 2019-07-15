@@ -34,12 +34,13 @@ from buttonwood.MarketObjects.Events.OrderEvents import NewOrderCommand
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Market import Market
 from buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Events.OrderEventConstants import MARKET as MARKET_ORDER
 from buttonwood.MarketObjects.Events.OrderEventConstants import LIMIT as LIMIT_ORDER
 
-MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), Decimal("0.01"))
+MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), PriceFactory("0.01"))
 
 
 def test_creation():

@@ -27,6 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import json
 from cdecimal import Decimal
 from buttonwood.MarketObjects.Side import Side
 
@@ -322,3 +323,10 @@ class PriceFactory:
 
     def is_valid_price(self, price):
         return (self._min_price <= price <= self._max_price) and (price / self._mpi) % 1 == 0
+
+    def to_json(self):
+        return {"mpi": str(self._mpi), "mpv": str(self._mpi_value), "min": str(self._min_price),
+                "max": str(self._max_price)}
+
+    def __str__(self):
+        return json.dumps(self.to_json())

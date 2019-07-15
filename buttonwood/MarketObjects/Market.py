@@ -73,7 +73,7 @@ class Market(object):
         return self._price_factory
 
     def get_price(self, price_value):
-        self._price_factory.get_price()
+        return self._price_factory.get_price(price_value)
 
     def min_price_increment(self):
         """
@@ -121,8 +121,7 @@ class Market(object):
         return {"product": self.product().to_json(), "endpoint": self.endpoint().to_json()}
 
     def to_detailed_json(self):
-        price_info = {"mpi": str(self._min_price_increment), "mpv": str(self._min_price_increment_value),
-                      "min": str(self._min_price), "max": str(self._max_price)}
+        price_info = self._price_factory.to_json()
         return {"product": self.product().to_detailed_json(), "endpoint": self._endpoint.to_json(),
                 "price_info": price_info}
 
