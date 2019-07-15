@@ -228,3 +228,97 @@ class Price(object):
         if isinstance(obj, Price):
             val = obj.price()
         return val
+
+
+class PriceFactory:
+
+    def __init__(self, min_price_increment, min_price_increment_value=1, min_price=Decimal(-999999),
+                 max_price=Decimal(999999), seed_price=None, price_range=10):
+        assert isinstance(min_price_increment, (Decimal, str, int))
+        assert isinstance(min_price_increment_value, (Decimal, str, int))
+        assert max_price >= min_price, "Max price (%s) must be greater than or equal to min price (%s)." % \
+                                       (str(max_price), str(min_price))
+        self._mpi = Decimal(min_price_increment)
+        self._mpi_value = Decimal(min_price_increment_value)
+        self._min_price = min_price
+        self._max_price = max_price
+        self._price_range = price_range
+        self._prices = {}
+        if seed_price is not None:
+            assert self.is_valid_price(Decimal(seed_price)), "Seed price (%s) must be evenly divisible by the MPI (%s)." % \
+                                                             (str(seed_price), str(min_price_increment))
+            assert isinstance(seed_price, Decimal), "seed_price must be type Decimal"
+            assert min_price <= seed_price <= max_price, "Seed price (%s) must be between min price(%s) and max price (%s)." % \
+                                                         (str(seed_price), str(min_price), str(max_price))
+            self._create_prices(seed_price)
+
+    def _create_price(self, price_value):
+        use_price = price_value
+        if not isinstance(price_value, Decimal):
+            use_price = Decimal(price_value)
+        if use_price not in self._prices:
+            self._prices[use_price] = Price(use_price)
+
+    def _create_prices(self, seed_price, iterator=None):
+        self._create_price(seed_price)
+        if iterator is None:
+            self._create_prices(seed_price, iterator=1)
+            self._create_prices(seed_price, iterator=-1)
+        else:
+            count = 1
+            while count <= self._price_range:
+                new_price = seed_price + ((count * iterator) * self._mpi)
+                if self._min_price <= new_price <= self._max_price:
+                    self._create_price(new_price)
+                count += 1
+
+    def get_price(self, price_value):
+        assert isinstance(price_value, (Decimal, int, str))
+        # first thing, create decimal and check if in dictionary
+        p = Decimal(price_value)
+        if p in self._prices:
+            return self._prices[p]
+        else:
+            # if it wasn't in prices then we need to check if it is valid and if valid create it
+            #  but since prices in most markets tend to be bunched around each other also create the range.
+            if self.is_valid_price(p):
+                self._create_prices(p)
+            else:
+                raise InvalidPriceException("%s is not a valid price for %s, which has an MPI of %s, min of %s, and max of %s" %
+                                            (str(price_value), str(self), str(self._mpi),
+                                             str(self._min_price), str(self._max_price)))
+            # now it should be in the dictionary so return it
+            return self._prices[p]
+
+    def min_price_increment(self):
+        """
+        Gets the minimum price increment of a product. This is the smallest increment that the product trades in.
+        :return: Decimal
+        """
+        return self._mpi
+
+    def min_price_increment_value(self):
+        """
+        Gets the monetary value associated with the minimum price increment of a product.
+        :return: Decimal
+        """
+        return self._mpi_value
+
+    def mpi(self):
+        """
+        This is the same as `min_price_increment()'. It is just for the convenience of the developer.
+
+        :return: Decimal
+        """
+        return self._mpi
+
+    def mpi_value(self):
+        """
+        This is the same as `min_price_increment_value()'. It is just for the convenience of the developer.
+
+        :return: Decimal
+        """
+        return self._mpi_value
+
+    def is_valid_price(self, price):
+        return (self._min_price <= price <= self._max_price) and (price / self._mpi) % 1 == 0
