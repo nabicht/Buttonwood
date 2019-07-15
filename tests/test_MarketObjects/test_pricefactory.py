@@ -33,7 +33,10 @@ from cdecimal import Decimal
 from buttonwood.MarketObjects.Price import Price
 from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Price import InvalidPriceException
+from buttonwood.MarketObjects.Side import ASK_SIDE
+from buttonwood.MarketObjects.Side import BID_SIDE
 from nose.tools import *
+
 
 def test_price_validation():
     p = Price("23.455")
@@ -195,6 +198,34 @@ def test_max_price():
     assert Decimal("99.99") in pf._prices
     assert Decimal("100.00") in pf._prices
     assert Decimal("100.01") not in pf._prices
+
+
+def test_next_price():
+    pf = PriceFactory(".5")
+    starting_price = pf.get_price(100)
+    new_price = pf.next_price(starting_price, BID_SIDE)
+    assert new_price == Price("100.5")
+    new_price = pf.next_price(new_price, BID_SIDE)
+    assert new_price == Price(101)
+
+    new_price = pf.next_price(new_price, ASK_SIDE)
+    assert new_price == Price("100.5")
+    new_price = pf.next_price(new_price, ASK_SIDE)
+    assert new_price == Price(100)
+
+
+def test_prev_price():
+    pf = PriceFactory(".5")
+    starting_price = pf.get_price(100)
+    new_price = pf.prev_price(starting_price, BID_SIDE)
+    assert new_price == Price("99.5")
+    new_price = pf.prev_price(new_price, BID_SIDE)
+    assert new_price == Price(99)
+
+    new_price = pf.prev_price(new_price, ASK_SIDE)
+    assert new_price == Price("99.5")
+    new_price = pf.prev_price(new_price, ASK_SIDE)
+    assert new_price == Price(100)
 
 
 @raises(InvalidPriceException)

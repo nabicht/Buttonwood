@@ -30,6 +30,7 @@ SOFTWARE.
 import json
 from cdecimal import Decimal
 from buttonwood.MarketObjects.Side import Side
+from buttonwood.MarketObjects.Side import BID_SIDE
 
 
 class InvalidPriceException(Exception):
@@ -37,13 +38,14 @@ class InvalidPriceException(Exception):
 
 
 class Price(object):
+
     def __init__(self, price_value):
         """
         Represents a price. Is created with a string, for accuracy, or as a Decimal and is kept as a Decimal
   
         :param price_value: str
         """
-        assert isinstance(price_value, str) or isinstance(price_value, Decimal)
+        assert isinstance(price_value, (int, str, Decimal))
         self._price = Decimal(price_value)  # yup, this is do-able. You can instantiate a Decimal with another Decimal
         self._hash = hash(price_value)
 
@@ -272,6 +274,12 @@ class PriceFactory:
                 if self._min_price <= new_price <= self._max_price:
                     self._create_price(new_price)
                 count += 1
+
+    def next_price(self, price, side):
+        return self.get_price(price + (self._mpi * (1 if side is BID_SIDE else -1)))
+
+    def prev_price(self, price, side):
+        return self.get_price(price + (self._mpi * (-1 if side is BID_SIDE else 1)))
 
     def get_price(self, price_value):
         assert isinstance(price_value, (Decimal, int, str))
