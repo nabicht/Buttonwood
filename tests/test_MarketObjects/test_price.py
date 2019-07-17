@@ -35,7 +35,7 @@ from buttonwood.MarketObjects.Side import ASK_SIDE
 
 def test_setting_price():
     p = Price("94.58793")
-    assert p.price() == Decimal("94.58793")
+    assert p == Decimal("94.58793")
 
 
 def test_better_than():

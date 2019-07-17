@@ -137,11 +137,11 @@ def test_get_price():
     pf = PriceFactory("0.01", price_range=2)
     assert len(pf._prices) == 0
     p = pf.get_price(100)
-    assert p.price() == Decimal("100.00")
+    assert p == Decimal("100.00")
     p = pf.get_price("100.01")
-    assert p.price() == Decimal("100.01")
+    assert p == Decimal("100.01")
     p = pf.get_price(Decimal("222.22"))
-    assert p.price() == Decimal("222.22")
+    assert p == Decimal("222.22")
 
 
 @raises(InvalidPriceException)

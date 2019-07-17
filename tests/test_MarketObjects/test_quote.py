@@ -42,7 +42,7 @@ MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), PriceF
 
 def test_quote_creation():
     q = Quote(MARKET, BID_SIDE, Price("95.42"), 94)
-    assert q.price().price() == Decimal("95.42")
+    assert q.price() == Decimal("95.42")
     assert q.visible_qty() == 94
     assert q.hidden_qty() == 0
     assert q._price_level.number_of_orders() == 1

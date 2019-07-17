@@ -37,7 +37,7 @@ class InvalidPriceException(Exception):
     pass
 
 
-class Price(object):
+class Price(Decimal):
 
     def __init__(self, price_value):
         """
@@ -45,16 +45,7 @@ class Price(object):
   
         :param price_value: str
         """
-        assert isinstance(price_value, (int, str, Decimal))
-        self._price = Decimal(price_value)  # yup, this is do-able. You can instantiate a Decimal with another Decimal
-        self._hash = hash(price_value)
-
-    def price(self):
-        """
-        Gets the underlying price of the Price object as a Decimal
-        :return: Decimal
-        """
-        return self._price
+        Decimal.__init__(price_value)
 
     def better_than(self, other_price, side):
         """
@@ -68,15 +59,14 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        assert isinstance(other_price, Price), "other_price should be MarketObjects.Price.Price"
         assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
         # if this price is a bid it is better than otherPrice if greater than
 
         if side.is_bid():
-            return self._price > other_price._price
+            return self > other_price
         # otherwise price is an ask and it is better than otherPrice if less than
         else:
-            return self._price < other_price._price
+            return self < other_price
 
     def better_or_same_as(self, other_price, side):
         """
@@ -91,11 +81,7 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        assert isinstance(other_price, Price), "other_price should be MarketObjects.Price.Price"
-        assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
-        if other_price._price == self._price:
-            return True
-        return self.better_than(other_price, side)
+        return True if other_price == self else self.better_than(other_price, side)
 
     def worse_than(self, other_price, side):
         """
@@ -110,14 +96,14 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        # if this price is a bid it is worse than otherPrice if less than
         assert isinstance(other_price, Price), "other_price should be MarketObjects.Price.Price"
         assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
+        # if this price is a bid it is worse than otherPrice if less than
         if side.is_bid():
-            return self._price < other_price._price
+            return self < other_price
         # otherwise price is an ask and it is worse than otherPrice if greater than
         else:
-            return self._price > other_price._price
+            return self > other_price
 
     def worse_or_same_as(self, other_price, side):
         """
@@ -132,13 +118,9 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        assert isinstance(other_price, Price), "other_price should be MarketObjects.Price.Price"
-        assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
-        if other_price._price == self._price:
-            return True
-        return self.worse_than(other_price, side)
+        return True if other_price == self else self.worse_than(other_price, side)
 
-    def ticks_behind(self, other_price, side, product):
+    def ticks_behind(self, other_price, side, market):
         """
         For bids it subtracts its own price from the other price and divides by mpi
   
@@ -150,87 +132,16 @@ class Price(object):
         If otherprice is none it returns None
         :param other_price: MarketObjects.Price.Price the price you are comparing too
         :param side: MMarketObjects.Side.Side side of the market the comparison is happening on
-        :param product: MarketObjects.Product.Product
+        :param market: MarketObjects.Market.Market
         :return: float Can be None
         """
         if other_price is None:
             return None
 
         if side.is_bid():
-            return (other_price._price - self._price) / product.mpi()
+            return (other_price - self) / market.mpi()
         else:
-            return (self._price - other_price._price) / product.mpi()
-
-    def __lt__(self, other):
-        if isinstance(other, Price):
-            return self._price < other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price < other
-        return None
-
-    def __le__(self, other):
-        if isinstance(other, Price):
-            return self._price <= other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price <= other
-        return None
-
-    def __gt__(self, other):
-        if isinstance(other, Price):
-            return self._price > other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price > other
-        return None
-
-    def __ge__(self, other):
-        if isinstance(other, Price):
-            return self._price >= other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price >= other
-        return None
-
-    def __eq__(self, other):
-        if isinstance(other, Price):
-            return self._price == other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price == other
-        return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return self._hash
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __str__(self):
-        return str(self.price())
-
-    def __rsub__(self, other):
-        return other - self._price
-
-    def __sub__(self, other):
-        return self._price - other
-
-    def __radd__(self, other):
-        return other + self._price
-
-    def __add__(self, other):
-        return self._price + other
-
-    def __div__(self, other):
-        return self._price / self.__math_val(other)
-
-    def __mul__(self, other):
-        return self._price * self.__math_val(other)
-
-    def __math_val(self, obj):
-        val = obj
-        if isinstance(obj, Price):
-            val = obj.price()
-        return val
+            return (self - other_price) / market.mpi()
 
 
 class PriceFactory:

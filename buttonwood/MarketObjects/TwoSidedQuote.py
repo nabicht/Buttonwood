@@ -109,7 +109,7 @@ class TwoSidedQuote(object):
         """
         if self.buy_quote() is None or self.sell_quote() is None:
             return None
-        return (self.sell_quote().price().price() - self.buy_quote().price().price()) / self.buy_quote().market().mpi()
+        return (self.sell_quote().price() - self.buy_quote().price()) / self.buy_quote().market().mpi()
 
     def __eq__(self, other):
         return self.buy_quote() == other.buy_quote() and self.sell_quote() == other.sell_quote()
