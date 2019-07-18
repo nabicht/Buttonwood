@@ -30,11 +30,11 @@ SOFTWARE.
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Product import Product
-
+import sys
 
 class Market(object):
 
-    def __init__(self, product, endpoint, price_factory):
+    def __init__(self, product, endpoint, price_factory, min_qty=1, max_qty=sys.maxint, qty_increment=1):
         """
         Contains all the information needed about a Market.
 
@@ -44,6 +44,8 @@ class Market(object):
         :param product: Product. the market's product.
         :param endpoint: Endpoint. the market's endpoint.
         :param price_factory: Price.PriceFactory
+        :param min_qty: int. the minimum qty that can be traded in the market. Defaults to 1
+        :param qty_increment: int. the increment of qty that is allowed in the market. Defaults to 1
         """
         assert isinstance(product, Product)
         assert isinstance(endpoint, Endpoint)
@@ -51,6 +53,9 @@ class Market(object):
         self._price_factory = price_factory
         self._product = product
         self._endpoint = endpoint
+        self._min_qty = min_qty
+        self._max_qty = max_qty
+        self._qty_increment = qty_increment
         self._hash = hash((self._product, self._endpoint))
 
     def product(self):
@@ -108,6 +113,18 @@ class Market(object):
     def is_valid_price(self, price):
         return self._price_factory.is_valid_price(price)
 
+    def min_qty(self):
+        return self._min_qty
+
+    def max_qty(self):
+        return self._max_qty
+
+    def qty_increment(self):
+        return self._qty_increment
+
+    def is_valid_qty(self, qty):
+        return self._min_qty <= qty <= self._max_qty and (qty - self._min_qty) % self._qty_increment == 0
+
     def __eq__(self, other):
         return isinstance(other, Market) and other.__hash__() == self.__hash__()
 
@@ -123,7 +140,7 @@ class Market(object):
     def to_detailed_json(self):
         price_info = self._price_factory.to_json()
         return {"product": self.product().to_detailed_json(), "endpoint": self._endpoint.to_json(),
-                "price_info": price_info}
+                "price_info": price_info, "min_qty": self._min_qty, "qty_increment": self._qty_increment}
 
     def __hash__(self):
         return self._hash
