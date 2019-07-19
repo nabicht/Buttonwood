@@ -49,7 +49,6 @@ def test_default_market_creation():
     assert PRODUCT == mrkt.product()
     assert ENDPOINT == mrkt.endpoint()
     assert mrkt.min_price_increment() == mrkt.mpi() == Decimal("0.01")
-    assert len(mrkt.price_factory()._prices) == 0
     assert mrkt.min_qty() == 1
     assert mrkt.qty_increment() == 1
     assert mrkt.max_qty() == sys.maxint
@@ -60,7 +59,6 @@ def test_market_creation():
     assert PRODUCT == mrkt.product()
     assert ENDPOINT == mrkt.endpoint()
     assert mrkt.min_price_increment() == mrkt.mpi() == Decimal("0.01")
-    assert len(mrkt.price_factory()._prices) == 0
     assert mrkt.min_qty() == 2
     assert mrkt.qty_increment() == 4
 
@@ -108,6 +106,7 @@ def test_basic_equality():
 
     mrkt2 = Market(PRODUCT, Endpoint("xxx", "another endpoint"), PRICE_FACTORY)
     assert mrkt1 != mrkt2
+
 
 def test_to_json():
     # this is only testing that it isn't broken / bad code
