@@ -37,7 +37,7 @@ class InvalidPriceException(Exception):
     pass
 
 
-class Price(Decimal):
+class Price:
 
     def __init__(self, price_value):
         """
@@ -45,7 +45,8 @@ class Price(Decimal):
   
         :param price_value: str
         """
-        Decimal.__init__(self, price_value)
+        self._value = price_value if isinstance(price_value, Decimal) else Decimal(price_value)
+        self.__hash = self._value.__hash__()
 
     def better_than(self, other_price, side):
         """
@@ -143,19 +144,144 @@ class Price(Decimal):
         else:
             return (self - other_price) / market.mpi()
 
+    def __hash__(self):
+        return self.__hash
+
+    def __repr__(self):
+        return self._value.__repr__()
+
+    def __str__(self):
+        return self._value.__str__()
+
+    def __lt__(self, other):
+        if not isinstance(other, Price):
+            raise TypeError(other, '< requires another Price object')
+        else:
+            return self._value < other._value
+
+    def __le__(self, other):
+        if not isinstance(other, Price):
+            raise TypeError(other, '<= requires another Price object')
+        else:
+            return self._value <= other._value
+
+    def __eq__(self, other):
+        if isinstance(other, Price):
+            return self._value == other._value
+        return False
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __gt__(self, other):
+        if not isinstance(other, Price):
+            raise TypeError(other, '> requires another Price object')
+        else:
+            return self._value > other._value
+
+    def __ge__(self, other):
+        if not isinstance(other, Price):
+            raise TypeError(other, '>= requires another Price object')
+        else:
+            return self._value >= other._value
+
+    def __nonzero__(self):
+        return self.__bool__()
+
+    def __bool__(self):
+        return bool(self._value)
+
+    def __add__(self, other):
+        if isinstance(other, Price):
+            other = other._value
+        value = self._value + other
+        return self.__class__(value)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, Price):
+            other = other._value
+        value = self._value - other
+        return self.__class__(value)
+
+    def __rsub__(self, other):
+        return (-self).__add__(other)
+
+    def __mul__(self, other):
+        if isinstance(other, Price):
+            raise TypeError("Two prices cannot be multiplied")  # just doesn't make sense. Why would someone do this?
+        value = self._value * other
+        return self.__class__(value)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __div__(self, other):
+        return self.__truediv__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, Price):
+            # not really sure why someone would want to divide a price by another price
+            raise TypeError("Two prices cannot be divided")
+        else:
+            if other == 0:
+                raise ZeroDivisionError()
+            return self._value/ other
+
+    def __floordiv__(self, other):
+        if isinstance(other, Price):
+            # not really sure why someone would want to divide a price by another price
+            raise TypeError("Two prices cannot be divided")
+        else:
+            if other == 0:
+                raise ZeroDivisionError()
+            value = self._value // other
+            return self.__class__(value)
+
+    def __mod__(self, other):
+        if isinstance(other, Price):
+            # not really sure why someone would want to modulo a price by another price
+            raise TypeError("modulo of two prices is not supported")
+        if other == 0:
+            raise ZeroDivisionError()
+        return self._value % other
+
+    def __divmod__(self, other):
+        raise TypeError("divmod of a price is not supported")
+
+    def __pow__(self, other):
+        raise TypeError("pow of a price is not supported")
+
+    def __neg__(self):
+        return self.__class__(-self._value)
+
+    def __pos__(self):
+        return self.__class__(+self._value)
+
+    def __abs__(self):
+        return self.__class__(abs(self._value))
+
+    def __int__(self):
+        return int(self._value)
+
+    def __float__(self):
+        return float(self._value)
+
 
 class PriceFactory:
 
-    def __init__(self, min_price_increment, min_price_increment_value=1, min_price=Decimal(-999999),
-                 max_price=Decimal(999999)):
+    def __init__(self, min_price_increment, min_price_increment_value=1, min_price=Price(-999999),
+                 max_price=Price(999999)):
         assert isinstance(min_price_increment, (Decimal, str, int))
         assert isinstance(min_price_increment_value, (Decimal, str, int))
-        assert max_price >= min_price, "Max price (%s) must be greater than or equal to min price (%s)." % \
-                                       (str(max_price), str(min_price))
         self._mpi = Decimal(min_price_increment)
         self._mpi_value = Decimal(min_price_increment_value)
-        self._min_price = min_price
-        self._max_price = max_price
+        self._min_price = min_price if isinstance(min_price, Price) else Price(min_price)
+        self._max_price = max_price if isinstance(max_price, Price) else Price(max_price)
+        assert self._min_price <= self._max_price, "Max price (%s) must be greater than or equal to min price (%s)." % \
+                                                   (str(max_price), str(min_price))
 
     def next_price(self, price, side):
         return self.get_price(price + (self._mpi * (1 if side is BID_SIDE else -1)))
@@ -164,7 +290,7 @@ class PriceFactory:
         return self.get_price(price + (self._mpi * (-1 if side is BID_SIDE else 1)))
 
     def get_price(self, price_value):
-        price = Price(price_value)
+        price = price_value if isinstance(price_value, Price) else Price(price_value)
         if not self.is_valid_price(price):
             raise InvalidPriceException("%s is not valid price with min %s max %s and mpi %s" %
                                         (str(price_value), str(self._min_price), str(self._max_price), str(self._mpi)))
@@ -201,7 +327,9 @@ class PriceFactory:
         return self._mpi_value
 
     def is_valid_price(self, price):
-        return (self._min_price <= price <= self._max_price) and (price / self._mpi) % 1 == 0
+        if not isinstance(price, Price):
+            price = Price(price)
+        return (self._min_price <= price <= self._max_price) and (price % self._mpi) == 0
 
     def to_json(self):
         return {"mpi": str(self._mpi), "mpv": str(self._mpi_value), "min": str(self._min_price),
@@ -209,3 +337,4 @@ class PriceFactory:
 
     def __str__(self):
         return json.dumps(self.to_json())
+

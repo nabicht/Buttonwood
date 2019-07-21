@@ -36,13 +36,13 @@ from buttonwood.MarketObjects.Side import BID_SIDE, ASK_SIDE
 
 def test_pricelevel_creation():
     pl = PriceLevel(Price("84.5"), 12)
-    assert pl.price() == Decimal("84.5")
+    assert pl.price() == Price("84.5")
     assert pl.number_of_orders() is None
     assert pl.visible_qty() == 12
     assert pl.hidden_qty() == 0
 
     pl = PriceLevel(Price("32.134"), 14, 23)
-    assert pl.price() == Decimal("32.134")
+    assert pl.price() == Price("32.134")
     assert pl.number_of_orders() is None
     assert pl.visible_qty() == 14
     assert pl.hidden_qty() == 23

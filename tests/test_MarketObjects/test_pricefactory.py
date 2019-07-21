@@ -63,11 +63,14 @@ def test_price_validation():
 def test_get_price():
     pf = PriceFactory("0.01")
     p = pf.get_price(100)
-    assert p == Decimal("100.00")
+    assert p == Price(100)
+    assert p._value == Decimal("100.00")
     p = pf.get_price("100.01")
-    assert p == Decimal("100.01")
+    assert p == Price("100.01")
+    assert p._value == Decimal("100.01")
     p = pf.get_price(Decimal("222.22"))
-    assert p == Decimal("222.22")
+    assert p == Price("222.22")
+    assert p._value == Decimal("222.22")
 
 
 @raises(InvalidPriceException)

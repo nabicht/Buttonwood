@@ -53,7 +53,7 @@ class Quote(object):
         assert visible_qty > 0, "A quote's visible qty must be greater than 0"
         assert hidden_qty >= 0, "A quote's hidden qty must be greater than or equal to 0"
         use_price = price
-        if isinstance(price, str):
+        if not isinstance(price, Price):
             use_price = Price(price)
         assert market.is_valid_price(use_price), \
             "%s is not a valid price for a product with minimum price increment %s" % \
