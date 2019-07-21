@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -303,11 +303,11 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         opposite_best_price = order_book.best_price(resulting_order_chain.side().other_side())
         ticks_from_opposite_tob = None
         if opposite_best_price is not None:  # if it is None then ticks from opposite is None
-            ticks_from_opposite_tob = abs((opposite_best_price - fill_event.fill_price()) / market.product().mpi())
+            ticks_from_opposite_tob = abs((opposite_best_price - fill_event.fill_price()) / market.mpi())
         priority = Priority(0, ticks_from_opposite_tob, 0)
         self._market_to_event_to_priority.set((market, event_id), value=priority)
 
-        #for a fill, priority before fill is always 0
+        # for a fill, priority before fill is always 0
         self._market_to_event_to_priority_before.set((market, event_id), value=priority)
 
     def handle_partial_fill_report(self, partial_fill_report, resulting_order_chain):

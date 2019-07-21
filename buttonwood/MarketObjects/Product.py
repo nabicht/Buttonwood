@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,32 +27,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from cdecimal import Decimal
+import json
 
 
 class Product(object):
-    def __init__(self, symbol, name, min_price_increment, min_price_increment_value):
+    def __init__(self, symbol, name):
         """
         Contains all the information needed about a Product.
-  
+
         A product + an endpoint == a trade-able asset
         :param symbol: str. the common symbol of the product
         :param name: str. the name of the product (more verbose than product. This is also the unique hash of the product
-        :param min_price_increment: float or int. the smallest increment of the product, also often called a tick.
-        :param min_price_increment_value: float or int. the value of the smallest increment the products trades in.
         """
         assert isinstance(symbol, str)
         assert isinstance(name, str)
-        assert isinstance(min_price_increment, Decimal) or isinstance(min_price_increment, str)
-        assert isinstance(min_price_increment_value, Decimal) or isinstance(min_price_increment_value, str)
         self._symbol = symbol
         self._name = name
-        self._min_price_increment = Decimal(min_price_increment)
-        self._min_price_increment_value = Decimal(min_price_increment_value)
         self._identifiers = {}  # used to store different identifiers, like CUSIP, bloomberg universal ID, etc.
         # equality of product ends up getting called pretty frequently so rather than doing a bunch of comparison of a
         #  bunch of getters i'm just going to have one nice tuple and do and do a direct comparison of the tuple
         self._equality_comparitor = (name.lower(), symbol.lower())
+        # since this should be an immutable object we can go ahead and create the following
+        self.__json = {"symbol": self.symbol(), "name": self.name()}
+        self.__str = json.dumps(self.__json)
         self.__hash = hash(name)
 
     def set_identifier(self, id_type, id_name):
@@ -102,39 +99,6 @@ class Product(object):
         """
         return self._symbol
 
-    def min_price_increment(self):
-        """
-        Gets the minimum price increment of a product. This is the smallest increment that the product trades in.
-        :return: Decimal
-        """
-        return self._min_price_increment
-
-    def min_price_increment_value(self):
-        """
-        Gets the monetary value associated with the minimum price increment of a product.
-        :return: Decimal
-        """
-        return self._min_price_increment_value
-
-    def mpi(self):
-        """
-        This is the same as `min_price_increment()'. It is just for the convenience of the developer.
-  
-        :return: Decimal
-        """
-        return self._min_price_increment
-
-    def mpi_value(self):
-        """
-        This is the same as `min_price_increment_value()'. It is just for the convenience of the developer.
-  
-        :return: Decimal
-        """
-        return self._min_price_increment_value
-
-    def is_valid_price(self, price):
-        return (price / self._min_price_increment) % 1 == 0
-
     def __eq__(self, other):
         identifiers_match = True
         other_identifiers = other.identifiers()
@@ -150,10 +114,16 @@ class Product(object):
         return not self.__eq__(other)
 
     def __str__(self):
-        return "%s %s  {mpi: %s mpiValue: %s}" % (self.symbol(), self.name(), str(self.mpi()), str(self.mpi_value()))
+        return self.__str
 
     def __hash__(self):
         return self.__hash
 
     def to_json(self):
-        return {"symbol": self.symbol(), "name": self.name(), "mpi": str(self.mpi()), "mpi_value": str(self.mpi_value())}
+        return self.__json
+
+    def to_detailed_json(self):
+        # I know that copying the dict is overkill, but it keeps the return json dict from letting someone edit the
+        #  identifiers dict accidentally (or on purpose)
+        return {"symbol": self.symbol(), "name": self.name(), "identifiers": self._identifiers.copy()}
+
