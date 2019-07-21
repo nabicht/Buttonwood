@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,17 +31,18 @@ from cdecimal import Decimal
 from nose.tools import *
 from buttonwood.MarketObjects.Quote import Quote
 from buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Market import Market
 from buttonwood.MarketObjects.Product import Product
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), PriceFactory("0.01"))
 
 
 def test_quote_creation():
     q = Quote(MARKET, BID_SIDE, Price("95.42"), 94)
-    assert q.price().price() == Decimal("95.42")
+    assert q.price() == Price("95.42")
     assert q.visible_qty() == 94
     assert q.hidden_qty() == 0
     assert q._price_level.number_of_orders() == 1
@@ -75,7 +76,8 @@ def test_equality():
     q2 = Quote(MARKET, BID_SIDE, Price("95.42"), 94)
     assert q1 == q2
 
-    q2 = Quote(Product("APPL", "Apple", "0.01", "0.01"), BID_SIDE, Price("95.42"), 94)
+    q2 = Quote(Market(Product("APPL", "Apple"), Endpoint("Nasdaq", "NSDQ"), PriceFactory("0.01")),
+               BID_SIDE, Price("95.42"), 94)
     assert q1 != q2
 
     q2 = Quote(MARKET, BID_SIDE, Price("95.43"), 94)

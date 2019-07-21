@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -43,12 +43,14 @@ from buttonwood.MarketObjects.Events.OrderEvents import PartialFillReport
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Market import Market
 from buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Side import BID_SIDE, ASK_SIDE
 from buttonwood.utils.IDGenerators import MonotonicIntID
+from cdecimal import Decimal
 
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), PriceFactory("0.01"))
 
 LOGGER = logging.getLogger()
 
@@ -557,3 +559,71 @@ def test_cancel_replace_not_allowed_on_fak_or_fok():
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     cr = CancelReplaceCommand(121235, 1234235.324, 2342, "user_x", MARKET, BID_SIDE, Price("43.01"), 234)
     assert_raises(AssertionError, oec.apply_cancel_replace_command, cr)
+
+
+def test_subchain_str():
+    # pretty basic, just testing that it doesn't break
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
+    oec = OrderEventChain(n, LOGGER, MonotonicIntID())
+    # now ack it
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, None)
+    oec.apply_acknowledgement_report(ack)
+    assert oec.most_recent_event() == ack
+
+    # now check I can get a __str__ of the subchain no problem
+    str(oec.most_recent_subchain())
+
+
+def test_subchain_to_json():
+    # pretty basic, just testing that it doesn't break
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
+    oec = OrderEventChain(n, LOGGER, MonotonicIntID())
+    # now ack it
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, None)
+    oec.apply_acknowledgement_report(ack)
+    assert oec.most_recent_event() == ack
+
+    # now check I can get a to_json of the subchain no problem
+    oec.most_recent_subchain().to_json()
+
+
+
+def test_subchain_getters():
+    # pretty basic, just testing that it doesn't break
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
+    oec = OrderEventChain(n, LOGGER, MonotonicIntID())
+    # now ack it
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, None)
+    oec.apply_acknowledgement_report(ack)
+    # and partial fill
+    aggressor = NewOrderCommand(1111, 1234237.123, 22222, "user_y", MARKET, ASK_SIDE, FAR, Price("34.52"), 44)
+    # now resting partial fill
+    pf = PartialFillReport(121236, 1234237.123, 2342, "user_x", MARKET, aggressor, 44, Price("34.52"),
+                           BID_SIDE, 99999, 1000 - 44)
+    oec.apply_partial_fill_report(pf)
+
+    subchain = oec.most_recent_subchain()
+    assert subchain.open_event() == n
+    assert subchain.first_execution_report() == ack
+    assert subchain.fills() == [pf]
+    assert subchain.last_event() == pf
+
+
+def test_subchain_getters_partial_fill_before_ack():
+    # pretty basic, just testing that it doesn't break
+    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
+    oec = OrderEventChain(n, LOGGER, MonotonicIntID())
+    # now aggressive partial fill
+    pf = PartialFillReport(121236, 1234237.123, 2342, "user_x", MARKET, n, 44, Price("34.52"),
+                           BID_SIDE, 99999, 1000 - 44)
+    oec.apply_partial_fill_report(pf)
+    # now ack it
+    ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000-44, None)
+    oec.apply_acknowledgement_report(ack)
+
+    subchain = oec.most_recent_subchain()
+    assert subchain.open_event() == n
+    assert subchain.first_execution_report() == pf
+    assert subchain.fills() == [pf]
+    assert subchain.last_event() == ack
+

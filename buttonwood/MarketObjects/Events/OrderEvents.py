@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -144,7 +144,7 @@ class OrderEvent(BasicEvent):
                     d[str(key)] = value.to_json()
                 elif isinstance(value, Price):
                     d[str(key)] = str(value.price())
-                elif hasattr(value, '__dict__'):  # cheap hack to figure out if a primative or not
+                elif hasattr(value, '__dict__'):  # cheap hack to figure out if a primitive or not
                     d[str(key)] = str(value)
                 else:
                     d[str(key)] = value
@@ -182,7 +182,7 @@ class NewOrderCommand(OrderCommand):
         assert qty > 0, "Qty must be greater than 0"
         assert iceberg_peak_qty is None or iceberg_peak_qty >= 0, "Iceberg Peak Qty must be None or an int >= 0"
         OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=other_key_values)
-        assert market.product().is_valid_price(price), "Price %s is not valid for Product %s" % (str(price), str(market))
+        assert market.is_valid_price(price), "Price %s is not valid for Product %s" % (str(price), str(market))
 
         self._side = side
         self._price = price
@@ -301,7 +301,7 @@ class CancelReplaceCommand(OrderCommand):
         assert iceberg_peak_qty is None or isinstance(iceberg_peak_qty, int)
         assert iceberg_peak_qty is None or iceberg_peak_qty >= 0, "iceberg_peak_qty cannot be negative."
         assert qty >= 0, "Qty must be greater than 0"
-        assert market.product().is_valid_price(price), "Price %s is not valid for Market %s" % (str(price), str(market))
+        assert market.is_valid_price(price), "Price %s is not valid for Market %s" % (str(price), str(market))
         OrderCommand.__init__(self, event_id, timestamp, chain_id, user_id, market, other_key_values=other_key_values)
         self._side = side
         self._price = price

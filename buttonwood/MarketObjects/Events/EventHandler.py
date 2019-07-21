@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -115,8 +115,8 @@ class OrderEventHandler:
                 "Registering OrderBook as an EventListener! Much downstream logic depends on EventListeners being updated before OrderBooks.")
         if event_listener_id not in self._event_listeners:
             self._event_listeners[event_listener_id] = event_listener
-            self._logger.info("Registered OrderEventListener: '%s': %s" %
-                              (event_listener_id, event_listener.__class__.__name__))
+            self._logger.debug("Registered OrderEventListener: '%s': %s" %
+                               (event_listener_id, event_listener.__class__.__name__))
         else:
             raise Exception("%s is already registered" % event_listener_id)
 

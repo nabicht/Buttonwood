@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,27 +27,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import json
 from cdecimal import Decimal
 from buttonwood.MarketObjects.Side import Side
+from buttonwood.MarketObjects.Side import BID_SIDE
 
 
-class Price(object):
+class InvalidPriceException(Exception):
+    pass
+
+
+class Price:
+
     def __init__(self, price_value):
         """
         Represents a price. Is created with a string, for accuracy, or as a Decimal and is kept as a Decimal
   
         :param price_value: str
         """
-        assert isinstance(price_value, str) or isinstance(price_value, Decimal)
-        self._price = Decimal(price_value)  # yup, this is do-able. You can instantiate a Decimal with another Decimal
-        self._hash = hash(price_value)
-
-    def price(self):
-        """
-        Gets the underlying price of the Price object as a Decimal
-        :return: Decimal
-        """
-        return self._price
+        self._value = price_value if isinstance(price_value, Decimal) else Decimal(price_value)
+        self.__hash = self._value.__hash__()
 
     def better_than(self, other_price, side):
         """
@@ -61,15 +60,14 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        assert isinstance(other_price, Price), "other_price should be MarketObjects.Price.Price"
         assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
         # if this price is a bid it is better than otherPrice if greater than
 
         if side.is_bid():
-            return self._price > other_price._price
+            return self > other_price
         # otherwise price is an ask and it is better than otherPrice if less than
         else:
-            return self._price < other_price._price
+            return self < other_price
 
     def better_or_same_as(self, other_price, side):
         """
@@ -84,11 +82,7 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        assert isinstance(other_price, Price), "other_price should be MarketObjects.Price.Price"
-        assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
-        if other_price._price == self._price:
-            return True
-        return self.better_than(other_price, side)
+        return True if other_price == self else self.better_than(other_price, side)
 
     def worse_than(self, other_price, side):
         """
@@ -103,14 +97,14 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        # if this price is a bid it is worse than otherPrice if less than
         assert isinstance(other_price, Price), "other_price should be MarketObjects.Price.Price"
         assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
+        # if this price is a bid it is worse than otherPrice if less than
         if side.is_bid():
-            return self._price < other_price._price
+            return self < other_price
         # otherwise price is an ask and it is worse than otherPrice if greater than
         else:
-            return self._price > other_price._price
+            return self > other_price
 
     def worse_or_same_as(self, other_price, side):
         """
@@ -125,13 +119,9 @@ class Price(object):
         :param side: Side. the side used for the comparison
         :return: boolean
         """
-        assert isinstance(other_price, Price), "other_price should be MarketObjects.Price.Price"
-        assert isinstance(side, Side), "side should be MarketObjects.Side.Side"
-        if other_price._price == self._price:
-            return True
-        return self.worse_than(other_price, side)
+        return True if other_price == self else self.worse_than(other_price, side)
 
-    def ticks_behind(self, other_price, side, product):
+    def ticks_behind(self, other_price, side, market):
         """
         For bids it subtracts its own price from the other price and divides by mpi
   
@@ -143,84 +133,208 @@ class Price(object):
         If otherprice is none it returns None
         :param other_price: MarketObjects.Price.Price the price you are comparing too
         :param side: MMarketObjects.Side.Side side of the market the comparison is happening on
-        :param product: MarketObjects.Product.Product
+        :param market: MarketObjects.Market.Market
         :return: float Can be None
         """
         if other_price is None:
             return None
 
         if side.is_bid():
-            return (other_price._price - self._price) / product.mpi()
+            return (other_price - self) / market.mpi()
         else:
-            return (self._price - other_price._price) / product.mpi()
+            return (self - other_price) / market.mpi()
+
+    def __hash__(self):
+        return self.__hash
+
+    def __repr__(self):
+        return self._value.__repr__()
+
+    def __str__(self):
+        return self._value.__str__()
 
     def __lt__(self, other):
-        if isinstance(other, Price):
-            return self._price < other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price < other
-        return None
+        if not isinstance(other, Price):
+            raise TypeError(other, '< requires another Price object')
+        else:
+            return self._value < other._value
 
     def __le__(self, other):
-        if isinstance(other, Price):
-            return self._price <= other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price <= other
-        return None
-
-    def __gt__(self, other):
-        if isinstance(other, Price):
-            return self._price > other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price > other
-        return None
-
-    def __ge__(self, other):
-        if isinstance(other, Price):
-            return self._price >= other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price >= other
-        return None
+        if not isinstance(other, Price):
+            raise TypeError(other, '<= requires another Price object')
+        else:
+            return self._value <= other._value
 
     def __eq__(self, other):
         if isinstance(other, Price):
-            return self._price == other._price
-        if isinstance(other, (float, int, Decimal)):
-            return self._price == other
+            return self._value == other._value
         return False
 
     def __ne__(self, other):
-        return not self.__eq__(other)
+        return not self == other
 
-    def __hash__(self):
-        return self._hash
+    def __gt__(self, other):
+        if not isinstance(other, Price):
+            raise TypeError(other, '> requires another Price object')
+        else:
+            return self._value > other._value
 
-    def __repr__(self):
-        return self.__str__()
+    def __ge__(self, other):
+        if not isinstance(other, Price):
+            raise TypeError(other, '>= requires another Price object')
+        else:
+            return self._value >= other._value
 
-    def __str__(self):
-        return str(self.price())
+    def __nonzero__(self):
+        return self.__bool__()
 
-    def __rsub__(self, other):
-        return other - self._price
-
-    def __sub__(self, other):
-        return self._price - other
-
-    def __radd__(self, other):
-        return other + self._price
+    def __bool__(self):
+        return bool(self._value)
 
     def __add__(self, other):
-        return self._price + other
+        if isinstance(other, Price):
+            other = other._value
+        value = self._value + other
+        return self.__class__(value)
 
-    def __div__(self, other):
-        return self._price / self.__math_val(other)
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, Price):
+            other = other._value
+        value = self._value - other
+        return self.__class__(value)
+
+    def __rsub__(self, other):
+        return (-self).__add__(other)
 
     def __mul__(self, other):
-        return self._price * self.__math_val(other)
+        if isinstance(other, Price):
+            raise TypeError("Two prices cannot be multiplied")  # just doesn't make sense. Why would someone do this?
+        value = self._value * other
+        return self.__class__(value)
 
-    def __math_val(self, obj):
-        val = obj
-        if isinstance(obj, Price):
-            val = obj.price()
-        return val
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __div__(self, other):
+        return self.__truediv__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, Price):
+            # not really sure why someone would want to divide a price by another price
+            raise TypeError("Two prices cannot be divided")
+        else:
+            if other == 0:
+                raise ZeroDivisionError()
+            return self._value/ other
+
+    def __floordiv__(self, other):
+        if isinstance(other, Price):
+            # not really sure why someone would want to divide a price by another price
+            raise TypeError("Two prices cannot be divided")
+        else:
+            if other == 0:
+                raise ZeroDivisionError()
+            value = self._value // other
+            return self.__class__(value)
+
+    def __mod__(self, other):
+        if isinstance(other, Price):
+            # not really sure why someone would want to modulo a price by another price
+            raise TypeError("modulo of two prices is not supported")
+        if other == 0:
+            raise ZeroDivisionError()
+        return self._value % other
+
+    def __divmod__(self, other):
+        raise TypeError("divmod of a price is not supported")
+
+    def __pow__(self, other):
+        raise TypeError("pow of a price is not supported")
+
+    def __neg__(self):
+        return self.__class__(-self._value)
+
+    def __pos__(self):
+        return self.__class__(+self._value)
+
+    def __abs__(self):
+        return self.__class__(abs(self._value))
+
+    def __int__(self):
+        return int(self._value)
+
+    def __float__(self):
+        return float(self._value)
+
+
+class PriceFactory:
+
+    def __init__(self, min_price_increment, min_price_increment_value=1, min_price=Price(-999999),
+                 max_price=Price(999999)):
+        assert isinstance(min_price_increment, (Decimal, str, int))
+        assert isinstance(min_price_increment_value, (Decimal, str, int))
+        self._mpi = Decimal(min_price_increment)
+        self._mpi_value = Decimal(min_price_increment_value)
+        self._min_price = min_price if isinstance(min_price, Price) else Price(min_price)
+        self._max_price = max_price if isinstance(max_price, Price) else Price(max_price)
+        assert self._min_price <= self._max_price, "Max price (%s) must be greater than or equal to min price (%s)." % \
+                                                   (str(max_price), str(min_price))
+
+    def next_price(self, price, side):
+        return self.get_price(price + (self._mpi * (1 if side is BID_SIDE else -1)))
+
+    def prev_price(self, price, side):
+        return self.get_price(price + (self._mpi * (-1 if side is BID_SIDE else 1)))
+
+    def get_price(self, price_value):
+        price = price_value if isinstance(price_value, Price) else Price(price_value)
+        if not self.is_valid_price(price):
+            raise InvalidPriceException("%s is not valid price with min %s max %s and mpi %s" %
+                                        (str(price_value), str(self._min_price), str(self._max_price), str(self._mpi)))
+        return price
+
+    def min_price_increment(self):
+        """
+        Gets the minimum price increment of a product. This is the smallest increment that the product trades in.
+        :return: Decimal
+        """
+        return self._mpi
+
+    def min_price_increment_value(self):
+        """
+        Gets the monetary value associated with the minimum price increment of a product.
+        :return: Decimal
+        """
+        return self._mpi_value
+
+    def mpi(self):
+        """
+        This is the same as `min_price_increment()'. It is just for the convenience of the developer.
+
+        :return: Decimal
+        """
+        return self._mpi
+
+    def mpi_value(self):
+        """
+        This is the same as `min_price_increment_value()'. It is just for the convenience of the developer.
+
+        :return: Decimal
+        """
+        return self._mpi_value
+
+    def is_valid_price(self, price):
+        if not isinstance(price, Price):
+            price = Price(price)
+        return (self._min_price <= price <= self._max_price) and (price % self._mpi) == 0
+
+    def to_json(self):
+        return {"mpi": str(self._mpi), "mpv": str(self._mpi_value), "min": str(self._min_price),
+                "max": str(self._max_price)}
+
+    def __str__(self):
+        return json.dumps(self.to_json())
+

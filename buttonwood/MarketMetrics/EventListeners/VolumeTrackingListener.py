@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -72,15 +72,15 @@ class VolumeTrackingListener(OrderEventListener):
 
     def __init__(self, logger):
         OrderEventListener.__init__(self, logger)
-        self._market_to_participant_to_volume = defaultdict(lambda: defaultdict(VolumeTracker()))  # TODO can I use NDeep dict here?
+        self._market_to_participant_to_volume = defaultdict(lambda: defaultdict(VolumeTracker))  # TODO can I use NDeep dict here?
 
     def _handle_fill(self, fill_report):
         # only care about passive fill reports because that way we get both counterparties:
         #  1) the user getting filled here and
         #  2) the user on the aggressive command
         if not fill_report.is_aggressor():
-            passive_user = fill_report.user()
-            aggressive_user = fill_report.aggressing_command().user()
+            passive_user = fill_report.user_id()
+            aggressive_user = fill_report.aggressing_command().user_id()
             qty = fill_report.fill_qty()
             market = fill_report.market()
             self._market_to_participant_to_volume[market][passive_user].add_passive_trade(qty, aggressive_user)
@@ -91,3 +91,10 @@ class VolumeTrackingListener(OrderEventListener):
 
     def handle_full_fill_report(self, full_fill_report, resulting_order_chain):
         self._handle_fill(full_fill_report)
+
+    def volume_tracker(self, market, user_id):
+        user_to_volume = self._market_to_participant_to_volume.get(market)
+        if user_to_volume is not None:
+            return user_to_volume.get(user_id)
+        return None
+

@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -248,8 +248,8 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
             raise Exception("%s is already registered" % listener_id)
 
         self._listeners[listener_id] = order_level_book_listener
-        self._logger.info("%s %s registered listener: %s" %
-                          (self.name(), str(self._market), order_level_book_listener.__class__.__name__))
+        self._logger.debug("%s %s registered listener: %s" %
+                           (self.name(), str(self._market), order_level_book_listener.__class__.__name__))
 
     def order_level_book_listener(self, listener_id):
         """
@@ -715,7 +715,7 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
         for price in ask_prices:
             if price is None:
                 continue
-            s += "%s%.12f\t\t" % (" " * 40, price.price())
+            s += "%s%.12f\t\t" % (" " * 40, price)
             order_chains = self._ask_price_to_level[price].order_chains()
             for order_chain in order_chains:
                 s += "%s %d (%d/%d) %s, " % \
@@ -730,7 +730,7 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
         for price in bid_prices:
             if price is None:
                 continue
-            s += "%.12f\t\t" % price.price()
+            s += "%.12f\t\t" % price
             order_chains = self._bid_price_to_level[price].order_chains()
             for order_chain in order_chains:
                 s += "%s %d (%d/%d) %s, " % (
@@ -998,13 +998,13 @@ class AggregateOrderLevelBook(OrderLevelBook, OrderLevelBookListener):
         for price in ask_prices:
             if price is not None:
                 order_books = self.order_books_at_price(ASK_SIDE, price)
-                s += "%s%.12f %d (%d) [%s]\n" % (" " * 40, price.price(), self.visible_qty_at_price(ASK_SIDE, price), self.hidden_qty_at_price(ASK_SIDE, price), ",".join(order_book.market().endpoint().name() for order_book in order_books))
+                s += "%s%.12f %d (%d) [%s]\n" % (" " * 40, price, self.visible_qty_at_price(ASK_SIDE, price), self.hidden_qty_at_price(ASK_SIDE, price), ",".join(order_book.market().endpoint().name() for order_book in order_books))
         s += "--------------------------------------\n"
         bid_prices = self.prices(BID_SIDE)
         for price in bid_prices:
             if price is not None:
                 order_books = self.order_books_at_price(BID_SIDE, price)
-                s += "%.12f %d (%d) [%s]\n" % (price.price(), self.visible_qty_at_price(BID_SIDE, price), self.hidden_qty_at_price(BID_SIDE, price), ",".join(order_book.market().endpoint().name() for order_book in order_books))
+                s += "%.12f %d (%d) [%s]\n" % (price, self.visible_qty_at_price(BID_SIDE, price), self.hidden_qty_at_price(BID_SIDE, price), ",".join(order_book.market().endpoint().name() for order_book in order_books))
         return s
 
     """

@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -53,11 +53,11 @@ class Quote(object):
         assert visible_qty > 0, "A quote's visible qty must be greater than 0"
         assert hidden_qty >= 0, "A quote's hidden qty must be greater than or equal to 0"
         use_price = price
-        if isinstance(price, str):
+        if not isinstance(price, Price):
             use_price = Price(price)
-        assert market.product().is_valid_price(use_price), \
+        assert market.is_valid_price(use_price), \
             "%s is not a valid price for a product with minimum price increment %s" % \
-            (str(use_price), str(market.product().mpi()))
+            (str(use_price), str(market.mpi()))
         self._side = side
         self._market = market
         self._price_level = PriceLevel(use_price, visible_qty, hidden_qty, num_orders=1)

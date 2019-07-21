@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-
+# Cancel Types
 USER_CANCEL = 1
 SYSTEM_CANCEL = 2
 
@@ -35,6 +35,7 @@ CANCEL_TYPES_STRINGS = {USER_CANCEL: "User requested cancel.",
                         SYSTEM_CANCEL: "System requested cancel.",
                        }
 
+# Cancel Reasons
 MARKET_CLOSED = 100
 SELF_TRADE = 101
 CANCEL_REPLACE_TO_ZERO = 102

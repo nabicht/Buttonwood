@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -43,13 +43,16 @@ from buttonwood.MarketObjects.OrderBooks.OrderLevelBook import OrderLevelBook
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Market import Market
 from buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketObjects.Price import PriceFactory
+
 from buttonwood.MarketObjects.PriceLevel import PriceLevel
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Side import ASK_SIDE
 from buttonwood.utils.IDGenerators import MonotonicIntID
+from cdecimal import Decimal
 
-MARKET = Market(Product("MSFT", "Microsoft", "0.01", "0.01"), Endpoint("Nasdaq", "NSDQ"))
+MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), PriceFactory("0.01"))
 LOGGER = logging.getLogger()
 SUBCHAIN_ID_GENERATOR = MonotonicIntID()
 
