@@ -51,7 +51,7 @@ class TimePriorityOrderLevel(object):
         self._num_orders = 0
 
     def order_chains(self):
-        return self._order_chains.values()
+        return list(self._order_chains.values())
 
     def iter_order_chains(self):
         return self._order_chains.values()
