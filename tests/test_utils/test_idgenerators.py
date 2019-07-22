@@ -34,12 +34,12 @@ from buttonwood.utils.IDGenerators import MonotonicIntID
 def test_monotonicintid():
     #test with the default values (should be 0 as the seed and 1 as the increment
     generator = MonotonicIntID()
-    for i in xrange(1,1000):
+    for i in range(1,1000):
         assert generator.id() == i
 
     #test with increment being 2
     generator = MonotonicIntID(increment = 2)
-    for i in xrange(2, 1000, 2):
+    for i in range(2, 1000, 2):
         assert generator.id() == i
 
     #test with a seed number

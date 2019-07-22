@@ -27,8 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import StringIO
-from cdecimal import Decimal
+import io
 from datetime import datetime
 import json
 from buttonwood.MarketObjects.Market import Market
@@ -48,7 +47,7 @@ from buttonwood.MarketObjects import Side
 from buttonwood.utils.timehelpers import datetime_to_epoch
 
 
-EXAMPLE_DATA = StringIO.StringIO("""Order ID,Index,Event,Time,Product Name,Destination,Time In Force,User,Side,Price,Qty,Leaves Qty,Response To Id,Aggressive Event ID,Match ID,Cancel Reason,,,,,,,,,
+EXAMPLE_DATA = io.StringIO("""Order ID,Index,Event,Time,Product Name,Destination,Time In Force,User,Side,Price,Qty,Leaves Qty,Response To Id,Aggressive Event ID,Match ID,Cancel Reason,,,,,,,,,
 87AB672,1,New,2019-05-07 12:00:00.001,AAAA,EXC1,FAR,FirmA,B,100.10,50,,,,,,,,,,,,,,
 87AB672,2,Ack,2019-05-07 12:00:00.002,AAAA,EXC1,FAR,FirmA,B,100.10,50,,1,,,,,,,,,,,,
 87AB673,3,New,2019-05-07 12:00:00.002,AAAA,EXC1,FAR,FirmA,B,100.09,50,,,,,,,,,,,,,,
@@ -220,4 +219,4 @@ def get_events():
 if __name__ == "__main__":
     events = get_events()
     for e in events:
-        print json.dumps(e.to_json(), indent=4, separators=(',', ': '))
+        print(json.dumps(e.to_json(), indent=4, separators=(',', ': ')))
