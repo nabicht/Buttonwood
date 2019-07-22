@@ -47,7 +47,6 @@ from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Side import BID_SIDE, ASK_SIDE
 from buttonwood.utils.IDGenerators import MonotonicIntID
-from cdecimal import Decimal
 
 
 MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), PriceFactory("0.01"))

@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from cdecimal import Decimal
+from decimal import Decimal
 from nose.tools import *
 from buttonwood.MarketObjects.Quote import Quote
 from buttonwood.MarketObjects.Price import Price

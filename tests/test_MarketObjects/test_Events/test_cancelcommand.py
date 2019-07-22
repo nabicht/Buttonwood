@@ -27,8 +27,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from nose.tools import *
-from cdecimal import Decimal
 from buttonwood.MarketObjects.Events.OrderEvents import CancelCommand
 from buttonwood.MarketObjects import CancelReasons
 from buttonwood.MarketObjects.Endpoint import Endpoint
@@ -37,6 +35,7 @@ from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Price import PriceFactory
 
 MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), PriceFactory("0.01"))
+
 
 def test_creation():
     cancel = CancelCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, CancelReasons.SYSTEM_CANCEL)

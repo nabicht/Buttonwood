@@ -28,7 +28,7 @@ SOFTWARE.
 """
 
 import json
-from cdecimal import Decimal
+from decimal import Decimal
 from buttonwood.MarketObjects.Side import Side
 from buttonwood.MarketObjects.Side import BID_SIDE
 

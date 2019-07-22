@@ -29,7 +29,7 @@ SOFTWARE.
 
 import json
 import sys
-from cdecimal import Decimal
+from decimal import Decimal
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Price import Price
