@@ -54,7 +54,7 @@ class TimePriorityOrderLevel(object):
         return self._order_chains.values()
 
     def iter_order_chains(self):
-        return self._order_chains.itervalues()
+        return self._order_chains.values()
 
     def first(self):
         if self.is_empty():
@@ -114,7 +114,7 @@ class TimePriorityOrderLevel(object):
         visible_qty = 0
         hidden_qty = 0
         num_orders = 0
-        for order_chain in self._order_chains.itervalues():
+        for order_chain in self._order_chains.values():
             visible_qty += order_chain.visible_qty()
             hidden_qty += order_chain.hidden_qty()
             num_orders += 1
@@ -262,7 +262,7 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
         return self._listeners.get(listener_id)
 
     def _notify_listeners(self, order_chain, tob_updated):
-        for listener in self._listeners.itervalues():
+        for listener in self._listeners.values():
             listener.notify_book_update(self, order_chain, tob_updated)
 
     def best_priority_chain(self, side):
@@ -677,7 +677,7 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                                       str(cancel_report.chain_id()),
                                       str(cancel_report.event_id()),
                                       str(resulting_order_chain.price_at_close())))
-                for price, the_level in price_to_level.iteritems():
+                for price, the_level in price_to_level.items():
                     if the_level.has_order_chain(resulting_order_chain):
                         the_level.remove_from_level(resulting_order_chain)
                         self._logger.warning(

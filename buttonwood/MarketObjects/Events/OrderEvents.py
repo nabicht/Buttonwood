@@ -139,7 +139,7 @@ class OrderEvent(BasicEvent):
     def _other_values_json(self):
         d = {}
         if self._other_key_values is not None:
-            for key, value in self._other_key_values.iteritems():
+            for key, value in self._other_key_values.items():
                 if isinstance(value, Market):
                     d[str(key)] = value.to_json()
                 elif isinstance(value, Price):

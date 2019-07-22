@@ -77,7 +77,7 @@ class MatchSeriesTracker(OrderEventListener):
         :return: list() of Buttonwood.MarketObjects.MatchSeries.MatchSeries
         """
         l = []
-        for series in self._id_to_series.itervalues():
+        for series in self._id_to_series.values():
             if series.aggressor_side() == side:
                 l.append(series)
         return l

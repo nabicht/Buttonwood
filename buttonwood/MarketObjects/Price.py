@@ -185,9 +185,6 @@ class Price:
         else:
             return self._value >= other._value
 
-    def __nonzero__(self):
-        return self.__bool__()
-
     def __bool__(self):
         return bool(self._value)
 
