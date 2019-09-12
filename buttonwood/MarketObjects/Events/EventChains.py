@@ -627,7 +627,7 @@ class OrderEventChain(object):
 
     def _close_chain(self, closing_event):
         # TODO unit test!
-        if self._current_exposure is not None and self._current_exposure.qty() > 0:
+        if self._current_exposure is not None:
             self._price_at_close = self.current_exposure().price()
             self._open_qty_at_close = self.current_exposure().qty()
         else:  # for example, FAKs and other aggressive orders that get cancelled without an acknowledgement
@@ -651,9 +651,7 @@ class OrderEventChain(object):
             "execution_report must be a valid ExecutionReport instance"
         assert isinstance(execution_report, ExecutionReport), \
             "execution_report must be a valid ExecutionReport instance"
-        # partial fills can't close out exposure
-        assert not isinstance(execution_report,
-                              PartialFillReport), "PartialFillReports cannot close requested exposure."
+
         closed_exposure = False
         # if execution_report is a cancel confirm or full fill then close out all open requested exposures
         if isinstance(execution_report, CancelReport) or isinstance(execution_report, FullFillReport):
@@ -831,6 +829,8 @@ class OrderEventChain(object):
         #       - if outstanding exposure for causing event goes to zero or below then log an error
         #             and close order chain and subchain
         # don't need to change visible qty because not ack'd yet
+        close_sub_chain = False
+        close_chain = False
         if pf.is_aggressor():
             requested_exposure = self.find_requested_exposure(pf.aggressing_command().event_id())
             if requested_exposure is None:
@@ -840,20 +840,23 @@ class OrderEventChain(object):
             else:
                 requested_exposure.dec_qty(pf.fill_qty())
                 if requested_exposure.qty() <= 0:
-                    self._logger.error(
-                        "OrderChain state issue: %s. Aggressive partial fill (%s) took requested exposure from %s to %d. Closing Order Chain." %
-                        (self._chain_id, str(pf.event_id()), str(pf.aggressing_command().event_id()),
-                         pf.fill_qty()))
+                    if requested_exposure.qty() < 0:
+                        self._logger.error(
+                            "OrderChain state issue: %s. Aggressive partial fill (%s) took requested exposure from %s to %d. Closing Order Chain." %
+                            (self._chain_id, str(pf.event_id()), str(pf.aggressing_command().event_id()),
+                             pf.fill_qty()))
                     # close subchain down below after adding it
                     close_sub_chain = True
                     self._close_requested_exposure(pf)
-                    self._close_chain(pf)
+                    close_chain = True
         else:
             # if passive then
             #  change open exposure by the fill size (because it has been ack'd)
             #       - if exposure goes to 0 or less then log a critical error and close order chain and subchain
             # change visible size
             #       - reduce by amount filled. If this is 0 or less then replenish min(iceberg peak qty, open exposure qty)
+            close_sub_chain = False
+            close_chain = False
             if self._current_exposure is None:
                 self._logger.error("OrderChain state issue: %s. Passive partial fill (%s) with no current exposure." %
                                    (self._chain_id, pf.event_id()))
@@ -864,15 +867,17 @@ class OrderEventChain(object):
                         (self._chain_id, pf.event_id(), pf.fill_qty()))
                     # subchain closed down below, after the partial fill is added to it
                     close_sub_chain = True
-                    # don't decrement qty because this, in essence, gets taken care of in the close and we still want
-                    #  some qty so we can grab the closing price
-                    self._close_chain(pf)
+                    close_chain = True
                 else:
                     self._current_exposure.dec_qty(pf.fill_qty())
                     self._visible_qty -= pf.fill_qty()
                     if self._visible_qty <= 0:
                         self._visible_qty = min(self.iceberg_peak_qty(), self._current_exposure.qty())
+                        if self._visible_qty <= 0:
+                            raise Exception("After visible qty replenish, the visible qty is still <= 0 (%d)\n%s" %
+                                            (self._visible_qty, str(self)))
                         self._events_that_caused_visible_qty_refresh.add(pf.event_id())
+        return close_chain, close_sub_chain
 
     def _modify_exposure_by_full_fill(self, ff):
         if ff.is_aggressor():
@@ -914,8 +919,7 @@ class OrderEventChain(object):
         self._filled_price_to_qty[pf.fill_price()] = pf.fill_qty()
         # track the match id
         self._match_ids.add(pf.match_id())
-        close_sub_chain = False
-        self._modify_exposure_by_partial_fill(pf)
+        close_chain, close_sub_chain = self._modify_exposure_by_partial_fill(pf)
         if pf.is_aggressor():
             # if aggressor then could be opening a new subchain
             # but dont' need to worry about it if second partial fill of subchain, only handle it if aggressing event id doens't match the current subchain open id
@@ -939,6 +943,8 @@ class OrderEventChain(object):
         self.most_recent_subchain().add_event(pf)
         if close_sub_chain:
             self.most_recent_subchain().close_subchain(SubChain.FULLY_FILLED)
+        if close_chain:
+            self._close_chain(pf)
 
     def apply_full_fill_report(self, ff):
         """
