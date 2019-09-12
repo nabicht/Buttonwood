@@ -537,6 +537,8 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
         # only need to updat the orderbook if a passive fill, if its the
         #  aggressive fill then it shouldn't be in the order book so the fill
         #  doesn't impact the order book
+        # or if a partial fill of a previous ack'd order that results in 0 remaining qty. In this case you want to
+        #  remove the order chain from the previous ack'd price
         self._last_update_time = partial_fill_report.timestamp()
         is_bid = resulting_order_chain.side().is_bid()
         price_to_level = self._bid_price_to_level if resulting_order_chain.side().is_bid() else self._ask_price_to_level
@@ -576,7 +578,7 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                             tob_updated = True
             else:
                 price = partial_fill_report.fill_price()
-                self._logger.error(
+                self._logger.debug(
                     "%s: OrderChain %s Partial Fill %s. Resulted in no visible qty %d (%d) @ %s. Removing from order book." %
                     (self.name(),
                      str(partial_fill_report.chain_id()),
@@ -598,6 +600,24 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                 order_book_updated = True
                 if price == pre_fill_best_price:
                     tob_updated = True
+
+        elif resulting_order_chain.visible_qty() <= 0 and resulting_order_chain.has_acknowledgement():
+            price = resulting_order_chain.last_acknowledgement().price()
+            if price_to_level[price].has_order_chain(partial_fill_report.chain_id()):
+                price_to_level[price].remove_from_level(resulting_order_chain)
+            else:
+                self._logger.error(
+                    "%s: OrderChain %s most recent acknowledgement %s. OrderChain not at price @ %s. Cannot remove from OrderBook." %
+                    (self.name(),
+                     str(partial_fill_report.chain_id()),
+                     str(partial_fill_report.event_id()),
+                     str(price)))
+            if len(price_to_level[price].order_chains()) == 0:
+                del price_to_level[price]
+            order_book_updated = True
+            if price == pre_fill_best_price:
+                tob_updated = True
+
         if order_book_updated:
             self._notify_listeners(resulting_order_chain, tob_updated)
         return order_book_updated, tob_updated
