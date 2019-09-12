@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2017 Peter F. Nabicht
+Copyright (c) 2016-2019 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -109,7 +109,7 @@ class TwoSidedQuote(object):
         """
         if self.buy_quote() is None or self.sell_quote() is None:
             return None
-        return (self.sell_quote().price().price() - self.buy_quote().price().price()) / self.buy_quote().market().product().mpi()
+        return (self.sell_quote().price() - self.buy_quote().price()) / self.buy_quote().market().mpi()
 
     def __eq__(self, other):
         return self.buy_quote() == other.buy_quote() and self.sell_quote() == other.sell_quote()
