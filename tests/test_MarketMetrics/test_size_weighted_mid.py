@@ -29,6 +29,7 @@ SOFTWARE.
 
 from cdecimal import Decimal
 from buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketMetrics.MicroPrice import size_weighted_midpoint
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Side import ASK_SIDE
 
@@ -54,22 +55,6 @@ def test_price_int_addition():
     assert isinstance(new_price, Price)
     assert new_price != p
     assert new_price == Price("101.01")
-
-
-def test_price_int_subtraction():
-    p = Price("100.01")
-    n = p - 1
-    assert isinstance(n, Price)
-    assert n == Price("99.01")
-    assert n != p
-
-
-def test_price_decimal_subtraction():
-    p = Price("100.01")
-    n = p - Decimal(1)
-    assert isinstance(n, Price)
-    assert n == Price("99.01")
-    assert n != p
 
 
 def test_better_than():

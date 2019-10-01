@@ -141,17 +141,6 @@ def test_new_iceberg_order_ack():
     assert oec.visible_qty() == 50
 
 
-def test_close_exposure_fails_partial_fill():
-    n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
-    oec = OrderEventChain(n, LOGGER, MonotonicIntID())
-    # _close_exposure(...) should fail for type PartialFill
-    # TODO in OrderEventChain, check that the user hasn't changed on us mid chain
-    aggressing_cmd = NewOrderCommand(1214321, 1234235.823, 2354, "user_y", MARKET, ASK_SIDE, FAK, Price("34.52"), 100)
-    pf = PartialFillReport(121236, 1234237.723, 2342, "user_x", MARKET, aggressing_cmd, 100, Price("34.52"), ASK_SIDE,
-                           987654, 900)
-    assert_raises(Exception, oec._close_requested_exposure, pf)  # TODO change to EventChainLogicException
-
-
 def test_close_exposure_cancel_closes_all():
     id_gen = MonotonicIntID(seed=23043, increment=1)
     n = NewOrderCommand(id_gen.id(), 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAR, Price("34.52"), 1000)
