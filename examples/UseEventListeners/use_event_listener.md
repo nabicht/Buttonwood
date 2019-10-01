@@ -4,6 +4,8 @@ EventListeners are a basic way of creating metrics based off of the events (and 
 
 This example shows how to push order events through an EventHandler and to EventListeners. 
 
+Please note that this example relies on code in `examples/CSVtoEvents`. That is a good place to start if you are new to Buttonwood.
+
 The EventHandler takes each event it is given, in order, and:
 1. builds order event chains
 2. hands them off to event listeners that are registered
