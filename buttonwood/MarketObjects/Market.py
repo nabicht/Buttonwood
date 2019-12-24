@@ -34,7 +34,7 @@ import sys
 
 class Market(object):
 
-    def __init__(self, product, endpoint, price_factory, min_qty=1, max_qty=sys.maxint, qty_increment=1):
+    def __init__(self, product, endpoint, price_factory, min_qty=1, max_qty=sys.maxsize, qty_increment=1):
         """
         Contains all the information needed about a Market.
 

@@ -304,35 +304,35 @@ class OrderEventHandler:
         return order_chain, markets_with_updated_books
 
     def _new_order_command_notification(self, new_order_command, resulting_order_chain):
-        for listener in self._event_listeners.itervalues():
+        for listener in self._event_listeners.values():
             listener.handle_new_order_command(new_order_command, resulting_order_chain)
 
     def _cancel_replace_command_notification(self, cancel_replace_command, resulting_order_chain):
-        for listener in self._event_listeners.itervalues():
+        for listener in self._event_listeners.values():
             listener.handle_cancel_replace_command(cancel_replace_command, resulting_order_chain)
 
     def _cancel_command_notification(self, cancel_command, resulting_order_chain):
-        for listener in self._event_listeners.itervalues():
+        for listener in self._event_listeners.values():
             listener.handle_cancel_command(cancel_command, resulting_order_chain)
 
     def _acknowledgement_report_notification(self, acknowledgement_report, resulting_order_chain):
-        for listener in self._event_listeners.itervalues():
+        for listener in self._event_listeners.values():
             listener.handle_acknowledgement_report(acknowledgement_report, resulting_order_chain)
 
     def _partial_fill_report_notification(self, partial_fill_report, resulting_order_chain):
-        for listener in self._event_listeners.itervalues():
+        for listener in self._event_listeners.values():
             listener.handle_partial_fill_report(partial_fill_report, resulting_order_chain)
 
     def _full_fill_report_notification(self, full_fill_report, resulting_order_chain):
-        for listener in self._event_listeners.itervalues():
+        for listener in self._event_listeners.values():
             listener.handle_full_fill_report(full_fill_report, resulting_order_chain)
 
     def _cancel_report_notification(self, cancel_report, resulting_order_chain):
-        for listener in self._event_listeners.itervalues():
+        for listener in self._event_listeners.values():
             listener.handle_cancel_report(cancel_report, resulting_order_chain)
 
     def _reject_report_notification(self, reject_report, resulting_order_chain):
-        for listener in self._event_listeners.itervalues():
+        for listener in self._event_listeners.values():
             listener.notify_reject_reort(reject_report, resulting_order_chain)
 
     def _close_chain_notification(self, closed_order_chain):
@@ -340,11 +340,11 @@ class OrderEventHandler:
             self._logger.error("%s: _close_chain_notification called for order chain %s and it is NOT closed! Not notifying listeners." %
                                (self.__class__.__name__, str(closed_order_chain.chain_id())))
             return
-        for listener in self._event_listeners.itervalues():
+        for listener in self._event_listeners.values():
             listener.handle_chain_close(closed_order_chain)
 
     def chain_ids(self):
-        return self._chain_id_to_chain.keys()
+        return list(self._chain_id_to_chain.keys())
 
     def order_chain(self, chain_id):
         return self._chain_id_to_chain.get(chain_id)

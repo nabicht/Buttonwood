@@ -55,7 +55,7 @@ class IDGenerator:
 
 class MonotonicIntID(IDGenerator):
 
-    def __init__(self, seed=0, increment=1, max_id=sys.maxint):
+    def __init__(self, seed=0, increment=1, max_id=sys.maxsize):
         """
         A monotonically increasing integer.  increases by the passed the increment value, starting at the seed value.
          The seed value is reserved. It itself will not be returned as an ID
@@ -63,7 +63,7 @@ class MonotonicIntID(IDGenerator):
         :param seed:
         :param increment:
         """
-        assert isinstance(seed, int) or isinstance(seed, long)
+        assert isinstance(seed, int) or isinstance(seed, int)
         assert isinstance(increment, int)
         IDGenerator.__init__(self)
         self._seed = seed
@@ -89,7 +89,7 @@ class MonotonicIntID(IDGenerator):
 
 class RandomPositiveIntID(IDGenerator):
 
-    def __init__(self, floor=1, ceiling=sys.maxint, attempts=20000):
+    def __init__(self, floor=1, ceiling=sys.maxsize, attempts=20000):
         assert isinstance(floor, int)
         assert isinstance(ceiling, int)
         assert ceiling > floor
@@ -104,7 +104,7 @@ class RandomPositiveIntID(IDGenerator):
     def id(self):
         if self._id_count >= self._max_id_count:
             raise Exception("%d IDs distributed. All possible IDs have been used." % self._id_count)
-        for x in xrange(1, self._attempts):
+        for x in range(1, self._attempts):
             x = random.randint(self._floor, self._ceiling)
             if x not in self._ids:
                 self._ids.add(x)

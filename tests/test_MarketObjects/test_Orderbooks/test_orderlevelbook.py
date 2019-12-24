@@ -50,7 +50,6 @@ from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Side import ASK_SIDE
 from buttonwood.utils.IDGenerators import MonotonicIntID
-from cdecimal import Decimal
 
 MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), PriceFactory("0.01"))
 LOGGER = logging.getLogger()
@@ -104,7 +103,7 @@ def test_populating_tob():
     assert ob.best_ask_price() == Price("34.52")  # best price has not changed
     assert ob.best_priority_chain(ASK_SIDE).chain_id() == ask_oec1.chain_id()  # best priority chain has not changed
     assert ob.best_ask_level().price() == Price("34.52")  # price of best level has not changed
-    print ob.best_ask_level().visible_qty()
+    print(ob.best_ask_level().visible_qty())
     assert ob.best_ask_level().visible_qty() == 10 + 20  # visible qty should have got up by 20
     assert ob.best_ask_level().hidden_qty() == 25  # hidden qty should not have changed
     assert ob.best_ask_level().number_of_orders() == 2  # num orders should go up 2
@@ -173,8 +172,8 @@ def build_base_order_book():
 
     # do some asserts to ensure we built book as expected
     bid_prices = ob.prices(BID_SIDE)
-    print ob.best_bid_price()
-    print bid_prices
+    print(ob.best_bid_price())
+    print(bid_prices)
     assert len(bid_prices) == 1
     assert bid_prices[0] == Price("34.50")
     assert ob.best_bid_price() == Price("34.50")
@@ -387,7 +386,7 @@ def test_cancel_replace_order_down_in_qty():
     current_order_chains = ob.order_chains_at_price(BID_SIDE, Price("34.50"))
     assert len(current_order_chains) == 2
     for chain in current_order_chains:
-        print chain
+        print(chain)
     assert prev_order_chains[0].chain_id() == 1001
     assert prev_order_chains[1].chain_id() == 1004
     assert ob.best_priority_chain(BID_SIDE).chain_id() == 1001

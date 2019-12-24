@@ -36,11 +36,11 @@ TIME_IN_FORCE_STRINGS = {FAR: "FAR",
                          FAK: "FAK",
                         }
 
-TIME_IN_FORCE_STR_TO_INT = {v: k for k, v in TIME_IN_FORCE_STRINGS.iteritems()}
+TIME_IN_FORCE_STR_TO_INT = {v: k for k, v in TIME_IN_FORCE_STRINGS.items()}
 
 def time_in_force_str(int_id):
     assert isinstance(int_id, int)
-    if not TIME_IN_FORCE_STRINGS.has_key(int_id):
+    if int_id not in TIME_IN_FORCE_STRINGS:
         raise Exception("%d is an unknown time in force identifier")
     return TIME_IN_FORCE_STRINGS[int_id]
 

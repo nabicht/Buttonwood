@@ -56,7 +56,7 @@ def test_ndeepdict_3_deep():
     assert isinstance(d._dict["foo"], dict)
     #i should be able to get default 0 if I look 2 levels in
     assert isinstance(d._dict["foo"]["bar"], dict)
-    print d._dict["foo"]["bar"]["baz"]
+    print(d._dict["foo"]["bar"]["baz"])
     assert isinstance(d._dict["foo"]["bar"]["baz"], int)
     assert d._dict["foo"]["bar"]["baz"] == 0
     #still should be nothing in any layer of the dictionary
