@@ -13,10 +13,7 @@ setup(
   url = 'https://github.com/nabicht/Buttonwood',
   download_url = 'https://github.com/nabicht/Buttonwood/archive/v2.0.0.tar.gz',
   keywords = ['markets', 'finance', 'electronic markets', 'microstructure', 'market analysis'],
-  install_requires=[
-          'nose',
-          'cdecimal',
-      ],
+  install_requires=[],
   classifiers=[
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
