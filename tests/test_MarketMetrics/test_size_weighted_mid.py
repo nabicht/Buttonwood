@@ -27,15 +27,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from decimal import Decimal
+from cdecimal import Decimal
 from buttonwood.MarketObjects.Price import Price
+from buttonwood.MarketMetrics.MicroPrice import size_weighted_midpoint
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Side import ASK_SIDE
 
 
 def test_setting_price():
     p = Price("94.58793")
-    assert p == Decimal("94.58793")
+    assert p._value == Decimal("94.58793")
 
 
 def test_price_decimal_addition():
@@ -54,63 +55,6 @@ def test_price_int_addition():
     assert isinstance(new_price, Price)
     assert new_price != p
     assert new_price == Price("101.01")
-
-
-def test_price_int_subtraction():
-    p = Price("100.01")
-    n = p - 1
-    assert isinstance(n, Price)
-    assert n == Price("99.01")
-    assert n != p
-
-
-def test_price_decimal_subtraction():
-    p = Price("100.01")
-    n = p - Decimal(1)
-    assert isinstance(n, Price)
-    assert n == Price("99.01")
-    assert n != p
-
-
-def test_float_addition():
-    p = Price('1.1')
-    f = 2.2
-    res = p + f
-    assert isinstance(res, Price)
-    assert res == Price('3.3')
-
-
-def test_int_addition():
-    p = Price('1.1')
-    i = 5
-    res = p + i
-    assert isinstance(res, Price)
-    assert res == Price('6.1')
-
-
-def test_int_multiplication():
-    p = Price('1.1')
-    i = 6
-    res = p * i
-    assert isinstance(res, Price)
-    assert res == Price("6.6")
-
-
-def test_decimal_multiplication():
-    p = Price('1.1')
-    d = Decimal(6)
-    res = p * d
-    assert isinstance(res, Price)
-    assert res == Price("6.6")
-
-
-def test_float_mulitplication():
-    p = Price('1.1')
-    f = 6.5
-    res = p * f
-    assert isinstance(res, Price)
-    print res
-    assert res == Price('7.15')
 
 
 def test_better_than():
