@@ -35,13 +35,54 @@ from buttonwood.MarketObjects.Side import ASK_SIDE
 
 def test_setting_price():
     p = Price("94.58793")
-    assert p._value == Decimal("94.58793")
+    assert p == Decimal("94.58793")
 
 
 def test_price_decimal_addition():
     p = Price("100.01")
     mpi = Decimal("0.01")
     assert isinstance(p + mpi, Price)
+
+
+def test_float_addition():
+    p = Price('1.1')
+    f = 2.2
+    res = p + f
+    assert isinstance(res, Price)
+    assert res == Price('3.3')
+
+
+def test_int_addition():
+    p = Price('1.1')
+    i = 5
+    res = p + i
+    assert isinstance(res, Price)
+    assert res == Price('6.1')
+
+
+def test_int_multiplication():
+    p = Price('1.1')
+    i = 6
+    res = p * i
+    assert isinstance(res, Price)
+    assert res == Price("6.6")
+
+
+def test_decimal_multiplication():
+    p = Price('1.1')
+    d = Decimal(6)
+    res = p * d
+    assert isinstance(res, Price)
+    assert res == Price("6.6")
+
+
+def test_float_mulitplication():
+    p = Price('1.1')
+    f = 6.5
+    res = p * f
+    assert isinstance(res, Price)
+    print res
+    assert res == Price('7.15')
 
 
 def test_better_than():

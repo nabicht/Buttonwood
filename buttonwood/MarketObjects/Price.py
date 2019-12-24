@@ -28,6 +28,7 @@ SOFTWARE.
 """
 
 import json
+import decimal
 from decimal import Decimal
 from buttonwood.MarketObjects.Side import Side
 from buttonwood.MarketObjects.Side import BID_SIDE
@@ -39,14 +40,16 @@ class InvalidPriceException(Exception):
 
 class Price:
 
-    def __init__(self, price_value):
-        """
-        Represents a price. Is created with a string, for accuracy, or as a Decimal and is kept as a Decimal
-  
-        :param price_value: str
-        """
-        self._value = price_value if isinstance(price_value, Decimal) else Decimal(price_value)
-        self.__hash = self._value.__hash__()
+    def __init__(self, price_value, precision=Decimal(".111111111111111")):  # precision defaults to 15
+        if isinstance(price_value, Decimal):
+            self.__value = price_value
+        elif isinstance(price_value, float):
+            self.__value = Decimal(price_value).quantize(precision, rounding=decimal.ROUND_HALF_UP)
+        else:
+            self.__value = Decimal(price_value)
+        self.__hash = self.__value.__hash__()
+        self.__float_value = float(self.__value)
+        self.__precision = precision
 
     def better_than(self, other_price, side):
         """
@@ -148,27 +151,28 @@ class Price:
         return self.__hash
 
     def __repr__(self):
-        return self._value.__repr__()
+        return self.__value.__repr__()
 
     def __str__(self):
-        return self._value.__str__()
+        return self.__value.__str__()
 
     def __lt__(self, other):
         if not isinstance(other, Price):
             raise TypeError(other, '< requires another Price object')
         else:
-            return self._value < other._value
+            return self.__value < other.__value
 
     def __le__(self, other):
         if not isinstance(other, Price):
             raise TypeError(other, '<= requires another Price object')
         else:
-            return self._value <= other._value
+            return self.__value <= other.__value
 
     def __eq__(self, other):
         if isinstance(other, Price):
-            return self._value == other._value
-        return False
+            return self.__value == other.__value
+        else:
+            return self.__value == Price(other).__value
 
     def __ne__(self, other):
         return not self == other
@@ -177,40 +181,49 @@ class Price:
         if not isinstance(other, Price):
             raise TypeError(other, '> requires another Price object')
         else:
-            return self._value > other._value
+            return self.__value > other.__value
 
     def __ge__(self, other):
         if not isinstance(other, Price):
             raise TypeError(other, '>= requires another Price object')
         else:
-            return self._value >= other._value
+            return self.__value >= other.__value
 
     def __bool__(self):
-        return bool(self._value)
+        return bool(self.__value)
 
     def __add__(self, other):
-        if isinstance(other, Price):
-            other = other._value
-        value = self._value + other
-        return self.__class__(value)
+        if isinstance(other, float):
+            value = self.__float_value + other
+        else:
+            if isinstance(other, Price):
+                other = other.__value
+            value = self.__value + other
+        return self.__class__(value, precision=self.__precision)
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
-        if isinstance(other, Price):
-            other = other._value
-        value = self._value - other
-        return self.__class__(value)
+        if isinstance(other, float):
+            value = self.__float_value - other
+        else:
+            if isinstance(other, Price):
+                other = other.__value
+            value = self.__value - other
+        return self.__class__(value, precision=self.__precision)
 
     def __rsub__(self, other):
         return (-self).__add__(other)
 
     def __mul__(self, other):
-        if isinstance(other, Price):
-            raise TypeError("Two prices cannot be multiplied")  # just doesn't make sense. Why would someone do this?
-        value = self._value * other
-        return self.__class__(value)
+        if isinstance(other, float):
+            value = self.__float_value * other
+        else:
+            if isinstance(other, Price):
+                raise TypeError("Two prices cannot be multiplied")  # just doesn't make sense. Why would someone do this?
+            value = self.__value * other
+        return self.__class__(value, precision=self.__precision)
 
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -225,7 +238,11 @@ class Price:
         else:
             if other == 0:
                 raise ZeroDivisionError()
-            return self._value/ other
+            if isinstance(other, float):
+                value = self.__float_value / other
+            else:
+                value = self.__value / other
+        return self.__class__(value, precision=self.__precision)
 
     def __floordiv__(self, other):
         if isinstance(other, Price):
@@ -234,8 +251,11 @@ class Price:
         else:
             if other == 0:
                 raise ZeroDivisionError()
-            value = self._value // other
-            return self.__class__(value)
+            if isinstance(other, float):
+                value = self.__float_value // other
+            else:
+                value = self.__value // other
+        return self.__class__(value, precision=self.__precision)
 
     def __mod__(self, other):
         if isinstance(other, Price):
@@ -243,7 +263,11 @@ class Price:
             raise TypeError("modulo of two prices is not supported")
         if other == 0:
             raise ZeroDivisionError()
-        return self._value % other
+        if isinstance(other, float):
+            value = self.__float_value % other
+        else:
+            value = self.__value % other
+        return self.__class__(value, precision=self.__precision)
 
     def __divmod__(self, other):
         raise TypeError("divmod of a price is not supported")
@@ -252,28 +276,38 @@ class Price:
         raise TypeError("pow of a price is not supported")
 
     def __neg__(self):
-        return self.__class__(-self._value)
+        return self.__class__(-self.__value)
 
     def __pos__(self):
-        return self.__class__(+self._value)
+        return self.__class__(+self.__value)
 
     def __abs__(self):
-        return self.__class__(abs(self._value))
+        return self.__class__(abs(self.__value))
 
     def __int__(self):
-        return int(self._value)
+        return int(self.__value)
 
     def __float__(self):
-        return float(self._value)
+        return self.__float_value
 
 
 class PriceFactory:
 
     def __init__(self, min_price_increment, min_price_increment_value=1, min_price=Price(-999999),
-                 max_price=Price(999999)):
+                 max_price=Price(999999), precision=Decimal(".111111111111111")):
         assert isinstance(min_price_increment, (Decimal, str, int))
         assert isinstance(min_price_increment_value, (Decimal, str, int))
+        assert isinstance(precision, Decimal)
+        self._precision = precision
         self._mpi = Decimal(min_price_increment)
+        # if mpi has a decimal then precision needs be more precise than min_price_increment's decimal
+        mpi_decimal_len = 0
+        precision_len = 0
+        if str(self._mpi).find(".") > -1:
+            mpi_decimal_len = len(str(self._mpi).split(".")[1])
+        if str(self._precision).find(".") > -1:
+            precision_len = len(str(self._precision).split(".")[1])
+        assert precision_len >= mpi_decimal_len, "precision needs to be more precise than min_price_increment"
         self._mpi_value = Decimal(min_price_increment_value)
         self._min_price = min_price if isinstance(min_price, Price) else Price(min_price)
         self._max_price = max_price if isinstance(max_price, Price) else Price(max_price)
@@ -334,4 +368,3 @@ class PriceFactory:
 
     def __str__(self):
         return json.dumps(self.to_json())
-
