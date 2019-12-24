@@ -176,11 +176,11 @@ class SubChain(object):
         """
         assert isinstance(opening_cmd, OrderCommand), "A subchain must be opened with an OrderCommand"
         self._logger = logger
-        try:
-            self._debug = debug_logging
-        except NameError:
+        if 'debug_logging' not in globals():
             global debug_logging
-            debug_logging = self._debug = self._logger.isEnabledFor(logging.DEBUG)
+            debug_logging = self._logger.isEnabledFor(logging.DEBUG)
+        self._debug = debug_logging
+
         self._events = []
         self._chain_id = opening_cmd.chain_id()
         self._opening_cmd = opening_cmd
@@ -303,11 +303,10 @@ class OrderEventChain(object):
         assert isinstance(new_order_command, NewOrderCommand)
         assert isinstance(subchain_id_generator, IDGenerator)
         self._logger = logger  # TODO add debug logging throughout
-        try:
-            self._debug = debug_logging
-        except NameError:
+        if 'debug_logging' not in globals():
             global debug_logging
-            debug_logging = self._debug = self._logger.isEnabledFor(logging.DEBUG)
+            debug_logging = self._logger.isEnabledFor(logging.DEBUG)
+        self._debug = debug_logging
 
         # keeping this state local, rather than looking it up in self._new_order_command all the time speeds things up
         #  (only doing it for a select few that tend to get called more than others)

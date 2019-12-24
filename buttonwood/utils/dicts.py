@@ -122,7 +122,7 @@ class NDeepDict:
     def _sum(self, v):
         total = 0
         if isinstance(v, dict):
-            for value in v.itervalues():
+            for value in v.values():
                 total += self._sum(value)
         else:
             total += v

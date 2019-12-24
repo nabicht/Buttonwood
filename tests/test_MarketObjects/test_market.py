@@ -29,7 +29,7 @@ SOFTWARE.
 
 import json
 import sys
-from cdecimal import Decimal
+from decimal import Decimal
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Price import Price
@@ -51,7 +51,7 @@ def test_default_market_creation():
     assert mrkt.min_price_increment() == mrkt.mpi() == Decimal("0.01")
     assert mrkt.min_qty() == 1
     assert mrkt.qty_increment() == 1
-    assert mrkt.max_qty() == sys.maxint
+    assert mrkt.max_qty() == sys.maxsize
 
 
 def test_market_creation():
@@ -69,8 +69,8 @@ def test_is_valid_qty_defaaults():
     assert mrkt.is_valid_qty(1)
     assert mrkt.is_valid_qty(3)
     assert mrkt.is_valid_qty(234566346)
-    assert mrkt.is_valid_qty(sys.maxint)
-    assert not mrkt.is_valid_qty(sys.maxint + 1)
+    assert mrkt.is_valid_qty(sys.maxsize)
+    assert not mrkt.is_valid_qty(sys.maxsize + 1)
 
 
 def test_is_valid_qty():

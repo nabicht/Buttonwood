@@ -126,7 +126,7 @@ class MatchSeries:
                                     str(self._pas_price_to_qty.keys())))
 
         # should have same qty at each price
-        for price, qty in self._agg_price_to_qty.iteritems():
+        for price, qty in self._agg_price_to_qty.items():
             if qty != self._pas_price_to_qty[price]:
                 raise Exception("Match Series %s: does not have same qty at price %s. Agg: %d. Pas: %d" %
                                 (str(self.series_id()), str(price), qty, self._pas_price_to_qty[price]))
@@ -185,7 +185,7 @@ class MatchSeries:
             self._price_qty_sanity_check()
         total_qty = 0
         price_weighted_qty = 0.0
-        for price, qty in self._agg_price_to_qty.iteritems():
+        for price, qty in self._agg_price_to_qty.items():
             total_qty += qty
             price_weighted_qty += float(price * qty)
         return price_weighted_qty / total_qty

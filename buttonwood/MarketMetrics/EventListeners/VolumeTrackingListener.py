@@ -54,13 +54,13 @@ class VolumeTracker(object):
 
     def total_aggressive_volume(self):
         total_volume = 0
-        for volume in self._counterparty_to_aggressive_volume.itervalues():
+        for volume in self._counterparty_to_aggressive_volume.values():
             total_volume += volume
         return total_volume
 
     def total_passive_volume(self):
         total_volume = 0
-        for volume in self._counterparty_to_passive_volume.itervalues():
+        for volume in self._counterparty_to_passive_volume.values():
             total_volume += volume
         return total_volume
 

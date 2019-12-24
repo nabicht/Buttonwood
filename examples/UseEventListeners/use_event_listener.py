@@ -70,23 +70,23 @@ for event in get_events():
     #  that one after each event. But we will look at EventCountListener.
 
     # for getting event counts, we need a user id and a market, we'll use the user id and market for each event.
-    print "Event Counts for %s / %s" % (event.user_id(), str(event.market()))
-    print "New Order Count: %d" % ec.get_count(event.market(), event.user_id(), OrderEventCountListener.NEW_ORDER)
-    print "Cancel Replaces Count: %d" % ec.get_count(event.market(), event.user_id(),
-                                                     OrderEventCountListener.CANCEL_REPLACE)
-    print "Acknowledgement Count: %d" % ec.get_count(event.market(), event.user_id(), OrderEventCountListener.ACK)
-    print "Cancel Request Count: %d" % ec.get_count(event.market(), event.user_id(),
-                                                    OrderEventCountListener.CANCEL_REQUEST)
-    print "Cancel Confirm Count: %d" % ec.get_count(event.market(), event.user_id(),
-                                                    OrderEventCountListener.CANCEL_CONFIRM)
-    print "Partial Fill Count: %d" % ec.get_count(event.market(), event.user_id(), OrderEventCountListener.PARTIAL_FILL)
-    print "Full Fill Count: %d" % ec.get_count(event.market(), event.user_id(), OrderEventCountListener.FULL_FILL)
-    print "\n"
+    print("Event Counts for %s / %s" % (event.user_id(), str(event.market())))
+    print("New Order Count: %d" % ec.get_count(event.market(), event.user_id(), OrderEventCountListener.NEW_ORDER))
+    print("Cancel Replaces Count: %d" % ec.get_count(event.market(), event.user_id(),
+                                                     OrderEventCountListener.CANCEL_REPLACE))
+    print("Acknowledgement Count: %d" % ec.get_count(event.market(), event.user_id(), OrderEventCountListener.ACK))
+    print("Cancel Request Count: %d" % ec.get_count(event.market(), event.user_id(),
+                                                    OrderEventCountListener.CANCEL_REQUEST))
+    print("Cancel Confirm Count: %d" % ec.get_count(event.market(), event.user_id(),
+                                                    OrderEventCountListener.CANCEL_CONFIRM))
+    print("Partial Fill Count: %d" % ec.get_count(event.market(), event.user_id(), OrderEventCountListener.PARTIAL_FILL))
+    print("Full Fill Count: %d" % ec.get_count(event.market(), event.user_id(), OrderEventCountListener.FULL_FILL))
+    print("\n")
     market_user.add((event.market(), event.user_id()))
 
 # now that all events are processed let's access some volume tracking
 for market, user in market_user:
     vol_tracker = vtl.volume_tracker(market, user)
-    print "%s / %s" % (str(market), user)
-    print "\tPassive Vol: %d" % (vol_tracker.total_passive_volume() if vol_tracker is not None else 0)
-    print "\tAggressive Vol: %d" % (vol_tracker.total_aggressive_volume() if vol_tracker is not None else 0)
+    print("%s / %s" % (str(market), user))
+    print("\tPassive Vol: %d" % (vol_tracker.total_passive_volume() if vol_tracker is not None else 0))
+    print("\tAggressive Vol: %d" % (vol_tracker.total_aggressive_volume() if vol_tracker is not None else 0))

@@ -57,7 +57,7 @@ class AggressiveAct(MatchSeries):
             passive_tob = order_book.best_level(passive_side)
             # if the opposite tob is worse than the last fill price, then there is no impact on top of book. This can
             #  happen at venues that have stupidly bad self trade prevention.
-            for fill_price, fill_qty in self._agg_price_to_qty.iteritems():
+            for fill_price, fill_qty in self._agg_price_to_qty.items():
                 if passive_tob is not None and fill_price == passive_tob.price():
                     total_qty = passive_tob.total_qty() + fill_qty
                     impact += float(fill_qty) / total_qty

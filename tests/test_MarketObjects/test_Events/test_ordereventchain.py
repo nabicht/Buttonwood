@@ -47,7 +47,6 @@ from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Product import Product
 from buttonwood.MarketObjects.Side import BID_SIDE, ASK_SIDE
 from buttonwood.utils.IDGenerators import MonotonicIntID
-from cdecimal import Decimal
 
 
 MARKET = Market(Product("MSFT", "Microsoft"), Endpoint("Nasdaq", "NSDQ"), PriceFactory("0.01"))
@@ -65,7 +64,7 @@ def test_exposure():
     e3 = Exposure(Price("1.1"), 2, 6789)
     assert e1 != e3
     assert e1.price() == e2.price()
-    print e1, e2
+    print(e1, e2)
     assert e1.equivalent_exposure(e3)
     assert e3.equivalent_exposure(e1)
     e4 = Exposure(Price("1.1"), 3, 6789)
@@ -112,7 +111,7 @@ def test_acknowledgement():
     assert oec.most_recent_requested_exposure() is None
     assert oec.current_exposure() == Exposure(Price("34.52"), 1000, 121235)
     # check visible qty
-    print oec.visible_qty()
+    print(oec.visible_qty())
     assert oec.visible_qty() == 1000
 
 
@@ -340,7 +339,7 @@ def test_partial_fill_on_multiple_unacked_requests():
     ack3 = AcknowledgementReport(12, 1234235.123, 2342, "user_x", MARKET, cr2, Price("34.55"), 780, None)
     oec.apply_acknowledgement_report(ack3)
     assert len(oec.open_exposure_requests()) == 1
-    print oec.open_exposure_requests()[0]
+    print(oec.open_exposure_requests()[0])
     assert oec.open_exposure_requests()[0] == Exposure(Price("34.56"), 750, 4)
     assert oec.current_exposure() == Exposure(Price("34.55"), 780, 12)
 

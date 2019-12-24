@@ -28,7 +28,6 @@ SOFTWARE.
 """
 
 from nose.tools import *
-from cdecimal import Decimal
 from buttonwood.MarketObjects.Events.OrderEvents import CancelReplaceCommand
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Market import Market
