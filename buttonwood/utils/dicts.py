@@ -29,128 +29,48 @@ SOFTWARE.
 
 from collections import defaultdict
 
-"""
-this isn't a true dict, but it wraps a dict and allows for easily initializing
- and using (in simple cases), an n deep dict, where the structure is:
-  key1 -> key2 ->.... -> keyn -> payload
-"""
 
+class NDeepDict(defaultdict):
 
-def _establish_level(levels, default_value):
-    if levels < 2:
-        return defaultdict(default_value)
-    return defaultdict(lambda: _establish_level(levels - 1, default_value))
-
-
-class NDeepDict:
-    def __init__(self, depth, default_value=None):
+    def __init__(self, depth, default_factory=None):
         assert depth > 0
-        if default_value is None:
-            default_value = lambda: None
-        assert callable(default_value), "default_value must be not defined or callable"
-        self._depth = depth
-        self._dict = _establish_level(depth, default_value)
-
-    def get(self, keys):
-        """
-        Pulling data out of the dict. Must have a number of args that is less
-         than or equal to the depth of the dict.
-
-        This returns what the args map to. If the same number of args as the
-         defined depth it returns whatever object is in the final payload.
-         Otherwise it returns the dict that the given keys lead to.
-
-        :param keys: a list of the keys you want to use for accessing the dict.
-        :return: the value of the passed in args
-        """
-        assert len(keys) <= self._depth, "To access a value out of dict hierarchy, number of keys must be less than or equal to depth of dict"
-        result = self._dict
-        for key in keys:
-            result = result[key]
-        return result
-
-    def set(self, keys, value=None):
-        """
-        Setting data in the dict. This requires all keys that lead to final
-         payload, so the number of args must equal the defined depth.
-
-        Value defaults to None and if None then nothing happens.
-
-        :param keys: a list of the keys you want to use for accessing the dict
-        :param value: the value you want to set payload to. If None (the default), then nothing happens
-        """
-        assert len(keys) == self._depth, "Number of arguments must equal depth of dict to set a value"
-        result = self._dict
-        for key in keys[:-1]:
-            result = result[key]
-        result[keys[-1]] = value
-
-    def inc(self, keys, amount=1):
-        """
-        Increment the payload of the dict. Note, if the payload isn't a numeric
-         then this fails. This requires all keys that lead to final
-         payload, so the number of args must equal the defined depth.
-
-        amount is the amount to increment. It defaults to 1.
-
-        :param keys: the keys you want to use for accessing the dict
-        :param amount: amount to increment by, it defaults to 1.
-        """
-        assert len(keys) == self._depth, "Number of arguments must equal depth of dict to increment the payload value"
-        result = self._dict
-        for key in keys[:-1]:
-            result = result[key]
-        result[keys[-1]] += amount
-
-    def dec(self, keys, amount=1):
-        """
-        Decrement the payload of the dict. Note, if the payload isn't a numeric
-         then this fails. This requires all keys that lead to final
-         payload, so the number of args must equal the defined depth.
-
-        amount is the amount to decrement. It defaults to 1.
-
-        :param keys: the keys you want to use for accessing the dict
-        :param amount: amount to increment by, it defaults to 1.
-        """
-        assert len(keys) == self._depth, "Number of arguments must equal depth of dict to decrement the payload value"
-        result = self._dict
-        for key in keys[:-1]:
-            result = result[key]
-        result[keys[-1]] -= amount
-
-    def _sum(self, v):
-        total = 0
-        if isinstance(v, dict):
-            for value in v.values():
-                total += self._sum(value)
+        if depth > 1:
+            super().__init__(lambda: NDeepDict(depth-1, default_factory=default_factory))
         else:
-            total += v
-        return total
+            super().__init__(default_factory)
+        self._depth = depth
+    
+    def get(self, key):
+        if isinstance(key, list):
+            return self.__getitem__(key)
+        else:
+            return super().get(key)
 
-    def sum(self, keys):
-        """
-        Sums the payloads that fall under the dict the keys return. If the keys
-         return just a payload, the sum is just that payload.
+    def __getitem__(self, key):
+        if isinstance(key, list):
+            if len(key) > 1:
+                ret = super().__getitem__(key[0]).get(key[1:])
+            else:
+                ret = super().__getitem__(key[0])
+        else:
+            ret = super().__getitem__(key)
+        return ret
+    
+    def __setitem__(self, key, value):
+        if isinstance(key, list):
+            if len(key) > 1:
+                self.__getitem__(key[0]).__setitem__(key[1:], value)
+            else:
+                super().__setitem__(key[0], value)
+        else:
+            super().__setitem__(key, value)
+    
+    def __delitem__(self, key):
+        if isinstance(key, list):
+            if len(key) > 1:
+                self.__getitem__(key[0]).__delitem__(key[1:])
+            else:
+                super().__delitem__(key[0])
+        else:
+            super().__delitem__(key)
 
-        WARNING: If += doesn't work on the payload this will fail.
-
-        :param keys: the keys you want to use for accessing the dict
-        :return: the sum
-        """
-        assert len(
-            keys) <= self._depth, "To sum values in dict hierarchy, number of keys must be less than or equal to depth of dict"
-        return self._sum(self.get(keys))
-
-    def delete(self, keys):
-        # TODO document
-        # TODO unit test
-        assert len(keys) == self._depth, "Number of arguments must equal depth of dict to decrement the payload value"
-        result = self._dict
-        for key in keys[:-1]:
-            result = result[key]
-        if keys[-1] in result:
-            del result[keys[-1]]
-
-    def __str__(self):
-        return str(self._dict)

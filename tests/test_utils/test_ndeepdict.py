@@ -27,170 +27,179 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from nose.tools import *
+import pytest
 from buttonwood.utils.dicts import NDeepDict
 
+def test_1_deep_with_default_standard_access():
+    d = NDeepDict(1, int)
+    assert len(d) == 0
 
-def test_ndeepdict_2_deep():
-    #test with the default value being 0
+    # setting something should work
+    d['a'] = 1
+    assert len(d) == 1
+
+    # getting 'a' should work
+    assert d['a'] == 1
+    assert d.get('a') == 1
+
+    
+    # getting 'b' should return the default of 0
+    assert d['b'] == 0
+    assert d.get('b') == 0
+
+    # length should now be two because b was created on the get
+    assert len(d) == 2
+    assert 'b' in d
+    assert 'a' in d
+    
+    # modifying an unknown int should work too
+    assert not 'c' in d
+    d['c'] += 1
+    assert d['c'] == 1
+
+def test_1_deep_with_default_list_access():
+    d = NDeepDict(1, int)
+    assert len(d) == 0
+
+    # setting something should work
+    d[['a']] = 1
+    assert len(d) == 1
+
+    # getting 'a' should work
+    assert d[['a']] == 1
+    assert d.get(['a']) == 1
+
+    
+    # getting 'b' should return the default of 0
+    assert d[['b']] == 0
+    assert d.get(['b']) == 0
+
+    # length should now be two because b was created on the get
+    assert len(d) == 2
+    assert 'b' in d
+    assert 'a' in d
+    
+    # modifying an unknown int should work too
+    assert not 'c' in d
+    d[['c']] += 1
+    assert d[['c']] == 1
+
+
+def test_1_deep_with_no_default_standard_access():
+    d = NDeepDict(1, None)
+    assert len(d) == 0
+
+    # setting something should work
+    d['a'] = 1
+    assert len(d) == 1
+
+    # getting 'a' should work
+    assert d['a'] == 1
+    assert d.get('a') == 1
+
+    # getting 'b' should return the default of None
+    with pytest.raises(KeyError):
+        d['b']
+    assert d.get('b') is None
+
+    # length should still be 1 because getting 'b' shouldn't have added anything
+    assert len(d) == 1
+    assert 'b' not in d
+    assert 'a' in d
+
+def test_1_deep_with_no_default_list_access():
+    d = NDeepDict(1, None)
+    assert len(d) == 0
+
+    # setting something should work
+    d[['a']] = 1
+    assert len(d) == 1
+
+    # getting 'a' should work
+    assert d[['a']] == 1
+    assert d.get(['a']) == 1
+
+    # getting 'b' should return the default of None
+    with pytest.raises(KeyError):
+        d[['b']]
+        d.get(['b'])
+
+    # length should still be 1 because getting 'b' shouldn't have added anything
+    assert len(d) == 1
+    assert 'b' not in d
+    assert 'a' in d
+    
+
+def test_2_deep_with_default_standard_access():
     d = NDeepDict(2, int)
-    #so I should be able to get a dict if I look at the first level
-    assert len(d._dict) == 0
-    assert isinstance(d._dict["foo"], dict)
-    #i should be able to get default 0 if I look 2 levels in
-    assert isinstance(d._dict["foo"]["bar"], int)
-    assert d._dict["foo"]["bar"] == 0
-    #still should be nothing in any layer of the dictionary
-    assert len(d._dict) == 1
-    d.set(["foo","bar"], value=7)
-    assert d._dict["foo"]["bar"] == 7
-    assert d.get(["foo", "bar"]) == 7
+    assert len(d) == 0, "Nothing is in new dict so length is 0"
+    assert len(d['a']) == 0, "Nothing is in the second level dict so should be 0"
+    assert len(d) == 1, "Looking for length of 'a' above should have added it to the first level dict, so now first level length is 0"
 
-    assert d.get(["foo", "baz"]) == 0
+    assert d['b'] == {}
+    assert 'b' in d
 
-def test_ndeepdict_3_deep():
-    #test with the default value being 0
-    d = NDeepDict(3, int)
-    #so I should be able to get a dict if I look at the first level
-    assert len(d._dict) == 0
-    assert isinstance(d._dict["foo"], dict)
-    #i should be able to get default 0 if I look 2 levels in
-    assert isinstance(d._dict["foo"]["bar"], dict)
-    print(d._dict["foo"]["bar"]["baz"])
-    assert isinstance(d._dict["foo"]["bar"]["baz"], int)
-    assert d._dict["foo"]["bar"]["baz"] == 0
-    #still should be nothing in any layer of the dictionary
-    assert len(d._dict) == 1
-    d.set(["foo","bar","baz"], value=7)
-    assert d._dict["foo"]["bar"]["baz"] == 7
-    assert d.get(["foo", "bar", "baz"]) == 7
-    assert d.get(["foo", "bar", "zab"]) == 0
-    assert d.get(["great", "googly", "moogly"]) == 0
+    assert len(d['b']) == 0
+    d['b']['level2-a'], "Getting a key for first time in second level dict, so should create an item in b"
+    assert len(d['b']) == 1
+    assert d['b']['level2-a'] == 0
+    d['b']['level2-b'] += 50
+    assert d['b']['level2-b'] == 50
+    assert d.get('b').get("level2-b") == 50
 
-def test_ndeepdict_8_deep():
-    #test with the default value being 0
-    d = NDeepDict(8, int)
-    assert d.get([1,2,3,4,5,6,7,8]) == 0
-    d.set([1,2,3,4,5,6,7,8], value=95)
-    assert d.get([1,2,3,4,5,6,7,8]) == 95
-    assert d.get([1,2,3,4,5,6,7]) == {8: 95}
 
-def test_get():
-    #get should work with any number of keys less than or equal to depth
-    depth = 9
-    d = NDeepDict(depth, lambda: "some value")
-    list_of_keys = []
-    #leading up to the last level of depth should all be dict type
-    for x in range(0, depth-1):
-        list_of_keys.append(x)
-        temp_dict = d.get(list_of_keys)
-        assert isinstance(temp_dict, dict)
-    #the last level the value should be the default value ("some value")
-    list_of_keys.append(depth-1)
-    assert d.get(list_of_keys) == "some value"
+def test_2_deep_with_default_list_access():
+    d = NDeepDict(2, int)
+    assert len(d) == 0, "Nothing is in new dict so length is 0"
+    assert len(d[['a']]) == 0, "Nothing is in the second level dict so should be 0"
+    assert len(d) == 1, "Looking for length of 'a' above should have added it to the first level dict, so now first level length is 0"
 
-@raises(AssertionError)
-def test_get_fails_too_many_keys():
-    depth = 8
-    d = NDeepDict(depth, lambda: "some value")
-    list_of_keys = [x for x in range(depth+1)]
-    d.get(list_of_keys)
+    assert d['b'] == {}
+    assert 'b' in d
 
-def test_set():
-    depth = 5
-    d = NDeepDict(depth, lambda: "some value")
-    list_of_keys = [x for x in range(depth)]
-    d.set(list_of_keys, value = "some other value")
-    assert d.get(list_of_keys) == "some other value"
+    assert len(d[['b']]) == 0
+    d[['b','level2-a']], "Getting a key for first time in second level dict, so should create an item in b"
+    assert len(d[['b']]) == 1
+    assert d[['b','level2-a']] == 0
+    d[['b', 'level2-b']] += 50
+    assert d[['b','level2-b']] == 50
+    assert d.get(['b',"level2-b"]) == 50
 
-@raises(AssertionError)
-def test_set_too_many_keys():
-    depth = 5
-    d = NDeepDict(depth, lambda: "some value")
-    list_of_keys = [x for x in range(depth+1)]
-    d.set(list_of_keys, value = "some other value")
 
-@raises(AssertionError)
-def test_set_too_few_keys():
-    depth = 5
-    d = NDeepDict(depth, lambda: "some value")
-    list_of_keys = [x for x in range(depth-1)]
-    d.set(list_of_keys, value = "some other value")
+def test_4_deep_create_at_once_standard_access():
+    d = NDeepDict(4)
+    assert len(d) == 0, "Starts completely empty"
+    d["level1"]["level2"]["level3"]["level4"] = 5
+    assert "level1" in d
+    assert "level2" in d["level1"]
+    assert "level3" in d["level1"]["level2"]
+    assert "level4" in d["level1"]["level2"]["level3"]
+    assert d["level1"]["level2"]["level3"]["level4"] == 5
 
-@raises(AssertionError)
-def test_set_no_keys():
-    depth = 5
-    d = NDeepDict(depth, lambda: "some value")
-    list_of_keys = [x for x in range(depth-1)]
-    d.set([], value = "some other value")
 
-def test_increment_int():
-    depth = 4
-    d = NDeepDict(depth, int)
-    list_of_keys = [x for x in range(depth)]
-    assert d.get(list_of_keys) == 0
-    d.inc(list_of_keys, amount=1)
-    assert d.get(list_of_keys) == 1
-    d.inc(list_of_keys, amount=1)
-    assert d.get(list_of_keys) == 2
-    d.inc(list_of_keys, amount=5)
-    assert d.get(list_of_keys) == 7
+def test_4_deep_create_at_once_list_access():
+    d = NDeepDict(4)
+    assert len(d) == 0, "Starts completely empty"
+    d[["level1", "level2", "level3", "level4"]] = 5
+    assert len(d) == 1
+    assert "level1" in d
+    assert "level2" in d[["level1"]]
+    assert "level3" in d[["level1", "level2"]]
+    assert "level4" in d[["level1", "level2", "level3"]]
+    assert len(d) ==  1
+    assert d[["level1", "level2", "level3", "level4"]] == 5
 
-@raises(Exception)
-def test_increment_string():
-    depth = 4
-    d = NDeepDict(depth, str)
-    list_of_keys = [x for x in range(depth)]
-    assert d.get(list_of_keys) == 0
-    d.inc(list_of_keys, amount=1)
-
-def test_decrement_int():
-    depth = 4
-    d = NDeepDict(depth, int)
-    list_of_keys = [x for x in range(depth)]
-    assert d.get(list_of_keys) == 0
-    d.dec(list_of_keys, amount=1)
-    assert d.get(list_of_keys) == -1
-    d.dec(list_of_keys, amount=1)
-    assert d.get(list_of_keys) == -2
-    d.dec(list_of_keys, amount=5)
-    assert d.get(list_of_keys) == -7
-
-@raises(Exception)
-def test_decrement_string():
-    depth = 4
-    d = NDeepDict(depth, str)
-    list_of_keys = [x for x in range(depth)]
-    assert d.get(list_of_keys) == 0
-    d.dec(list_of_keys, amount=1)
-
-def test_sum_int():
-    depth = 3
-    d = NDeepDict(depth, int)
-    assert d.sum(["a"]) == 0
-    d.set(["a",1,1], value = 5)
-    d.set(["a",1,2], value = 5)
-    d.set(["a",1,3], value = 5)
-    assert d.sum(["a"]) == 15
-    assert d.sum(["a",1]) == 15
-    assert d.sum(["a",1,2]) == 5
-    d.set(["a",2,1], value = 2)
-    d.set(["a",2,2], value = 2)
-    d.set(["a",2,3], value = 2)
-    d.set(["a",2,4], value = 2)
-    assert d.sum(["a"]) == 23
-    assert d.sum(["a",1]) == 15
-    assert d.sum(["a",2]) == 8
-    assert d.sum(["a",2,1]) == 2
-    assert d.sum(["a",2,2]) == 2
-    assert d.sum(["a",2,3]) == 2
-    assert d.sum(["a",2,4]) == 2
-    d.set(["a",3,1], value = 1)
-    d.set(["a",3,2], value = 2)
-    d.set(["a",3,3], value = 3)
-    d.set(["a",3,4], value = 4)
-    assert d.sum(["a",1]) == 15
-    assert d.sum(["a",2]) == 8
-    assert d.sum(["a",3]) == 10
-    assert d.sum(["a"]) == 33
-    assert d.sum(["b"]) == 0
+def test_1_deep_del_standard_access():
+    d = NDeepDict(4)
+    d[['a1','a1b1','a1b1c1']] = "test value"
+    d[['a2','a2b1','a2b1c1']] = "test value 2"
+    d[['a1','a1b2','a1b2c1']] = "test value 3"
+    d[['a1','a1b1','a1b1c2']] = "test value 4"
+    d[['a1','a1b1','a1b1c3']] = "test value 5"
+    assert 'a1b1c2' in d['a1']['a1b1']
+    del d[['a1', 'a1b1', 'a1b1c2']]
+    assert 'a1b1c2' not in d['a1']['a1b1'], "was deleted so should be gone"
+    assert 'a1b1c1' in d['a1']['a1b1'], "was not deleted so should be there"
+    assert 'a1b1c3' in d['a1']['a1b1'], "was not deleted so should be there"
+    assert 'a2b1c1' in d['a2']['a2b1'], "was not deleted so should be there"
+    assert 'a1b2c1' in d['a1']['a1b2'], "was not deleted so should be there"
