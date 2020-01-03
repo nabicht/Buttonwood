@@ -128,7 +128,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         OrderEventListener.__init__(self, logger)
         self._market_to_order_book = {}
         self._market_to_event_to_priority = NDeepDict(depth=2)
-        self._market_to_event_to_priority_before = NDeepDict(depth=2, default_value=None)
+        self._market_to_event_to_priority_before = NDeepDict(depth=2)
         self._handle_market_orders = handle_market_orders
 
     def _calculate_priority_not_in_book(self, price, side, market, ignore_order_ids=set()):
@@ -228,7 +228,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             return
         # new orders are not in the book so calculate what priority *would be*
         priority = self._calculate_priority_not_in_book(price, side, market)
-        self._market_to_event_to_priority.set((market, event_id), value=priority)
+        self._market_to_event_to_priority[[market, event_id]] = priority
         # No need to set priority before event on new orders
 
     def handle_cancel_replace_command(self, cancel_replace_command, resulting_order_chain):
@@ -244,7 +244,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             exposure = resulting_order_chain.current_exposure()
 
         before_event_priority = self._calculate_priority_in_book(resulting_order_chain)
-        self._market_to_event_to_priority_before.set((market, event_id), value=before_event_priority)
+        self._market_to_event_to_priority_before[[market, event_id]] = before_event_priority
 
         # cancel_replace_same_priority is True if cancel replace down and same price
         cancel_replace_same_priority = (price == exposure.price() and exposure.qty() > cancel_replace_command.qty())
@@ -256,7 +256,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             # ignore itself so that we do include it as in front of itself on cancel replace up in size
             priority = self._calculate_priority_not_in_book(price, side, market,
                                                             ignore_order_ids={cancel_replace_command.chain_id()})
-        self._market_to_event_to_priority.set((market, event_id), value=priority)
+        self._market_to_event_to_priority[[market, event_id]] = priority
 
     def handle_cancel_command(self, cancel_command, resulting_order_chain):
         """
@@ -267,9 +267,9 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         if market not in self._market_to_order_book:
             return
         priority = self._calculate_priority_in_book(resulting_order_chain)
-        self._market_to_event_to_priority.set((market, event_id), value=priority)
+        self._market_to_event_to_priority[[market, event_id]] = priority
         # priority before the event is the same calculated aftet event for cancel command
-        self._market_to_event_to_priority_before.set((market, event_id), value=priority)
+        self._market_to_event_to_priority_before[[market, event_id]] = priority
 
     def handle_acknowledgement_report(self, acknowledgement_report, resulting_order_chain):
         event_id = acknowledgement_report.event_id()
@@ -279,12 +279,12 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             return
         # acks are in the book already and no need to do anything fancy with ignoring orders
         priority = self._calculate_priority_in_book(resulting_order_chain)
-        self._market_to_event_to_priority.set((market, event_id), value=priority)
+        self._market_to_event_to_priority[[market, event_id]] = priority
 
         # if acking a new order no priority before, so use default of None.
         #  Calculate for cancel replace with current priority since hasn't been applied to book yet
         if isinstance(acknowledgement_report.causing_command(), CancelReplaceCommand):
-            self._market_to_event_to_priority_before.set((market, event_id), value=priority)
+            self._market_to_event_to_priority_before[[market, event_id]] = priority
 
 
     def _priority_at_fill(self, fill_event, resulting_order_chain):
@@ -305,10 +305,10 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         if opposite_best_price is not None:  # if it is None then ticks from opposite is None
             ticks_from_opposite_tob = abs((opposite_best_price - fill_event.fill_price()) / market.mpi())
         priority = Priority(0, ticks_from_opposite_tob, 0)
-        self._market_to_event_to_priority.set((market, event_id), value=priority)
+        self._market_to_event_to_priority[[market, event_id]] = priority
 
         # for a fill, priority before fill is always 0
-        self._market_to_event_to_priority_before.set((market, event_id), value=priority)
+        self._market_to_event_to_priority_before[[market, event_id]] = priority
 
     def handle_partial_fill_report(self, partial_fill_report, resulting_order_chain):
         self._priority_at_fill(partial_fill_report, resulting_order_chain)
@@ -331,8 +331,8 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             return
         event_id = cancel_report.event_id()
         priority = self._calculate_priority_in_book(resulting_order_chain)
-        self._market_to_event_to_priority.set((market, event_id), value=priority)
-        self._market_to_event_to_priority_before.set((market, event_id), value=priority)
+        self._market_to_event_to_priority[[market, event_id]] = priority
+        self._market_to_event_to_priority_before[[market, event_id]] = priority
 
     def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
@@ -349,7 +349,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         :param event_id: unique identifier of event
         :return: MarketMetrics.OrderLevelBookListeners.PriorityListeners.Priority
         """
-        return self._market_to_event_to_priority.get((market, event_id))
+        return self._market_to_event_to_priority.get([market, event_id])
 
     def priority_before_event(self, market, event_id):
         """
@@ -360,7 +360,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         :param event_id: unique identifier of event
         :return: MarketMetrics.OrderLevelBookListeners.PriorityListeners.Priority
         """
-        return self._market_to_event_to_priority_before.get((market, event_id))
+        return self._market_to_event_to_priority_before.get([market, event_id])
 
     def clean_up(self, order_chain):
         """
@@ -375,6 +375,6 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
         market = order_chain.market()
         events = order_chain.events()
         for event in events:
-            self._market_to_event_to_priority.delete((market, event.event_id()))
+            del self._market_to_event_to_priority[[market, event.event_id()]]
             if event.event_id() in self._market_to_event_to_priority_before.get([market]):
-                self._market_to_event_to_priority_before.delete((market, event.event_id()))
+                del self._market_to_event_to_priority_before[[market, event.event_id()]]

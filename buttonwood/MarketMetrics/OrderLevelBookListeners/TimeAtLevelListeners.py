@@ -36,7 +36,7 @@ class SubchainTimeAtTopPriorityListener(OrderLevelBookListener):
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
         self._market_to_subchain_id_to_time = NDeepDict(depth=2, default_value=list)
-        self._market_to_side_to_prev_tob_subchain_id = NDeepDict(depth=2, default_value=lambda: None)
+        self._market_to_side_to_prev_tob_subchain_id = NDeepDict(depth=2)
 
     def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
@@ -52,27 +52,27 @@ class SubchainTimeAtTopPriorityListener(OrderLevelBookListener):
             top_priority_subchain_id = chains[0].most_recent_subchain().subchain_id()
         market = order_book.market()
         use_time = order_book.last_update_time()
-        prev_top_priority_subchain_id = self._market_to_side_to_prev_tob_subchain_id.get((market, side))
+        prev_top_priority_subchain_id = self._market_to_side_to_prev_tob_subchain_id.get([market, side])
         if prev_top_priority_subchain_id is not None:
             # if top priority subchain is none and previous top subchain is not None, then close out open time range
             #  of prev
             if top_priority_subchain_id is None:
-                l = self._market_to_subchain_id_to_time.get((market, prev_top_priority_subchain_id))
+                l = self._market_to_subchain_id_to_time.get([market, prev_top_priority_subchain_id])
                 l[-1] = (l[-1][0], use_time)
             # if top priority id is different than the previous then close out previous and open new one
             elif top_priority_subchain_id != prev_top_priority_subchain_id:
-                l_old = self._market_to_subchain_id_to_time.get((market, prev_top_priority_subchain_id))
+                l_old = self._market_to_subchain_id_to_time.get([market, prev_top_priority_subchain_id])
                 l_old[-1] = (l_old[-1][0], use_time)
-                l_new = self._market_to_subchain_id_to_time.get((market, top_priority_subchain_id))
+                l_new = self._market_to_subchain_id_to_time.get([market, top_priority_subchain_id])
                 l_new.append((use_time, None))
 
             # if the same then just keep going, no need to update anything
         else:  # if prev is None then we are just creating a new one
-            l = self._market_to_subchain_id_to_time.get((market, top_priority_subchain_id))
+            l = self._market_to_subchain_id_to_time.get([market, top_priority_subchain_id])
             l.append((use_time, None))
 
         # and set prev to current
-        self._market_to_side_to_prev_tob_subchain_id.set((market, side), value=top_priority_subchain_id)
+        self._market_to_side_to_prev_tob_subchain_id[[market, side]] = top_priority_subchain_id
 
     def time_at_top_priority(self, market, subchain_id, query_time=None):
         """
@@ -89,7 +89,7 @@ class SubchainTimeAtTopPriorityListener(OrderLevelBookListener):
         :return: float
         """
         total_time = 0
-        tob_time_ranges = self._market_to_subchain_id_to_time.get((market, subchain_id))
+        tob_time_ranges = self._market_to_subchain_id_to_time.get([market, subchain_id])
         if len(tob_time_ranges) == 0:
             return 0
         for tob_time_range in tob_time_ranges[:-1]:
@@ -126,7 +126,7 @@ class SubchainTimeAtTopPriorityListener(OrderLevelBookListener):
     def clean_up_order_chain(self, order_chain):
         market = order_chain.market()
         for subchain in order_chain.subchains():
-            self._market_to_subchain_id_to_time.delete([market, subchain.subchain_id()])
+            del self._market_to_subchain_id_to_time[[market, subchain.subchain_id()]]
 
 
 
@@ -170,7 +170,7 @@ class SubchainTimeAtTOBListener(OrderLevelBookListener):
 
         order_chains = order_book.iter_order_chains_at_price(side, order_book.best_price(side))
         market = order_book.market()
-        prev_subchain_ids = self._market_to_side_to_prev_tob_subchain_ids.get((market, side))
+        prev_subchain_ids = self._market_to_side_to_prev_tob_subchain_ids.get([market, side])
         found_subchain_ids = set()
         for order_chain in order_chains:
             subchain_id = order_chain.most_recent_subchain().subchain_id()
@@ -178,17 +178,17 @@ class SubchainTimeAtTOBListener(OrderLevelBookListener):
             # if in the previous grouping then do nothing
             # if not in the previous grouping then create a new tuple with None for end time
             if subchain_id not in prev_subchain_ids:
-                l = self._market_to_subchain_id_to_time.get((market, subchain_id))
+                l = self._market_to_subchain_id_to_time.get([market, subchain_id])
                 l.append((use_time, None))
 
         for prev_subchain_id in prev_subchain_ids:
             # if something previously found wasn't found this time around then we need to close it out
             if prev_subchain_id not in found_subchain_ids:
-                l = self._market_to_subchain_id_to_time.get((market, prev_subchain_id))
+                l = self._market_to_subchain_id_to_time.get([market, prev_subchain_id])
                 l[-1] = (l[-1][0], use_time)
 
         # set previously found to be the new found
-        self._market_to_side_to_prev_tob_subchain_ids.set((market, side), value=found_subchain_ids)
+        self._market_to_side_to_prev_tob_subchain_ids[[market, side]] = found_subchain_ids
 
     def time_at_top_of_book(self, market, subchain_id, query_time=None):
         """
@@ -205,7 +205,7 @@ class SubchainTimeAtTOBListener(OrderLevelBookListener):
         :return: float
         """
         total_time = 0
-        tob_time_ranges = self._market_to_subchain_id_to_time.get((market, subchain_id))
+        tob_time_ranges = self._market_to_subchain_id_to_time.get([market, subchain_id])
         if len(tob_time_ranges) == 0:
             return 0
         for tob_time_range in tob_time_ranges[:-1]:
@@ -242,4 +242,4 @@ class SubchainTimeAtTOBListener(OrderLevelBookListener):
     def clean_up_order_chain(self, order_chain):
         market = order_chain.market()
         for subchain in order_chain.subchains():
-            self._market_to_subchain_id_to_time.delete([market, subchain.subchain_id()])
+            del self._market_to_subchain_id_to_time[[market, subchain.subchain_id()]]

@@ -52,18 +52,18 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
         OrderEventListener.__init__(self, logger)
-        self._market_to_side_prev_price = NDeepDict(depth=2, default_value=None)
-        self._market_side_price_time = NDeepDict(depth=3, default_value=None)  # market to side to price to last time it was top of book
-        self._market_side_best_price = NDeepDict(depth=2, default_value=None)
+        self._market_to_side_prev_price = NDeepDict(depth=2)
+        self._market_side_price_time = NDeepDict(depth=3)  # market to side to price to last time it was top of book
+        self._market_side_best_price = NDeepDict(depth=2)
         self._event_id_to_last_time_crossed = dict()
         self._event_id_to_last_time_tob = dict()
 
     def _update_based_on_new_event(self, market, time):
         for side in [BID_SIDE, ASK_SIDE]:
             # TODO could also loop over every market if we needed to do so here but that impacts performance for what I think is minimal gain
-            prev_best_price = self._market_to_side_prev_price.get((market, side))
+            prev_best_price = self._market_to_side_prev_price.get([market, side])
             if prev_best_price is not None:
-                self._market_side_price_time.set((market, side, prev_best_price), value=time)
+                self._market_side_price_time[market, side, prev_best_price] = time
 
     def handle_new_order_command(self, new_order_command, resulting_order_chain):
         assert isinstance(new_order_command, NewOrderCommand)
@@ -122,17 +122,17 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         best_price = order_book.best_price(side)
         # if current book best price is not none then need to set its time
         if best_price is not None:
-            self._market_side_price_time.set((market, side, best_price), value=time)
-            prev_best_price = self._market_side_best_price.get((market, side))
+            self._market_side_price_time[market, side, best_price] = time
+            prev_best_price = self._market_side_best_price.get([market, side])
             if prev_best_price is None or best_price.better_than(prev_best_price, side):
-                self._market_side_best_price.set((market, side), value=best_price)
+                self._market_side_best_price[market, side] = best_price
         # if previous best price is not none and is different than new best price then need to set its time to
         #  update it to include previous price period since it was best price until the change
-        prev_best_price = self._market_to_side_prev_price.get((market, side))
+        prev_best_price = self._market_to_side_prev_price.get([market, side])
         if prev_best_price is not None and prev_best_price != best_price:
-            self._market_side_price_time.set((market, side, prev_best_price), value=time)
+            self._market_side_price_time[market, side, prev_best_price] = time
         # set previous best price to be the current best price
-        self._market_to_side_prev_price.set((market, side), value=best_price)
+        self._market_to_side_prev_price[market, side] = best_price
 
     def _last_time_was_tob(self, market, side, price):
         """
@@ -145,7 +145,7 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         :param price: MarketObjects.Price.Price
         :return: float. (Could be None)
         """
-        return self._market_side_price_time.get((market, side, price))
+        return self._market_side_price_time.get([market, side, price])
 
     def _last_time_crossed(self, market, side, price):
         """
@@ -164,12 +164,12 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
 
         # there are a lot of messages that come in that never would have crossed. so just tracking a "best bid and best
         # offer seen all day" would keep us from doing the below sorting and iterating for these and save a ton of time
-        best_resting_price = self._market_side_best_price.get((market, resting_side))
+        best_resting_price = self._market_side_best_price.get([market, resting_side])
         if best_resting_price is None or price.worse_than(best_resting_price, side):
             return None
         else:
 
-            resting_prices_to_time = self._market_side_price_time.get((market, resting_side))
+            resting_prices_to_time = self._market_side_price_time.get([market, resting_side])
 
             # sort list based on time, where most recent time (highest number) is first
             sorted_x = sorted(resting_prices_to_time.items(), key=operator.itemgetter(1), reverse=True)

@@ -66,7 +66,7 @@ class MarketOrderTicksFromCrossing(OrderLevelBookListener, OrderEventListener):
             mpi = market.mpi()
             opp_price = self._market_side_tob[market][side.other_side()]
             ticks_away = ((opp_price - price) if side.is_bid() else (price - opp_price)) / mpi
-            self._market_chain_id_ticks.set([market, new_order_command.chain_id()], value=ticks_away)
+            self._market_chain_id_ticks[market, new_order_command.chain_id()] = ticks_away
 
     def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
