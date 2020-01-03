@@ -151,7 +151,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             opposite_best_price = order_book.best_price(side.other_side())
             ticks_from_opposite_tob = None
             if opposite_best_price is not None:  # if it is None then ticks from opposite is None
-                ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, market.product())
+                ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, market)
 
             #best_price = order_book.best_price(side)
             best_price = self._best_price(order_book, side, ignore_order_ids)
@@ -159,7 +159,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             if best_price is None:
                 return Priority(0, ticks_from_opposite_tob, 0)
             else:  # if best price is not None then we need to calculate
-                ticks_from_tob = price.ticks_behind(best_price, side, market.product())
+                ticks_from_tob = price.ticks_behind(best_price, side, market)
                 # assuming visible qty gets priority over hidden so only want visible qty for qty ahead
                 if len(ignore_order_ids) == 0:
                     qty_ahead = order_book.visible_qty_at_price(side, price)
@@ -198,7 +198,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             opposite_best_price = order_book.best_price(side.other_side())
             ticks_from_opposite_tob = None
             if opposite_best_price is not None:  # if it is None then ticks from opposite is None
-                ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, market.product())
+                ticks_from_opposite_tob = price.ticks_behind(opposite_best_price, side, market)
 
             # in getting best price, ignore the same order chain so it doesn't factor in with cancel-replace back off of top of book.
             best_price = order_book.best_price(side)
@@ -206,7 +206,7 @@ class EventPriorityListener(OrderLevelBookListener, OrderEventListener):
             if best_price is None:
                 return Priority(0, ticks_from_opposite_tob, 0)
             else:  # if best price is not None then we need to calculate
-                ticks_from_tob = price.ticks_behind(best_price, side, market.product())
+                ticks_from_tob = price.ticks_behind(best_price, side, market)
                 # assuming visible qty gets priority over hidden so only want visible qty for qty ahead
                 qty_ahead = 0
                 for chain in order_book.iter_order_chains_at_price(side, price):
