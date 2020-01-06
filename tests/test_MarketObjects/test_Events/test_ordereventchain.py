@@ -558,7 +558,7 @@ def test_subchain_str():
     # now ack it
     ack = AcknowledgementReport(121235, 1234235.123, 2342, "user_x", MARKET, n, Price("34.52"), 1000, None)
     oec.apply_acknowledgement_report(ack)
-    assert oec.most_recent_event() == acks
+    assert oec.most_recent_event() == ack
 
     # now check I can get a __str__ of the subchain no problem
     str(oec.most_recent_subchain())
