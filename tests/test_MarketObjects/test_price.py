@@ -28,6 +28,7 @@ SOFTWARE.
 """
 
 from decimal import Decimal
+from math import nan
 from buttonwood.MarketObjects.Price import Price
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Side import ASK_SIDE
@@ -42,6 +43,12 @@ def test_equality_to_none():
     p = Price("1.242")
     n = None
     assert p != n
+
+
+def test_equality_to_nan():
+    p = Price(nan)
+    x = Price("22.3")
+    assert p != x
 
 
 def test_price_decimal_addition():
