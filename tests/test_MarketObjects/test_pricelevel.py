@@ -28,7 +28,7 @@ SOFTWARE.
 """
 
 from decimal import Decimal
-from nose.tools import *
+import pytest
 from buttonwood.MarketObjects.PriceLevel import PriceLevel
 from buttonwood.MarketObjects.Price import Price
 from buttonwood.MarketObjects.Side import BID_SIDE, ASK_SIDE
@@ -48,14 +48,14 @@ def test_pricelevel_creation():
     assert pl.hidden_qty() == 23
 
 
-@raises(AssertionError)
 def test_negative_visible_qty_fails():
-    PriceLevel(Price("23.33"), -2)
+    with pytest.raises(AssertionError):
+        PriceLevel(Price("23.33"), -2)
 
 
-@raises(AssertionError)
 def test_zero_visible_qty_fails():
-    PriceLevel(Price("23.33"), 0)
+    with pytest.raises(AssertionError):
+        PriceLevel(Price("23.33"), 0)
 
 
 def test_zero_hidden_qty_works():
@@ -63,39 +63,39 @@ def test_zero_hidden_qty_works():
     assert pl.hidden_qty() == 0
 
 
-@raises(AssertionError)
 def test_negative_hidden_qty_failes():
-    PriceLevel(Price("23.33"), 3, -3)
+    with pytest.raises(AssertionError):
+        PriceLevel(Price("23.33"), 3, -3)
 
 
-@raises(AssertionError)
 def test_pricelevel_must_have_price():
-    PriceLevel(None, -2)
+    with pytest.raises(AssertionError):
+        PriceLevel(None, -2)
 
 
-@raises(AssertionError)
 def test_visible_qty_must_be_int():
-    PriceLevel(Price("1.1"), 3.0)
+    with pytest.raises(AssertionError):
+        PriceLevel(Price("1.1"), 3.0)
 
 
-@raises(AssertionError)
 def test_hidden_qty_must_be_int():
-    PriceLevel(Price("1.1"), 3, 4.0)
+    with pytest.raises(AssertionError):
+        PriceLevel(Price("1.1"), 3, 4.0)
 
 
-@raises(AssertionError)
 def test_negative_num_orders_fails():
-    PriceLevel(Price("1.1"), 3, 4, -2)
+    with pytest.raises(AssertionError):
+        PriceLevel(Price("1.1"), 3, 4, -2)
 
 
-@raises(AssertionError)
 def test_zero_num_orders_fails():
-    PriceLevel(Price("1.1"), 3, 4, 0)
+    with pytest.raises(AssertionError):
+        PriceLevel(Price("1.1"), 3, 4, 0)
 
 
-@raises(AssertionError)
 def test_cannot_have_more_orders_than_qty():
-    PriceLevel(Price("1.1"), 3, 2, 8)
+    with pytest.raises(AssertionError):
+        PriceLevel(Price("1.1"), 3, 2, 8)
 
 
 def test_better_than():

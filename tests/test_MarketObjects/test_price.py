@@ -109,7 +109,6 @@ def test_float_mulitplication():
     f = 6.5
     res = p * f
     assert isinstance(res, Price)
-    print res
     assert res == Price('7.15')
 
 

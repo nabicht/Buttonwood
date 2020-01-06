@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from nose.tools import *
+import pytest
 from buttonwood.utils.IDGenerators import MonotonicIntID
 
 
@@ -48,10 +48,11 @@ def test_monotonicintid():
         assert generator.id() == i
 
 
-@raises(AssertionError)
 def test_monotonicintid_seed_must_be_int():
-    MonotonicIntID(seed = 2.5)
+    with pytest.raises(AssertionError):
+        MonotonicIntID(seed = 2.5)
 
-@raises(AssertionError)
+
 def test_monotonicintid_increment_must_be_int():
-    MonotonicIntID(increment = 6.5)
+    with pytest.raises(AssertionError):
+        MonotonicIntID(increment = 6.5)

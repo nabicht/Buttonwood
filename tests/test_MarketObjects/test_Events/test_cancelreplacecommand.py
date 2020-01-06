@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from nose.tools import *
+import pytest
 from buttonwood.MarketObjects.Events.OrderEvents import CancelReplaceCommand
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Market import Market
@@ -50,14 +50,17 @@ def test_creation():
     assert cr.qty() == 234
     assert cr.iceberg_peak_qty() == 2
 
-@raises(AssertionError)
+
 def test_error_on_negative_qty():
-    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), -8, 2)
+    with pytest.raises(AssertionError):
+        CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), -8, 2)
 
-@raises(AssertionError)
+
 def test_error_on_negative_iceberg_qty():
-    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), 8, -2)
+    with pytest.raises(AssertionError):
+        CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.01"), 8, -2)
 
-@raises(AssertionError)
+
 def test_error_on_price_not_matching_product():
-    CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.001"), 8, -2)
+    with pytest.raises(AssertionError):
+        CancelReplaceCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, ASK_SIDE, Price("23.001"), 8, -2)

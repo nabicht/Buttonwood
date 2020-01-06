@@ -27,15 +27,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from nose.tools import *
+import pytest
 from buttonwood.MarketObjects.Events.BasicEvents import BasicEvent
+
 
 def test_event_creation():
     e = BasicEvent(124, 2312523.342345)
     assert abs(e.timestamp() - 2312523.342345) < 0.0000001
     assert e.event_id() == 124
 
-@raises(Exception)
+
 def test_event_type_str_not_implemented():
-    e = BasicEvent(124, 2312523.342345)
-    e.event_type_str()
+    with pytest.raises(Exception):
+        e = BasicEvent(124, 2312523.342345)
+        e.event_type_str()

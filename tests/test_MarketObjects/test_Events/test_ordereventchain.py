@@ -28,7 +28,7 @@ SOFTWARE.
 """
 
 import logging
-from nose.tools import *
+import pytest
 from buttonwood.MarketObjects import CancelReasons
 from buttonwood.MarketObjects.Events.EventChains import Exposure
 from buttonwood.MarketObjects.Events.EventChains import OrderEventChain
@@ -530,10 +530,10 @@ def test_full_fill_with_too_much_size_on_unacked_new_order():
     assert oec.is_open() is False
 
 
-@raises(AssertionError)
 def test_creation_without_neworder():
-    cr = CancelReplaceCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, Price("43.01"), 234)
-    OrderEventChain(cr, LOGGER, MonotonicIntID())
+    with pytest.raises(AssertionError):
+        cr = CancelReplaceCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, Price("43.01"), 234)
+        OrderEventChain(cr, LOGGER, MonotonicIntID())
 
 
 def test_cancel_replace_not_allowed_on_fak_or_fok():
@@ -541,12 +541,14 @@ def test_cancel_replace_not_allowed_on_fak_or_fok():
     n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FAK, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     cr = CancelReplaceCommand(121235, 1234235.324, 2342, "user_x", MARKET, BID_SIDE, Price("43.01"), 234)
-    assert_raises(AssertionError, oec.apply_cancel_replace_command, cr)
+    with pytest.raises(AssertionError):
+        oec.apply_cancel_replace_command(cr)
     # FOK
     n = NewOrderCommand(121234, 1234235.123, 2342, "user_x", MARKET, BID_SIDE, FOK, Price("34.52"), 1000)
     oec = OrderEventChain(n, LOGGER, MonotonicIntID())
     cr = CancelReplaceCommand(121235, 1234235.324, 2342, "user_x", MARKET, BID_SIDE, Price("43.01"), 234)
-    assert_raises(AssertionError, oec.apply_cancel_replace_command, cr)
+    with pytest.raises(AssertionError):
+        oec.apply_cancel_replace_command(cr)
 
 
 def test_subchain_str():

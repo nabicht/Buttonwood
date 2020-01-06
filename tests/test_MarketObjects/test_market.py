@@ -36,7 +36,6 @@ from buttonwood.MarketObjects.Price import Price
 from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Market import Market
 from buttonwood.MarketObjects.Price import InvalidPriceException
-from nose.tools import *
 
 
 PRODUCT = Product("AAA", "Some Product named AAA")

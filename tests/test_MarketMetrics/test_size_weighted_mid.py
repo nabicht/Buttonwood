@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from cdecimal import Decimal
+from decimal import Decimal
 from buttonwood.MarketObjects.Price import Price
 from buttonwood.MarketMetrics.MicroPrice import size_weighted_midpoint
 from buttonwood.MarketObjects.Side import BID_SIDE
@@ -36,7 +36,7 @@ from buttonwood.MarketObjects.Side import ASK_SIDE
 
 def test_setting_price():
     p = Price("94.58793")
-    assert p._value == Decimal("94.58793")
+    assert p == Decimal("94.58793")
 
 
 def test_price_decimal_addition():
@@ -131,7 +131,6 @@ def test_comparison():
 def test_price_math():
     p1 = Price('1.15')
     p2 = Price('1.35')
-    p3 = Price('0.01')
     assert p1 + p2 == Price('2.5')
     assert p2 + p1 == Price('2.5')
     assert p2 - p1 == Price('.2')

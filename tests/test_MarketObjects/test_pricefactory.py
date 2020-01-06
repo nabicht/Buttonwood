@@ -28,6 +28,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import pytest
 import json
 from decimal import Decimal
 from buttonwood.MarketObjects.Price import Price
@@ -35,7 +36,6 @@ from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Price import InvalidPriceException
 from buttonwood.MarketObjects.Side import ASK_SIDE
 from buttonwood.MarketObjects.Side import BID_SIDE
-from nose.tools import *
 
 
 def test_price_validation():
@@ -73,22 +73,22 @@ def test_get_price():
     assert p == Decimal("222.22")
 
 
-@raises(InvalidPriceException)
 def test_get_price_wrong_mpi_str():
-    pf = PriceFactory("0.01")
-    pf.get_price("100.001")
+    with pytest.raises(InvalidPriceException):
+        pf = PriceFactory("0.01")
+        pf.get_price("100.001")
 
 
-@raises(InvalidPriceException)
 def test_get_price_wrong_mpi_decimal():
-    pf = PriceFactory("0.01")
-    pf.get_price(Decimal("100.001"))
+    with pytest.raises(InvalidPriceException):
+        pf = PriceFactory("0.01")
+        pf.get_price(Decimal("100.001"))
 
 
-@raises(InvalidPriceException)
 def test_get_price_wrong_mpi_int():
-    pf = PriceFactory(5)
-    pf.get_price(7)
+    with pytest.raises(InvalidPriceException):
+        pf = PriceFactory(5)
+        pf.get_price(7)
 
 
 def test_min_price():
@@ -98,12 +98,13 @@ def test_min_price():
     pf.get_price("100.01")
     pf.get_price("100.00")
 
-@raises(InvalidPriceException)
+
 def test_min_price_excpetion():
-    pf = PriceFactory("0.01", min_price=Decimal("100.0"))
-    # should work for 100.01 and 100.0 but not 99.99
-    # also, price 100.01 should and 100.00 should not create 99.00
-    pf.get_price("99.99")
+    with pytest.raises(InvalidPriceException):
+        pf = PriceFactory("0.01", min_price=Decimal("100.0"))
+        # should work for 100.01 and 100.0 but not 99.99
+        # also, price 100.01 should and 100.00 should not create 99.00
+        pf.get_price("99.99")
 
 
 def test_max_price():
@@ -142,10 +143,10 @@ def test_prev_price():
     assert new_price == Price(100)
 
 
-@raises(InvalidPriceException)
 def test_max_price_excpetion():
-    pf = PriceFactory("0.01", max_price=Decimal("100.0"))
-    pf.get_price("100.01")
+    with pytest.raises(InvalidPriceException):
+        pf = PriceFactory("0.01", max_price=Decimal("100.0"))
+        pf.get_price("100.01")
 
 
 def test_to_json():

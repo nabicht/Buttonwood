@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from nose.tools import *
+import pytest
 from buttonwood.MarketObjects.Events.OrderEventConstants import *
 from buttonwood.MarketObjects.Events.OrderEvents import NewOrderCommand
 from buttonwood.MarketObjects.Endpoint import Endpoint
@@ -93,21 +93,21 @@ def test_neworder_defaults():
     assert new_order.iceberg_peak_qty() == 234
 
 
-@raises(AssertionError)
 def test_error_on_zero_qty():
-    NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK, Price("23.01"), 0, 2)
+    with pytest.raises(AssertionError):
+        NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK, Price("23.01"), 0, 2)
 
 
-@raises(AssertionError)
 def test_error_on_negative_qty():
-    NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK, Price("23.01"), -8, 2)
+    with pytest.raises(AssertionError):
+        NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK, Price("23.01"), -8, 2)
 
 
-@raises(AssertionError)
 def test_error_on_negative_iceberg_qty():
-    NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK, Price("23.01"), 8, -2)
+    with pytest.raises(AssertionError):
+        NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK, Price("23.01"), 8, -2)
 
 
-@raises(AssertionError)
 def test_error_on_price_not_matching_product():
-    NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK, Price("23.001"), 8, -2)
+    with pytest.raises(AssertionError):
+        NewOrderCommand(12, 324893458.324313, "342adf24441", "user_x", MARKET, BID_SIDE, FAK, Price("23.001"), 8, -2)

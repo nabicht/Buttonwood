@@ -28,7 +28,7 @@ SOFTWARE.
 """
 
 from decimal import Decimal
-from nose.tools import *
+import pytest
 from buttonwood.MarketObjects.Quote import Quote
 from buttonwood.MarketObjects.Price import Price
 from buttonwood.MarketObjects.Price import PriceFactory
@@ -50,25 +50,25 @@ def test_quote_creation():
     assert q.market().product().symbol() == "MSFT"
 
 
-@raises(AssertionError)
 def test_price_does_not_work_for_product():
     # price has to pass the test of being divisible evenly by the product's minimum price increment
-    Quote(MARKET, BID_SIDE, Price("94.342"), 94)
+    with pytest.raises(AssertionError):
+        Quote(MARKET, BID_SIDE, Price("94.342"), 94)
 
 
-@raises(AssertionError)
 def test_visible_qty_not_negative():
-    Quote(MARKET, BID_SIDE, Price("94.34"), -3)
+    with pytest.raises(AssertionError):
+        Quote(MARKET, BID_SIDE, Price("94.34"), -3)
 
 
-@raises(AssertionError)
 def test_visible_qty_not_zero():
-    Quote(MARKET, BID_SIDE, Price("94.34"), 0)
+    with pytest.raises(AssertionError):
+        Quote(MARKET, BID_SIDE, Price("94.34"), 0)
 
 
-@raises(AssertionError)
 def test_hidden_qty_not_negative():
-    Quote(MARKET, BID_SIDE, Price("94.34"), 23, -23)
+    with pytest.raises(AssertionError):
+        Quote(MARKET, BID_SIDE, Price("94.34"), 23, -23)
 
 
 def test_equality():
