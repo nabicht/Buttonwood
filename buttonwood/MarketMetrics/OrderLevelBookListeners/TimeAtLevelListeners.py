@@ -165,8 +165,8 @@ class SubchainTimeAtTOBListener(OrderLevelBookListener):
         use_time = order_book.last_update_time()
 
         if use_time != causing_order_chain.last_update_time():
-            self._logger.warn("Order book update time (%.6f) and causing order chain update time (%.6f) do not match!" %
-                              (use_time, causing_order_chain.last_update_time()))
+            self._logger.warning("Order book update time (%.6f) and causing order chain update time (%.6f) do not match!" %
+                                 (use_time, causing_order_chain.last_update_time()))
 
         order_chains = order_book.iter_order_chains_at_price(side, order_book.best_price(side))
         market = order_book.market()

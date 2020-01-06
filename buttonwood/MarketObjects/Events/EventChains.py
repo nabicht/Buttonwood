@@ -917,28 +917,28 @@ class OrderEventChain(object):
         if ff.is_aggressor():
             requested_exposure = self.find_requested_exposure(ff.aggressing_command().event_id())
             if ff.fill_qty() > requested_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is more than open exposure for %s. Took open exposure to %d" %
-                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
-                                   str(requested_exposure.causing_event_id()),
-                                   requested_exposure.qty() - ff.fill_qty()))
+                self._logger.warning("OrderChain state issue: %s. Aggressive full fill (%s) for %d is more than open exposure for %s. Took open exposure to %d" %
+                                     (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                      str(requested_exposure.causing_event_id()),
+                                      requested_exposure.qty() - ff.fill_qty()))
             elif ff.fill_qty() < requested_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Aggressive full fill (%s) for %d is less than open exposure for %s. Took open exposure to %d. Should NOT be full fill." %
-                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
-                                   str(requested_exposure.causing_event_id()),
-                                   requested_exposure.qty() - ff.fill_qty()))
-                self._logger.warn(str(self))
-                self._logger.warn(str(requested_exposure))
+                self._logger.warning("OrderChain state issue: %s. Aggressive full fill (%s) for %d is less than open exposure for %s. Took open exposure to %d. Should NOT be full fill." %
+                                     (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                     str(requested_exposure.causing_event_id()),
+                                     requested_exposure.qty() - ff.fill_qty()))
+                self._logger.warning(str(self))
+                self._logger.warning(str(requested_exposure))
         else:
             if ff.fill_qty() > self._current_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is more than current exposure. Took exposure to %d" %
-                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
-                                   self._current_exposure.qty() - ff.fill_qty()))
+                self._logger.warning("OrderChain state issue: %s. Passive full fill (%s) for %d is more than current exposure. Took exposure to %d" %
+                                     (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                      self._current_exposure.qty() - ff.fill_qty()))
             elif ff.fill_qty() < self._current_exposure.qty():
-                self._logger.warn("OrderChain state issue: %s. Passive full fill (%s) for %d is less than current exposure. Took exposure to %d. Should NOT be full fill." %
-                                  (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
-                                   self._current_exposure.qty() - ff.fill_qty()))
-                self._logger.warn(str(self))
-                self._logger.warn(str(self._current_exposure))
+                self._logger.warning("OrderChain state issue: %s. Passive full fill (%s) for %d is less than current exposure. Took exposure to %d. Should NOT be full fill." %
+                                     (str(self.chain_id()), str(ff.event_id()), ff.fill_qty(),
+                                      self._current_exposure.qty() - ff.fill_qty()))
+                self._logger.warning(str(self))
+                self._logger.warning(str(self._current_exposure))
 
     def apply_partial_fill_report(self, pf):
         """
