@@ -169,7 +169,9 @@ class Price:
             return self.__value <= other.__value
 
     def __eq__(self, other):
-        if isinstance(other, Price):
+        if other is None:
+            return False
+        elif isinstance(other, Price):
             return self.__value == other.__value
         else:
             return self.__value == Price(other).__value

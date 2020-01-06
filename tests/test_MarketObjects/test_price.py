@@ -38,6 +38,12 @@ def test_setting_price():
     assert p == Decimal("94.58793")
 
 
+def test_equality_to_none():
+    p = Price("1.242")
+    n = None
+    assert p != n
+
+
 def test_price_decimal_addition():
     p = Price("100.01")
     mpi = Decimal("0.01")
@@ -186,7 +192,6 @@ def test_comparison():
 def test_price_math():
     p1 = Price('1.15')
     p2 = Price('1.35')
-    p3 = Price('0.01')
     assert p1 + p2 == Price('2.5')
     assert p2 + p1 == Price('2.5')
     assert p2 - p1 == Price('.2')
