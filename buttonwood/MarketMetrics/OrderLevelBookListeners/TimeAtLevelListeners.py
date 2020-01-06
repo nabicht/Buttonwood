@@ -35,7 +35,7 @@ class SubchainTimeAtTopPriorityListener(OrderLevelBookListener):
 
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
-        self._market_to_subchain_id_to_time = NDeepDict(depth=2, default_value=list)
+        self._market_to_subchain_id_to_time = NDeepDict(depth=2, default_factory=list)
         self._market_to_side_to_prev_tob_subchain_id = NDeepDict(depth=2)
 
     def notify_book_update(self, order_book, causing_order_chain, tob_updated):
@@ -141,8 +141,8 @@ class SubchainTimeAtTOBListener(OrderLevelBookListener):
 
     def __init__(self, logger):
         OrderLevelBookListener.__init__(self, logger)
-        self._market_to_subchain_id_to_time = NDeepDict(depth=2, default_value=list) # this a list of tuples (start_time, end_time)
-        self._market_to_side_to_prev_tob_subchain_ids = NDeepDict(depth=2, default_value=set)
+        self._market_to_subchain_id_to_time = NDeepDict(depth=2, default_factory=list) # this a list of tuples (start_time, end_time)
+        self._market_to_side_to_prev_tob_subchain_ids = NDeepDict(depth=2, default_factory=set)
 
     def notify_book_update(self, order_book, causing_order_chain, tob_updated):
         """
