@@ -248,3 +248,5 @@ def test_two_level_contains_none_default():
     assert ['a', 'c'] not in d
     assert ['a'] in d
     assert ['b'] not in d
+    assert 'a' in d
+    assert 'b' not in d

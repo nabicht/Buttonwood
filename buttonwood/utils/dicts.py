@@ -79,3 +79,15 @@ class NDeepDict(defaultdict):
         else:
             super().__delitem__(key)
 
+    def __contains__(self, key):
+        if isinstance(key, list):
+            if len(key) > 1:
+                if super().__contains__(key[0]):
+                    return self[key[0]].__contains__(key[1:])
+                else:
+                    return False
+            else:
+                return super().__contains__(key[0])
+        else:
+            return super().__contains__(key)
+
