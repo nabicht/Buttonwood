@@ -44,7 +44,7 @@ class NDeepDict(defaultdict):
     def get(self, key):
         if isinstance(key, list):
             if len(key) > 1:
-                ret = super().get(key[0]).get(key[1:])
+                ret = super().__getitem__(key[0]).get(key[1:])
             else:
                 ret = super().get(key[0])
         else:

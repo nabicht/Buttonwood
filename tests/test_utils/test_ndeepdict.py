@@ -31,6 +31,12 @@ import pytest
 from buttonwood.utils.dicts import NDeepDict
 
 
+def test_first_none_default_2_deep():
+    d = NDeepDict(2)
+    d[['a', 'b']] = 16
+    assert d.get(['d', 'e']) is None
+
+
 def test_none_default_2_deep():
     d = NDeepDict(2)
     d[['a', 'b']] = 16
