@@ -30,6 +30,25 @@ SOFTWARE.
 import pytest
 from buttonwood.utils.dicts import NDeepDict
 
+
+def test_none_default_2_deep():
+    d = NDeepDict(2)
+    d[['a', 'b']] = 16
+    assert d.get(['a', 'b']) == 16
+    assert d.get(['a', 'c']) is None
+    with pytest.raises(KeyError):
+        x = d[['a', 'c']]
+
+
+def test_none_default_1_deep():
+    d = NDeepDict(1)
+    d[['a']] = 16
+    assert d.get(['a']) == 16
+    assert d.get(['c']) is None
+    with pytest.raises(KeyError):
+        x = d[['c']]
+
+
 def test_1_deep_with_default_standard_access():
     d = NDeepDict(1, int)
     assert len(d) == 0
@@ -106,6 +125,7 @@ def test_1_deep_with_no_default_standard_access():
     assert len(d) == 1
     assert 'b' not in d
     assert 'a' in d
+
 
 def test_1_deep_with_no_default_list_access():
     d = NDeepDict(1, None)
@@ -188,6 +208,7 @@ def test_4_deep_create_at_once_list_access():
     assert "level4" in d[["level1", "level2", "level3"]]
     assert len(d) ==  1
     assert d[["level1", "level2", "level3", "level4"]] == 5
+
 
 def test_1_deep_del_standard_access():
     d = NDeepDict(4)
