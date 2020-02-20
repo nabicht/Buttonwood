@@ -143,9 +143,10 @@ class Price:
             return None
 
         if side.is_bid():
-            return (other_price - self) / market.mpi()
+            ticks_behind = (other_price - self) / market.mpi()
         else:
-            return (self - other_price) / market.mpi()
+            ticks_behind = (self - other_price) / market.mpi()
+        return float(ticks_behind)
 
     def __hash__(self):
         return self.__hash
