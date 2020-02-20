@@ -230,3 +230,21 @@ def test_1_deep_del_standard_access():
     assert 'a1b1c3' in d['a1']['a1b1'], "was not deleted so should be there"
     assert 'a2b1c1' in d['a2']['a2b1'], "was not deleted so should be there"
     assert 'a1b2c1' in d['a1']['a1b2'], "was not deleted so should be there"
+
+
+def test_one_level_contains_none_default():
+    d = NDeepDict(1)
+    d[['a']] = 1
+    assert ['a'] in d
+    assert 'a' in d
+    assert ['b'] not in d
+    assert 'b' not in d
+
+
+def test_two_level_contains_none_default():
+    d = NDeepDict(2)
+    d[['a', 'b']] = 1
+    assert ['a', 'b'] in d
+    assert ['a', 'c'] not in d
+    assert ['a'] in d
+    assert ['b'] not in d
