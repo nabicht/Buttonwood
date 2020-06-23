@@ -32,10 +32,8 @@ import sys
 from decimal import Decimal
 from buttonwood.MarketObjects.Endpoint import Endpoint
 from buttonwood.MarketObjects.Product import Product
-from buttonwood.MarketObjects.Price import Price
 from buttonwood.MarketObjects.Price import PriceFactory
 from buttonwood.MarketObjects.Market import Market
-from buttonwood.MarketObjects.Price import InvalidPriceException
 
 
 PRODUCT = Product("AAA", "Some Product named AAA")

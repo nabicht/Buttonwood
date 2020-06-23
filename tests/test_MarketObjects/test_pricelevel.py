@@ -27,7 +27,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from decimal import Decimal
 import pytest
 from buttonwood.MarketObjects.PriceLevel import PriceLevel
 from buttonwood.MarketObjects.Price import Price

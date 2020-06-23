@@ -46,7 +46,7 @@ class BasicEvent(object):
         self._timestamp = timestamp
 
     def event_type_str(self):
-        raise NotImplemented("event_type_str to be implemented by inheriting sub class.")
+        raise NotImplementedError("event_type_str to be implemented by inheriting sub class.")
 
     def timestamp(self):
         """

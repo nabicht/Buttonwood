@@ -176,5 +176,5 @@ class PriceLevel(object):
     def __str__(self):
         s = "%s : %d | %d" % (str(self._price), self.visible_qty(), self.hidden_qty())
         if self._num_orders is not None:
-            s = s + " (%d)" % self._num_orders
+            s += " (%d)" % self._num_orders
         return s

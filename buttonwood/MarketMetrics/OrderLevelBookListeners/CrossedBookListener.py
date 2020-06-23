@@ -31,7 +31,6 @@ from buttonwood.MarketObjects.OrderBookListeners.OrderLevelBookListener import O
 from buttonwood.MarketObjects.Events.OrderEvents import AcknowledgementReport
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Side import ASK_SIDE
-import sys
 
 class CrossedBookListener(OrderLevelBookListener):
     """

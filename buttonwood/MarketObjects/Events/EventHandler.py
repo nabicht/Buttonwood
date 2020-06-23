@@ -48,7 +48,7 @@ from collections import defaultdict
 import logging
 
 
-class OrderEventHandler:
+class OrderEventHandler(object):
     def __init__(self, logger):
         self._event_listeners = OrderedDict()
         self._chain_id_to_chain = {}

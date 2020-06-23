@@ -31,7 +31,7 @@ import sys
 import random
 
 
-class IDGenerator:
+class IDGenerator(object):
 
     def __init__(self):
         pass
@@ -42,7 +42,7 @@ class IDGenerator:
 
         :return: the next ID
         """
-        raise NotImplemented("id() to be implemented by the inheriting class.")
+        raise NotImplementedError("id() to be implemented by the inheriting class.")
 
     def last_id(self):
         """
@@ -50,7 +50,7 @@ class IDGenerator:
 
         :return: the last id
         """
-        raise NotImplemented("last_id() to be implemented by the inheriting class.")
+        raise NotImplementedError("last_id() to be implemented by the inheriting class.")
 
 
 class MonotonicIntID(IDGenerator):

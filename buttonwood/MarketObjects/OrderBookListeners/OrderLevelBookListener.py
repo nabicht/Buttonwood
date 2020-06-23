@@ -44,7 +44,7 @@ class OrderLevelBookListener(object):
         :param causing_order_chain: MarketStructures.Events.EventChains.OrderEventChain
         :param tob_updated: boolean. Whether or not the top of book updated. This is for speed/convenience for the listener.
         """
-        raise NotImplemented("notify_book_update to be implemented by inheriting class.")
+        raise NotImplementedError("notify_book_update to be implemented by inheriting class.")
 
     def clean_up_order_chain(self, order_chain):
         """
@@ -56,4 +56,4 @@ class OrderLevelBookListener(object):
         :param order_chain: Buttonwood.MarketObjects.Events.EventChains.OrderEventChain
         :return: 
         """
-        raise NotImplemented("clean_up_order_chain to be implemented by inheriting class.")
+        raise NotImplementedError("clean_up_order_chain to be implemented by inheriting class.")

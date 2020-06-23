@@ -34,7 +34,7 @@ from buttonwood.MarketObjects.OrderBooks.OrderLevelOrderBookQueries import modif
 from buttonwood.utils.dicts import NDeepDict
 
 
-class Priority:
+class Priority(object):
     def __init__(self, ticks_from_tob, ticks_from_opposite_tob, size_ahead_at_price):
         self._ticks_from_tob = ticks_from_tob
         self._ticks_from_opposite_tob = ticks_from_opposite_tob
