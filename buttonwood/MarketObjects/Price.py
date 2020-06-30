@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2019 Peter F. Nabicht
+Copyright (c) 2016-2020 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ class InvalidPriceException(Exception):
     pass
 
 
-class Price:
+class Price(object):
 
     def __init__(self, price_value, precision=Decimal(".111111111111111")):  # precision defaults to 15
         if isinstance(price_value, Decimal):
@@ -294,7 +294,7 @@ class Price:
         return self.__float_value
 
 
-class PriceFactory:
+class PriceFactory(object):
 
     def __init__(self, min_price_increment, min_price_increment_value=1, min_price=Price(-999999),
                  max_price=Price(999999), precision=Decimal(".111111111111111")):

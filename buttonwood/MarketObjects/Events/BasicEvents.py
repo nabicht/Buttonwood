@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2019 Peter F. Nabicht
+Copyright (c) 2016-2020 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ class BasicEvent(object):
         self._timestamp = timestamp
 
     def event_type_str(self):
-        raise NotImplemented("event_type_str to be implemented by inheriting sub class.")
+        raise NotImplementedError("event_type_str to be implemented by inheriting sub class.")
 
     def timestamp(self):
         """

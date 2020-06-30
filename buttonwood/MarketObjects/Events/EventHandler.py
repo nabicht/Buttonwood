@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2019 Peter F. Nabicht
+Copyright (c) 2016-2020 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,7 @@ from collections import defaultdict
 import logging
 
 
-class OrderEventHandler:
+class OrderEventHandler(object):
     def __init__(self, logger):
         self._event_listeners = OrderedDict()
         self._chain_id_to_chain = {}

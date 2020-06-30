@@ -29,7 +29,6 @@ SOFTWARE.
 
 from decimal import Decimal
 from buttonwood.MarketObjects.Price import Price
-from buttonwood.MarketMetrics.MicroPrice import size_weighted_midpoint
 from buttonwood.MarketObjects.Side import BID_SIDE
 from buttonwood.MarketObjects.Side import ASK_SIDE
 

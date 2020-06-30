@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2019 Peter F. Nabicht
+Copyright (c) 2016-2020 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ import json
 def _level_json(order_book_level, side, price):
     level_list = []
     for order_chain in order_book_level.iter_order_chains_at_price(side, price):
-        chain_dict = dict()
+        chain_dict = {}
         chain_dict["chain_id"] = order_chain.chain_id()
         chain_dict["subchain_id"] = order_chain.most_recent_subchain().subchain_id()
         chain_dict["total_qty"] = order_chain.total_qty()
@@ -53,19 +53,19 @@ def _side_json(order_book, side):
     side_list = []
     prices = order_book.prices(side)
     for price in prices:
-        price_dict = dict()
+        price_dict = {}
         price_dict["price"] = float(price)
         price_dict["visible_qty"] = order_book.visible_qty_at_price(side, price)
         price_dict["hidden_qty"] = order_book.hidden_qty_at_price(side, price)
         price_dict["order_chains"] = _level_json(order_book, side, price)
         side_list.append(price_dict)
-    side_dict = dict()
+    side_dict = {}
     side_dict["levels"] = side_list
     return side_dict
 
 def json_snapshot(order_book):
     assert isinstance(order_book, OrderLevelBook)
-    order_book_dict = dict()
+    order_book_dict = {}
     order_book_dict["Market"] = order_book.market().to_json()
     order_book_dict["last_update_time"] = order_book.last_update_time()
     order_book_dict[str(BID_SIDE)] = _side_json(order_book, BID_SIDE)

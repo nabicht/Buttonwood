@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2019 Peter F. Nabicht
+Copyright (c) 2016-2020 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -55,8 +55,8 @@ class LastTimeTOBListener(OrderLevelBookListener, OrderEventListener):
         self._market_to_side_prev_price = NDeepDict(depth=2)
         self._market_side_price_time = NDeepDict(depth=3)  # market to side to price to last time it was top of book
         self._market_side_best_price = NDeepDict(depth=2)
-        self._event_id_to_last_time_crossed = dict()
-        self._event_id_to_last_time_tob = dict()
+        self._event_id_to_last_time_crossed = {}
+        self._event_id_to_last_time_tob = {}
 
     def _update_based_on_new_event(self, market, time):
         for side in [BID_SIDE, ASK_SIDE]:

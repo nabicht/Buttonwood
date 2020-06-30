@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2019 Peter F. Nabicht
+Copyright (c) 2016-2020 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -69,7 +69,7 @@ class BasicOrderBook(object):
 
         :return: str
         """
-        raise NotImplemented("%s: name() not implemented." % self.__class__.__name__)
+        raise NotImplementedError("%s: name() not implemented." % self.__class__.__name__)
 
     def last_update_time(self):
         """
@@ -95,7 +95,7 @@ class BasicOrderBook(object):
 
         :return: float
         """
-        raise NotImplemented("%s: last_update_time() not implemented." % self.__class__.__name__)
+        raise NotImplementedError("%s: last_update_time() not implemented." % self.__class__.__name__)
 
     def price_is_bid(self, price):
         """
@@ -149,7 +149,7 @@ class BasicOrderBook(object):
         :param side: MarketObjects.Side.Side
         :return: list of MarketObjects.Price.Price from best to worst
         """
-        raise NotImplemented("%s: prices(side) not implemented." % self.__class__.__name__)
+        raise NotImplementedError("%s: prices(side) not implemented." % self.__class__.__name__)
 
     def best_bid_price(self):
         """
@@ -204,7 +204,7 @@ class BasicOrderBook(object):
 
         :return: MarketObjects.PriceLevel.PriceLevel
         """
-        raise NotImplemented("%s: best_level(side) not implemented." % self.__class__.__name__)
+        raise NotImplementedError("%s: best_level(side) not implemented." % self.__class__.__name__)
 
     def total_qty_at_price(self, side, price):
         """
@@ -225,7 +225,7 @@ class BasicOrderBook(object):
         :param price: MarketObjects.Price.Price
         :return: int
         """
-        raise NotImplemented("%s visible_qty_at_price(side, price) not implemented" % self.__class__.__name__)
+        raise NotImplementedError("%s visible_qty_at_price(side, price) not implemented" % self.__class__.__name__)
 
     def hidden_qty_at_price(self, side, price):
         """
@@ -235,7 +235,7 @@ class BasicOrderBook(object):
         :param price: MarketObjects.Price.Price
         :return: int
         """
-        raise NotImplemented("%s hidden_qty_at_price(side, price) not implemented" % self.__class__.__name__)
+        raise NotImplementedError("%s hidden_qty_at_price(side, price) not implemented" % self.__class__.__name__)
 
     def num_orders_at_price(self, side, price):
         """
@@ -245,4 +245,4 @@ class BasicOrderBook(object):
         :param price: MarketObjects.Price.Price.
         :return: int.
         """
-        raise NotImplemented("%s num_orders_at_price(side, price, include_hideen) not implemented" % self.__class__.__name__)
+        raise NotImplementedError("%s num_orders_at_price(side, price, include_hideen) not implemented" % self.__class__.__name__)

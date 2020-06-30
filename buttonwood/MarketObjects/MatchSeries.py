@@ -6,7 +6,7 @@ analyze markets, market structures, and market participants.
 
 MIT License
 
-Copyright (c) 2016-2019 Peter F. Nabicht
+Copyright (c) 2016-2020 Peter F. Nabicht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ from buttonwood.MarketObjects.Events.OrderEvents import FullFillReport
 from collections import defaultdict
 
 
-class MatchSeries:
+class MatchSeries(object):
     """
     A match series is a series of fills on both sides of the book that make up one match from one aggressing order.
     
