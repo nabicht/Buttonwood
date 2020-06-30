@@ -569,13 +569,14 @@ class OrderLevelBook(BasicOrderBook, OrderEventListener):
                     if price not in price_to_level:
                         price_to_level[price] = TimePriorityOrderLevel(self._logger)
                     price_to_level[price].add_to_level(resulting_order_chain)
-                    order_book_updated = True
-                    if is_bid:
-                        if price >= pre_fill_best_price:
-                            tob_updated = True
-                    else:
-                        if price <= pre_fill_best_price:
-                            tob_updated = True
+
+                order_book_updated = True
+                if is_bid:
+                    if price >= pre_fill_best_price:
+                        tob_updated = True
+                else:
+                    if price <= pre_fill_best_price:
+                        tob_updated = True
             else:
                 price = partial_fill_report.fill_price()
                 self._logger.debug(
